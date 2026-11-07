@@ -4,6 +4,7 @@ const {CaptionReadAhead} = require('./caption-read-ahead.cjs');
 const {isSite} = require('./policy.cjs');
 
 function createCaptionBufferManager({win,ipcMain,nativeRoot,platform,onStatus = () => {},onFailure = () => {},Reader = CaptionReadAhead}) {
+  const playerContents = win.webContents;
   const reader = new Reader({ffmpeg:path.join(nativeRoot,'whisper',platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg'),
     helper:path.join(nativeRoot,'whisper',platform === 'win32' ? 'caption-reader.exe' : 'caption-reader')});
   let config = {enabled:false,speed:'fast',delayMs:0};
@@ -23,14 +24,15 @@ function createCaptionBufferManager({win,ipcMain,nativeRoot,platform,onStatus = 
   };
   const clock = (event,value) => {if (valid(event) && config.enabled) reader.clock(value?.session,value?.timeMs);};
   const stop = event => {if (valid(event)) reader.stop();};
-  const replay = () => send('desktop:caption-buffer',config);
+  const replay = () => send('desktop:caption-buffer',{...config,rewind:false,restart:false});
   ipcMain.on('buffer:source',source);ipcMain.on('buffer:clock',clock);ipcMain.on('buffer:stop',stop);
   win.webContents.on('did-finish-load',replay);
   const destroy = () => {
+    config = {...config,enabled:false};
     reader.stop();ipcMain.removeListener('buffer:source',source);ipcMain.removeListener('buffer:clock',clock);ipcMain.removeListener('buffer:stop',stop);
-    win.webContents.removeListener('did-finish-load',replay);
+    playerContents.removeListener('did-finish-load',replay);
   };
   win.once('closed',destroy);
-  return {set(value) {config = {...config,...value};if (!config.enabled || value.restart) reader.stop();replay();},destroy};
+  return {set(value) {config = {...config,...value};if (!config.enabled || value.restart) reader.stop();send('desktop:caption-buffer',config);},destroy};
 }
 module.exports = {createCaptionBufferManager};

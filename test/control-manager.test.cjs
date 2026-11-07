@@ -81,3 +81,9 @@ test('only the player main frame can report a supported playback timing change',
   assert.deepEqual(h.playback,['pause','playing','reset']);h.manager.destroy();
   h.ipc.emit('controls:playback',event,'pause');assert.equal(h.playback.length,3);
 });
+
+test('closing the native window does not access its destroyed webContents getter',()=>{
+  const h=setup();h.parent.isDestroyed=()=>true;
+  Object.defineProperty(h.parent,'webContents',{get(){throw Error('Object has been destroyed');}});
+  assert.doesNotThrow(()=>h.parent.emit('closed'));
+});

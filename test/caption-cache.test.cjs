@@ -33,3 +33,12 @@ test('only bounded HTTPS archive sources can reach the native audio reader',() =
     assert.throws(()=>sourceRequest({session:1,startMs:0,url}));
   assert.throws(()=>sourceRequest({session:1,startMs:NaN,url:'https://archive.org/test'}));
 });
+
+test('a short adjacent sentence tail joins the preceding cue without extending silence',() => {
+  const cache = new CaptionCache();cache.reset(1);
+  cache.add({session:1,startMs:0,endMs:3000,text:'The rest of the sentence'});
+  cache.add({session:1,startMs:3000,endMs:3300,text:'ends here.'});
+  assert.equal(cache.render(3200,100,s=>s.length).text,'The rest of the sentence ends here.');
+  assert.equal(cache.render(3300,100,s=>s.length).text,'');
+  cache.add({session:1,startMs:6000,endMs:6200,text:'No.'});assert.equal(cache.render(5000,100,s=>s.length).text,'');
+});

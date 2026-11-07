@@ -1,5 +1,5 @@
 'use strict';
-const {EventEmitter, once} = require('node:events');
+const {EventEmitter} = require('node:events');
 const {spawn} = require('node:child_process');
 const readline = require('node:readline');
 
@@ -25,7 +25,8 @@ class CaptionReadAhead extends EventEmitter {
     const caption = run.caption = this.spawnProcess(this.helper,['--pcm','--timed','--model',speed === 'balanced' ? 'base.en' : 'tiny.en'],
       {windowsHide:true,stdio:['pipe','pipe','pipe']});
     const audio = run.audio = this.spawnProcess(this.ffmpeg,['-nostdin','-hide_banner','-loglevel','error','-protocol_whitelist','https,http,tls,tcp,crypto',
-      '-ss',String(source.startMs / 1000),'-i',source.url,'-vn','-sn','-dn','-ac','1','-ar','16000','-f','s16le','pipe:1'],
+      '-rw_timeout','30000000','-reconnect','1','-reconnect_streamed','1','-reconnect_on_network_error','1','-reconnect_delay_max','3',
+      '-ss',String(source.startMs / 1000),'-i',source.url,'-vn','-sn','-dn','-ac','1','-af','highpass=f=60','-ar','16000','-f','s16le','pipe:1'],
       {windowsHide:true,stdio:['ignore','pipe','pipe']});
     const fail = message => {if (this.run !== run || run.stopped) return;this.stop();this.emit('failure',message);};
     run.timer = setTimeout(() => fail('The subtitle buffer could not fill. Check the connection and try again.'),90000);run.timer.unref?.();
@@ -42,9 +43,11 @@ class CaptionReadAhead extends EventEmitter {
         if (event.type === 'error') {fail('Whisper could not prepare subtitles. Try Faster recognition or restart captions.');return;}
         if (event.type === 'progress' && Number.isFinite(event.untilMs) && event.untilMs >= 0 && event.untilMs <= run.sentBytes / 32 + 1000) {
           run.processed = Math.max(run.processed,source.startMs + event.untilMs);ready();
+          if (process.env.SPELUNKR_CAPTION_DEBUG) console.error('Subtitle buffer',JSON.stringify({session:source.session,startMs:source.startMs,clockMs:run.clock,sentMs:run.sentBytes/32,processedMs:run.processed,ready:run.ready}));
           this.emit('progress',{session:source.session,untilMs:run.processed});
         } else if (event.type === 'cue' && typeof event.text === 'string' && event.text.length <= 2048 &&
           Number.isFinite(event.startMs) && Number.isFinite(event.endMs) && event.startMs >= 0 && event.endMs > event.startMs && event.endMs <= run.sentBytes / 32 + 1000) {
+          if (process.env.SPELUNKR_CAPTION_DEBUG) console.error('Subtitle cue',JSON.stringify({session:source.session,startMs:source.startMs+event.startMs,endMs:source.startMs+event.endMs,characters:event.text.length}));
           this.emit('cue',{session:source.session,text:event.text.trim(),startMs:source.startMs + event.startMs,endMs:source.startMs + event.endMs});
         }
       } catch {}
@@ -64,7 +67,12 @@ class CaptionReadAhead extends EventEmitter {
           while (!run.stopped && source.startMs + run.sentBytes / 32 >= run.clock + this.aheadMs) await new Promise(resolve => {run.wake = resolve;});
           if (run.stopped) break;
           run.sentBytes += chunk.length;
-          if (!caption.stdin.write(chunk)) await Promise.race([once(caption.stdin,'drain'),once(caption,'close')]);
+          if (!caption.stdin.write(chunk)) await new Promise(resolve => {
+            const done = () => {
+              caption.stdin.removeListener('drain',done);caption.stdin.removeListener('error',done);caption.removeListener('close',done);resolve();
+            };
+            caption.stdin.once('drain',done);caption.stdin.once('error',done);caption.once('close',done);
+          });
         }
         if (!run.stopped) {run.eof = true;caption.stdin.end();ready();}
       } catch {if (!run.stopped) fail('The subtitle buffer lost its audio connection. Toggle captions to try again.');}

@@ -6,6 +6,7 @@ const model = require('./controls-model.js');
 const {isSite} = require('./policy.cjs');
 
 function createControlManager({win, BrowserWindow, ipcMain, profileDir, platform, actions, onPlayback = () => {}, io = fs}) {
+  const playerContents = win.webContents;
   const file = path.join(profileDir, 'controls.json');
   const settingsFile = path.join(__dirname, 'controls.html');
   const settingsUrl = pathToFileURL(settingsFile).href;
@@ -86,7 +87,7 @@ function createControlManager({win, BrowserWindow, ipcMain, profileDir, platform
     ipcMain.removeListener('controls:action', perform);ipcMain.removeListener('controls:close', close);
     ipcMain.removeListener('controls:playback', playback);
     ipcMain.removeHandler('controls:load');ipcMain.removeHandler('controls:save');
-    win.webContents.removeListener('did-finish-load', push);
+    playerContents.removeListener('did-finish-load', push);
     if (settingsWindow && !settingsWindow.isDestroyed()) settingsWindow.close();
   };
   win.once('closed', destroy);
