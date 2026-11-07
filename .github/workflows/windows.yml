@@ -5,10 +5,6 @@ on:
     tags: ['v*']
 permissions:
   contents: read
-env:
-  POSTHOG_PROJECT_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
-  POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
-  POSTHOG_PRIVACY_CONFIGURED: ${{ vars.POSTHOG_PRIVACY_CONFIGURED }}
 jobs:
   build:
     runs-on: windows-latest

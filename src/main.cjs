@@ -14,10 +14,6 @@ const { toggleVideoFullscreen } = require('./video-fullscreen.cjs');
 const {createCaptionBufferManager} = require('./caption-buffer-manager.cjs');
 const {createAudioManager} = require('./audio-manager.cjs');
 const {configureAudioCors}=require('./audio-cors.cjs');
-const {createUsageReporter}=require('./usage-reporter.cjs');
-const {createUsageSettings}=require('./usage-settings.cjs');
-let usageConfig={};
-try {usageConfig=JSON.parse(fs.readFileSync(path.join(__dirname,'usage-config.json'),'utf8'));} catch {}
 
 app.setName('Spelunkr Desktop');
 app.enableSandbox();
@@ -75,14 +71,6 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     });
 
     const contents = win.webContents;
-    let usagePlaying=false;
-    const usage=createUsageReporter({profileDir:app.getPath('userData'),config:usageConfig,packaged:app.isPackaged,
-      version:app.getVersion?.()||'development',platform:process.platform,io:fs,
-      isActive:()=>Boolean(win&&!win.isDestroyed()&&isSite(contents.getURL())&&(usagePlaying||win.isFocused?.()))});
-    const usageSettings=createUsageSettings({win,dialog,reporter:usage});
-    win.once('ready-to-show',()=>{usage.tick();usageSettings.offer().catch(()=>{});});
-    win.once('closed',()=>usage.stop());
-    win.on('focus',()=>usage.tick());
     let videoFullscreen = false;
     const updateFullscreenMenu = () => {
       const item = Menu.getApplicationMenu()?.getMenuItemById('video-fullscreen');
@@ -309,7 +297,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     const about = () => dialog.showMessageBox(win, {
       type: 'info', title: 'About Spelunkr Desktop',
       message: `Spelunkr Desktop ${app.getVersion()} — Unofficial`,
-      detail: 'An independent desktop app for spelunkr.tv. Not affiliated with or endorsed by Spelunkr or the Internet Archive.\n\nThis app opens the live website. Internet access is required. The site controls channels, playback, and sign-in.\n\nOptional usage reporting counts active installations and approximate countries through PostHog, only after opt-in. Change your choice in Settings → Usage statistics. No viewing history, audio, or captions are reported.\n\nSpelunkr’s name, website, artwork, and programming belong to their respective owners. The app does not download or host videos.',
+      detail: 'An independent desktop app for spelunkr.tv. Not affiliated with or endorsed by Spelunkr or the Internet Archive.\n\nThis app opens the live website. Internet access is required. The site controls channels, playback, and sign-in.\n\nSpelunkr’s name, website, artwork, and programming belong to their respective owners. The app adds no tracking and does not download or host videos.',
       buttons: ['OK']
     });
     const nativeControls = {
@@ -339,8 +327,6 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     };
     const controls = createControlManager({win, BrowserWindow, ipcMain, profileDir: app.getPath('userData'),
       platform: process.platform, actions: nativeControls, io: fs, onPlayback: state => {
-        usagePlaying=state==='playing';
-        if(usagePlaying)usage.tick();
         if (captionEngine === 'whisper') return; // Buffered subtitles follow media time, not speaker-capture restarts.
         if (state === 'playing') {
           const wasPaused = playbackPaused;playbackPaused = false;
@@ -421,7 +407,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       ] },
       { label: '&Audio', submenu: [{id:'audio-settings',label:'&Audio settings…',click:audio.open}] },
       { label: '&Settings', submenu: [{id: 'controls-settings', label: '&Controls…', accelerator: 'CmdOrCtrl+,', click: controls.open},
-        {label:'&Audio…',click:audio.open},{id:'usage-settings',label:'&Usage statistics…',click:()=>usageSettings.open().catch(()=>{})}] },
+        {label:'&Audio…',click:audio.open}] },
       { label: '&Help', submenu: [
         { label: 'Linux setup and troubleshooting', visible: process.platform === 'linux', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop/blob/main/docs/LINUX.md') },
         { label: 'About Linux captions', visible: process.platform === 'linux', click: () => dialog.showMessageBox(win, { title: 'Linux captions', message: 'Local English captions prepared ahead of playback.', detail: 'Press Ctrl+Shift+L to toggle captions. Whisper reads the channel file directly and prepares timestamped subtitles at least 15 seconds ahead of the picture. Playback pauses while the cache fills. Captions work with the player muted and do not use other apps or a microphone. No audio or transcript is saved. Color, size, subtitle delay, two-line blocks, and fullscreen sizing use the same controls on every platform.' }) },
