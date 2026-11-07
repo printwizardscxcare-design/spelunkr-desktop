@@ -93,4 +93,5 @@ async function streamCheck() {
     console.log('PASS: packaged base/tiny models, silent-audio rejection, streaming speech recognition, and EOF cleanup');
   } finally {if(child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');}
 }
-streamCheck().catch(error=>{console.error(error);process.exitCode=1;});
+if (!process.argv.includes('--recorded-only')) streamCheck().catch(error=>{console.error(error);process.exitCode=1;});
+else console.log('PASS: packaged base/tiny recorded-speech models');

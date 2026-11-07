@@ -38,8 +38,10 @@ jobs:
           APP="$RUNNER_TEMP/spelunkr-dmg/Spelunkr Desktop.app"
           codesign --verify --deep --strict --verbose=2 "$APP"
           curl --fail --location --retry 3 https://raw.githubusercontent.com/alphacep/vosk-api/v0.3.45/python/example/test.wav -o "$RUNNER_TEMP/test.wav"
-          node scripts/check-whisper.cjs "$APP/Contents/Resources/native/whisper/caption-reader" "$RUNNER_TEMP/test.wav"
+          node scripts/check-whisper.cjs "$APP/Contents/Resources/native/whisper/caption-reader" "$RUNNER_TEMP/test.wav" --recorded-only
           node scripts/check-buffered-whisper.cjs "$APP/Contents/Resources/native/whisper/caption-reader" "$RUNNER_TEMP/test.wav"
+          node scripts/smoke-buffered-capture.cjs "$APP/Contents/Resources/native" "$RUNNER_TEMP/test.wav"
+          node scripts/check-audio-filter.cjs "$APP/Contents/Resources/native/whisper/ffmpeg" "$RUNNER_TEMP/test.wav"
           "$APP/Contents/Resources/native/whisper/ffmpeg" -version
           "$APP/Contents/Resources/native/whisper/audiotee" --help
           "$APP/Contents/MacOS/Spelunkr Desktop" > "$RUNNER_TEMP/spelunkr-startup.log" 2>&1 &
