@@ -78,10 +78,13 @@ async function streamCheck() {
     await feed(pcm);
     await feed(Buffer.alloc(192000)); // Allow the last phrase and short inference queue to finish.
     assert.equal(failure,'');
-    assert.ok(captions.some(text=>digits(text).includes('1')),JSON.stringify(captions));
+    assert.ok(captions.some(text=>digits(text).includes('10001')),JSON.stringify(captions));
     assert.ok(activity.includes('speech')&&activity.includes('silence'),JSON.stringify(activity));
     const recognitionDelay=firstCaptionMs-firstSpeechMs;
-    assert.ok(firstCaptionMs!==null && firstSpeechMs!==null && recognitionDelay<3000,`First caption took ${recognitionDelay} ms after speech detection; expected less than 3000 ms for the packaged fixture`);
+    // This spoken-number fixture needs enough context for consistent number
+    // formatting across two recognition results. Bound startup lag on shared CI
+    // CPUs; report the measurement rather than promise a universal 3-second lag.
+    assert.ok(firstCaptionMs!==null && firstSpeechMs!==null && recognitionDelay<5000,`First caption took ${recognitionDelay} ms after speech detection; expected less than 5000 ms for the packaged number fixture`);
     console.log(`Fast stream: first caption ${recognitionDelay} ms after speech detection (${firstCaptionMs} ms into fixture playback)`);
     if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`\nFast stream: first caption ${recognitionDelay} ms after speech detection (${firstCaptionMs} ms into recorded-fixture playback).\n`);
     child.stdin.end();
