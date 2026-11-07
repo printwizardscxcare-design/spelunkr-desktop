@@ -1,82 +1,72 @@
-# Spelunkr Desktop (Unofficial)
+# Spelunkr Desktop
 
-An independent, installable Windows app for **[spelunkr.tv](https://spelunkr.tv/)**. It opens the live website in a dedicated window. Channels and website changes arrive directly from Spelunkr without rebuilding the app.
+An unofficial Windows app for [spelunkr.tv](https://spelunkr.tv/). Watch in its own window, change channels with the arrow keys, and put captions right over the picture.
 
-**Not affiliated with or endorsed by Spelunkr or the Internet Archive.** No website assets or video files are bundled. The original app icon belongs to this wrapper, not Spelunkr.
+## Download and install
 
-## Install
+**[Download the Windows installer — v0.4.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.4.0/Spelunkr-Desktop-0.4.0-Windows-x64-Setup.exe)**
 
-Download `Spelunkr-Desktop-0.4.0-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
+[Release notes and checksum](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.4.0) · [All releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases)
 
-Requires Windows 10/11 x64 and an internet connection. This first build is unsigned, so Windows may show an unknown-publisher or SmartScreen warning. No automatic updater is included; use this private repository's Releases for new builds. Never install a copy from an unknown source.
+You'll need **64-bit Windows 10 or Windows 11** and an internet connection. The live-caption feature needs **Windows 11 22H2 or newer**.
 
-## Controls
+1. Download the installer using the link above. Choose the `.exe` file, rather than GitHub's source-code ZIP.
+2. Open the downloaded file and follow the installer. You can choose where to install it and add Start menu and desktop shortcuts. It installs for your Windows account without administrator access.
+3. Open **Spelunkr Desktop (Unofficial)** and choose a channel.
 
-| Control | Action |
+The installer isn't digitally signed yet, so Windows may show an unknown-publisher or SmartScreen warning.
+
+This repository is private for now. You'll need to sign in to a GitHub account with access to download the installer.
+
+## What it does
+
+Spelunkr runs as the live website, so its channels and schedules stay up to date. This app adds a few things for watching on a PC:
+
+- **Fullscreen channel surfing.** Press Up or Down to change channels without leaving fullscreen.
+- **Always on top.** Keep the window visible while doing something else.
+- **Captions over the video.** Choose white or yellow text on a transparent background, with five text sizes to pick from.
+- **Subtitle-style blocks.** Captions fill up to two lines, then start a fresh block. They clear during pauses instead of hanging around on screen.
+
+There's no account needed to watch. An optional Discord sign-in comes from the website itself.
+
+## Captions
+
+Press **Ctrl+Shift+L**, or choose **Captions → In-app live captions**. On first use, Windows may ask you to download speech files. Finish that setup and then turn captions on in the app.
+
+Under **Captions**, you can change the text color and size. Those choices are saved. Fullscreen captions adjust to the screen, and larger text fits fewer words in each block.
+
+The text comes from Windows Live Captions. Its window runs minimized while the app displays the subtitles. Windows captions all PC audio, so you may also see speech from another app if it's playing sound. Recognition can make mistakes, and pauses are estimated from text updates rather than exact speech timings.
+
+If captions stop working, try turning them off and on again. **Captions → Open Windows caption window** opens the original Windows controls for setup or troubleshooting. The video's own CC tracks, when available, are separate.
+
+## Handy keys
+
+| Key | Action |
 | --- | --- |
-| F11 | Toggle app fullscreen |
-| **↑ / ↓ while fullscreen** | **Next / previous channel**, in both app and website video fullscreen |
-| Ctrl+Shift+L | Toggle **in-app live captions** |
-| Ctrl+Shift+T | Toggle always on top |
-| Ctrl+Home | Return to channel guide |
-| Ctrl+R or F5 | Reload / retry connection |
-| Alt+← / → | Back / forward |
-| Ctrl+Plus / Minus / 0 | Zoom in / out / reset |
-| Ctrl+Shift+O | Open current Spelunkr page in your browser |
+| F11 | Enter or leave fullscreen |
+| Up / Down in fullscreen | Next / previous channel |
+| Ctrl+Shift+L | Turn in-app captions on or off |
+| Ctrl+Shift+T | Turn always on top on or off |
+| Ctrl+Home | Go back to the channel guide |
+| Ctrl+R or F5 | Refresh the page |
+| Ctrl+Shift+O | Open the current channel in your browser |
 
-The app menu has the same controls, including **Captions → In-app live captions**. Choose **Captions → Text color → White / Yellow** and **Captions → Text size** (80%, 100%, 125%, 150%, or 200%). Both choices are remembered. Captions have a fully transparent background: only text with a small dark shadow appears over the picture. Fullscreen captions use up to 90% of the screen width and scale with display height; changing size also reflows the text. The overlay follows the video into fullscreen and does not intercept clicks. Press Alt to access the menu. Arrow overrides leave text fields, sliders, subtitle menus, and dialogs alone. Holding an arrow does not repeatedly skip channels. The site's normal shortcuts remain available outside fullscreen.
+Press **Alt** to reach the app menu. The website's usual player shortcuts also work.
 
-### Windows native captions
+## Updates and uninstalling
 
-In-app captions use Windows' built-in Live Captions to generate text. Requires **Windows 11 22H2 or later** and the Windows .NET Framework desktop components normally included in Windows 11. Complete Windows' first-time speech-file setup if prompted. A small native helper reads only the Live Captions text control through Windows accessibility, minimizes the Windows caption window, and sends updates locally to the app. Text appears in a closed shadow root; no caption IPC or desktop functions are exposed to site JavaScript.
+For updates, download the installer from [Releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases) and run it again. There isn't an automatic updater yet.
 
-Ctrl+Shift+L toggles the in-app overlay while the app has focus. Captions start off each time the app opens. Turning captions off or closing Spelunkr restores a pre-existing Windows caption window; if the bridge started Windows captions itself, it closes that window. No transcript or audio is saved by the wrapper.
+To remove the app, open **Windows Settings → Apps → Installed apps**, find **Spelunkr Desktop**, and choose **Uninstall**. Your viewing preferences are kept.
 
-### Subtitle timing and pauses
+## A few things to know
 
-Captions use **separate cards of up to two lines**. Text fills the current card, and overflow starts a fresh card that replaces the entire previous one. It does not scroll away the first words or show only the tail of a rolling transcript. Line capacity is measured using the actual font and available video/screen width, so larger text fills a card sooner and wider fullscreen views fit more words.
+This is a fan-made app. It isn't affiliated with Spelunkr or the Internet Archive. Their names, website, artwork, and videos belong to their respective owners.
 
-A full card gets a short reading hold (about 20 characters per second, bounded between 0.833 and 4 seconds from first display) before replacement. Recognition bursts queue forward in order instead of skipping their opening cards. Size and window changes reflow the unconsumed text. Completed cards stay consumed when Windows revises or drops earlier transcript history. When captions are first enabled, existing Windows transcript history is used as a baseline; the overlay begins with new recognized speech.
+The app doesn't host videos, save caption transcripts, or add analytics. The live website still makes its own network requests; see [Spelunkr's privacy information](https://spelunkr.tv/about). For casting, use **Open in browser** and cast from Chrome.
 
-A pause is inferred after **1.5 seconds without new recognized words**. Once any pending cards have been displayed, the subtitle field clears and remains empty until new speech. Case/punctuation-only corrections do not restart its pause timer. The next phrase contains only newly recognized words, even if Windows keeps earlier text in its rolling transcript. Changing color, size, or fullscreen layout does not revive a completed card or restart its reading hold. Switching channel or turning captions off clears pending cards immediately.
+Found something broken? [Open an issue](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues) and include your Windows version and what happened.
 
-Windows Live Captions supplies text rather than word timestamps or an audio-silence signal. The pause detector therefore follows recognition activity; quiet speech, processing delays, or background audio can affect timing. Audio is not captured by the wrapper. Native Windows captions remain available as a fallback.
+For source builds, see [the development notes](docs/DEVELOPMENT.md). Maintainers can [check installer download counts](docs/DOWNLOADS.md).
 
-The design adapts [Netflix's timing guidance](https://partnerhelp.netflixstudios.com/hc/en-us/articles/360051554394-Timed-Text-Style-Guide-Subtitle-Timing-Guidelines), which favors a short hold after speech and avoiding flicker, and its [general requirements](https://partnerhelp.netflixstudios.com/hc/en-us/articles/215758617-Timed-Text-Style-Guide-General-Requirements), which specify a minimum event duration of five-sixths of a second. The 1.5-second recognition-pause threshold and four-second initial-reading cap are this app's live-caption settings. Prepared subtitles with known speech/shot timestamps can follow those guidelines more precisely.
-
-This uses Windows' accessible window structure rather than a public Live Captions text API, so a Windows update can require adjustments. **Captions → Open Windows caption window** remains available as a fallback and for changing the Windows language/settings. The helper does not complete setup or change microphone/privacy settings.
-
-Live Captions captions all PC audio, including this app, using Windows' on-device speech recognition. It is separate from existing subtitle tracks on the website's CC control. The wrapper does not record audio, request microphone permission, or send audio to a transcription service. See [Microsoft's Live Captions guide](https://support.microsoft.com/en-us/accessibility/windows/use-live-captions-to-better-understand-audio).
-
-## Privacy and boundaries
-
-- Local persistent browser storage keeps the website's preferences and any sign-in session. Window size and position are stored locally.
-- The wrapper adds no analytics. The live site's own [privacy information](https://spelunkr.tv/about) applies to its requests.
-- Remote pages run with Node integration disabled, context isolation, and Chromium sandboxing. No desktop APIs are exposed to the website. The fullscreen adapter receives a boolean from the app and dispatches the site's existing TV remote channel events.
-- Only the exact Spelunkr origin and its pinned Discord/Supabase authentication endpoints can navigate within the app. Other HTTPS links open in your default browser. Other URL schemes and file downloads are blocked.
-- Sign-in and casting depend on upstream browser compatibility. Discord login is optional and not required to watch. Casting is best performed in Chrome using Open in browser; this app does not promise Chromecast support.
-- There is no offline video mode. A recovery page provides Retry when the site fails to load.
-
-## Build
-
-On Windows, install Node.js 24 or later, then:
-
-```powershell
-npm ci
-npm test
-npm run dist -- --publish never
-```
-
-The installer is written to `dist/`. Packaging automatically compiles the native captions helper and bundles the local subtitle layout code into a self-contained sandboxed preload. Run `npm run build:captions` before `npm start` when developing; the preload is generated automatically. `npm run pack` creates an unpacked app for testing. Original icons are checked in; regenerate with `powershell -File scripts/make-icon.ps1` if needed. Dependencies and runtime versions are pinned in `package-lock.json`.
-
-The Windows GitHub Actions workflow builds an installer and checksum on manual dispatch or version-tag pushes. It does not publish anything publicly.
-
-## Existing app research
-
-Checked November 6, 2026: Spelunkr's [official app page](https://spelunkr.tv/app) lists Android, Android TV/Google TV, and Fire TV builds. An [independent LG webOS client](https://github.com/Nikolay1243/spelunkr-webos) also exists. No standalone Windows download was found in the official pages, GitHub searches, or Microsoft Store search. This is a bounded search, not a claim that no private or unindexed app exists.
-
-The site also supplies a web-app manifest. You can already install it through Microsoft Edge's **More tools → Apps → Install this site as an app**. This repository provides the separately packaged Windows installer, fullscreen channel arrows, and native Live Captions command requested by its owner.
-
-## License
-
-MIT for this wrapper and its original icon only. Spelunkr's name, website, styling, programming, and third-party videos remain the property of their respective owners.
+The desktop app's code and original icon are covered by the [MIT license](LICENSE).

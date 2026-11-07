@@ -1,0 +1,14 @@
+name: Installer download counts
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Count installer downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/download-counts.cjs
