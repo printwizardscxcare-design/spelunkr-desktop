@@ -101,10 +101,13 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       if (!menu) return;
       const toggle = menu.getMenuItemById('caption-overlay');
       if (toggle) toggle.checked = overlayEnabled;
+      // Selecting one radio item unchecks its siblings; only update the active choice.
+      const engineChoice = menu.getMenuItemById(`caption-engine-${overlayEnabled ? captionEngine : 'none'}`);
+      if (engineChoice) engineChoice.checked = true;
       const status = menu.getMenuItemById('caption-status');
       if (status) status.label = captionStatus;
       const speedMenu = menu.getMenuItemById('caption-speed');
-      if (speedMenu) speedMenu.enabled = captionEngine === 'whisper';
+      if (speedMenu) speedMenu.enabled = overlayEnabled && captionEngine === 'whisper';
     };
     let transition = Promise.resolve();
     let revision = 0;
@@ -125,8 +128,8 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       return transition;
     };
     const setCaptionEngine = engine => {
-      captionEngine = engine; saveCaptionPreferences(); updateCaptionMenu();
-      if (overlayEnabled) setOverlayEnabled(true);
+      captionEngine = engine; saveCaptionPreferences();
+      setOverlayEnabled(true);
     };
     const setCaptionSpeed = speed => {
       captionSpeed = speed; saveCaptionPreferences();
@@ -238,10 +241,11 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       { label: '&Captions', submenu: [
         { id: 'caption-overlay', label: '&In-app live captions', type: 'checkbox', accelerator: 'CmdOrCtrl+Shift+L', click: item => setOverlayEnabled(item.checked) },
         { label: 'Caption engine', submenu: [
-          { label: 'Built-in captions (Whisper)', type: 'radio', checked: captionEngine === 'whisper', click: () => setCaptionEngine('whisper') },
-          { label: 'Windows Live Captions (Windows 11)', visible: process.platform === 'win32', type: 'radio', checked: captionEngine === 'windows', click: () => setCaptionEngine('windows') }
+          { id: 'caption-engine-none', label: 'None', type: 'radio', checked: !overlayEnabled, click: () => setOverlayEnabled(false) },
+          { id: 'caption-engine-whisper', label: 'Built-in captions (Whisper)', type: 'radio', checked: overlayEnabled && captionEngine === 'whisper', click: () => setCaptionEngine('whisper') },
+          { id: 'caption-engine-windows', label: 'Windows Live Captions (Windows 11)', visible: process.platform === 'win32', type: 'radio', checked: overlayEnabled && captionEngine === 'windows', click: () => setCaptionEngine('windows') }
         ] },
-        { id: 'caption-speed', label: 'Recognition speed', enabled: captionEngine === 'whisper', submenu: [
+        { id: 'caption-speed', label: 'Recognition speed', enabled: overlayEnabled && captionEngine === 'whisper', submenu: [
           { label: 'Balanced (base English)', type: 'radio', checked: captionSpeed === 'balanced', click: () => setCaptionSpeed('balanced') },
           { label: 'Faster (tiny English)', type: 'radio', checked: captionSpeed === 'fast', click: () => setCaptionSpeed('fast') }
         ] },
