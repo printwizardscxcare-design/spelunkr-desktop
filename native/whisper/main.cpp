@@ -92,13 +92,15 @@ class Recognizer {
     std::vector<float> phrase, pending, preroll;
     int quiet = 0, voiced = 0;
     bool speech_active = false;
+    bool fast = false, compact_context = true;
     static std::string key(std::string word) {
         std::string result;
         for (unsigned char c : word) if (std::isalnum(c)) result += char(std::tolower(c));
         return result;
     }
 public:
-    Recognizer(const fs::path &root, const std::string &model) {
+    Recognizer(const fs::path &root, const std::string &model, bool full_context = false)
+        : fast(model == "tiny.en"), compact_context(!full_context) {
         auto cp = whisper_context_default_params(); cp.use_gpu = false;
         ctx = whisper_init_from_file_with_params((root / ("ggml-" + model + "-q5_1.bin")).u8string().c_str(), cp);
         if (!ctx) throw std::runtime_error("The bundled Whisper model could not load. Reinstall the app.");
@@ -117,6 +119,14 @@ public:
         p.language = "en"; p.translate = false; p.no_context = true;
         p.print_realtime = p.print_progress = p.print_timestamps = p.print_special = false;
         p.suppress_blank = true; p.suppress_nst = true; p.temperature_inc = 0;
+        if (fast) {
+            p.no_timestamps = true; p.single_segment = true; p.greedy.best_of = 1;
+            if (audio.size() <= 48000) p.max_tokens = 48;
+            // Short live chunks don't need the encoder's full 30-second window.
+            // Leave at least a second of padding and round up to a whole block.
+            const int frames = int((audio.size() + 319) / 320);
+            if (compact_context) p.audio_ctx = std::min(1500, std::max(256, ((frames + 50 + 63) / 64) * 64));
+        }
         p.abort_callback = [](void *) { return !running.load(); };
         if (whisper_full(ctx, p, audio.data(), int(audio.size())) != 0) {
             if (running) throw std::runtime_error("Whisper could not process this audio.");
@@ -161,8 +171,8 @@ public:
     void submit() {
         if (voiced >= 4) {
             std::lock_guard<std::mutex> lock(mutex);
-            if (queue.size() >= 3) {
-                queue.pop_front(); emit("status", "Captions are falling behind. Try Recognition speed > Faster.");
+            if (!queue.empty()) {
+                queue.pop_front(); emit("status", "Catching up with live audio...");
             }
             queue.push_back(phrase); available.notify_one();
         }
@@ -180,12 +190,12 @@ public:
             if (!phrase.empty() || speech) {
                 phrase.insert(phrase.end(), frame, frame + 512);
                 if (speech) { voiced++; quiet=0; } else quiet++;
-                if (quiet >= 16) {
+                if (quiet >= (fast ? 8 : 16)) {
                     submit(); phrase.clear(); quiet=voiced=0;
                     if (speech_active) { speech_active=false; emit("activity","silence"); }
                 }
-                else if (phrase.size() >= 40960) {
-                    submit(); phrase.erase(phrase.begin(), phrase.end() - 4096); voiced=1;
+                else if (phrase.size() >= (fast ? 24576u : 40960u)) {
+                    submit(); phrase.erase(phrase.begin(), phrase.end() - (fast ? 8192 : 4096)); voiced=1;
                 }
             }
             preroll.insert(preroll.end(), frame, frame+512);
@@ -262,12 +272,13 @@ static void capture_windows(Recognizer &recognizer) {
 
 int main(int argc, char **argv) {
     try {
-        std::string model="base.en", wav; bool wasapi=false;
+        std::string model="base.en", wav; bool wasapi=false, full_context=false;
         for (int i=1; i<argc; ++i) {
             std::string arg=argv[i];
             if (arg=="--model" && i+1<argc) model=argv[++i];
             else if (arg=="--test-wav" && i+1<argc) wav=argv[++i];
             else if (arg=="--wasapi") wasapi=true;
+            else if (arg=="--full-context") full_context=true;
             else if (arg!="--pcm") throw std::runtime_error("Unknown caption helper argument");
         }
         if (model!="base.en" && model!="tiny.en") throw std::runtime_error("Unknown speech model");
@@ -275,7 +286,7 @@ int main(int argc, char **argv) {
         const auto root = executable_dir(argv[0]);
         ggml_backend_load_all_from_path(root.u8string().c_str());
         emit("status", "Loading local Whisper model...");
-        Recognizer recognizer(root, model);
+        Recognizer recognizer(root, model, full_context);
         if (!wav.empty()) {
             auto audio=read_wav(fs::u8path(wav)); auto start=std::chrono::steady_clock::now();
             recognizer.append(recognizer.decode(audio));

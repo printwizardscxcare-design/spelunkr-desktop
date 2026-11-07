@@ -23,13 +23,15 @@ Windows installers aren't digitally signed. Mac builds are signed locally but ar
 
 ## Watching
 
-Open the app and choose a channel. Use **F11** for fullscreen on Windows or Linux, or **Control+Command+F** on Mac. In fullscreen, **Up** goes to the next channel and **Down** goes to the previous one.
+Open the app and choose a channel. **Up** goes to the next channel and **Down** goes to the previous one, in both windowed and fullscreen views. Use **F11** for fullscreen on Windows or Linux, or **Control+Command+F** on Mac.
 
 The **View** menu also has an always-on-top option. On Linux, that option is disabled when a Wayland session is detected.
 
 ## Captions
 
 Press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac. The app needs keyboard focus for its shortcuts to work.
+
+Captions start off. Turning them on rewinds the video **15 seconds** once so you get the lead-in. Choose **Captions → Caption engine → None** to turn them off.
 
 Whisper generates English captions locally. Both speech models are included in the installer; there's no speech account, subscription, or separate model download. Captions listen to speaker output, which can include other apps playing at the same time.
 
@@ -44,7 +46,7 @@ See the [caption guide](docs/CAPTIONS.md) for settings and troubleshooting.
 | Action | Windows / Linux | Mac |
 | --- | --- | --- |
 | Fullscreen | F11 | Control+Command+F |
-| Next / previous channel in fullscreen | Up / Down | Up / Down |
+| Next / previous channel | Up / Down | Up / Down |
 | Captions on / off | Ctrl+Shift+L | Command+Shift+L |
 | Always on top | Ctrl+Shift+T | Command+Shift+T |
 | Channel guide | Ctrl+Home | Command+Home |

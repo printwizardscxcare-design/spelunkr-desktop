@@ -1,6 +1,7 @@
 'use strict';
 const {execFileSync, spawn} = require('node:child_process');
 const fs = require('node:fs');
+const path = require('node:path');
 const assert = require('node:assert/strict');
 const {once} = require('node:events');
 const {setTimeout: delay} = require('node:timers/promises');
@@ -15,6 +16,18 @@ for (const model of ['base.en','tiny.en']) {
   const timing=events.find(event=>event.type==='status'&&event.text.startsWith('Benchmark:'))?.text;
   benchmarks.push(`${process.platform}/${process.arch} ${model}: ${timing}`);
 }
+const speechFixture = path.join(path.dirname(fixture), 'jfk.wav');
+if (fs.existsSync(speechFixture)) {
+  for (const full of [false, true]) {
+    const output = execFileSync(helper, ['--test-wav', speechFixture, '--model', 'tiny.en', ...(full ? ['--full-context'] : [])], {encoding:'utf8', timeout:180000});
+    const events = output.trim().split('\n').map(line => JSON.parse(line));
+    const text = events.filter(event => event.type === 'caption').map(event => event.text).join(' ');
+    assert.match(text, /fellow Americans/i);
+    assert.match(text, /country/i);
+    assert.match(text, /what you can do for your country/i);
+    benchmarks.push(`${process.platform}/${process.arch} tiny ${full ? 'full' : 'compact'} context: ${events.find(event => event.text.startsWith('Benchmark:'))?.text}`);
+  }
+}
 console.log(benchmarks.join('\n'));
 if(process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\n### Packaged Whisper CPU benchmarks\n\n'+benchmarks.map(line=>'- '+line).join('\n')+'\n\nThese use the CI computer and a short recorded fixture; they do not predict every user computer.\n');
 
@@ -27,13 +40,16 @@ async function streamCheck() {
   }
   assert.ok(pcm,'Missing PCM fixture');
   const child=spawn(helper,['--pcm','--model','tiny.en'],{stdio:['pipe','pipe','pipe']});
-  let buffer='',failure='',listening=false;const captions=[],activity=[];
+  let buffer='',failure='',listening=false,speechStartedAt=null,firstCaptionMs=null;const captions=[],activity=[];
   child.stdout.setEncoding('utf8');child.stdout.on('data',data=>{
     buffer+=data;let newline;
     while((newline=buffer.indexOf('\n'))>=0){
       const event=JSON.parse(buffer.slice(0,newline));buffer=buffer.slice(newline+1);
       if(event.type==='error')failure=event.text;
-      if(event.type==='caption')captions.push(event.text);
+      if(event.type==='caption') {
+        captions.push(event.text);
+        if(speechStartedAt!==null && firstCaptionMs===null) firstCaptionMs=Date.now()-speechStartedAt;
+      }
       if(event.type==='activity')activity.push(event.text);
       if(event.type==='status'&&event.text.includes('Listening'))listening=true;
     }
@@ -53,11 +69,15 @@ async function streamCheck() {
     assert.ok(listening,failure||'Recognizer did not start');
     await feed(Buffer.alloc(64000)); // Silence must not create invented captions.
     assert.deepEqual(captions,[]);
+    speechStartedAt=Date.now();
     await feed(pcm);
     await feed(Buffer.alloc(192000)); // Allow the last phrase and short inference queue to finish.
     assert.equal(failure,'');
     assert.ok(captions.some(text=>/\b(one|1)\b/i.test(text)),JSON.stringify(captions));
     assert.ok(activity.includes('speech')&&activity.includes('silence'),JSON.stringify(activity));
+    assert.ok(firstCaptionMs!==null && firstCaptionMs<3000,`First caption took ${firstCaptionMs} ms; expected less than 3000 ms for the packaged fixture`);
+    console.log(`Fast stream: first caption after ${firstCaptionMs} ms of fixture playback`);
+    if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`\nFast stream: first caption after ${firstCaptionMs} ms of recorded-fixture playback.\n`);
     child.stdin.end();
     const result=await Promise.race([closed,delay(5000).then(()=>{throw Error('PCM EOF did not stop capture recognition');})]);
     assert.equal(result[0],0);

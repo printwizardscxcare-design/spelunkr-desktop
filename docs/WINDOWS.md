@@ -14,7 +14,7 @@ GitHub's **Source code** ZIP contains the project files; use the `.exe` to insta
 
 ## Start watching
 
-Use **F11** for fullscreen, then **Up / Down** to change channels. **Ctrl+Shift+L** turns captions on or off while the app has focus.
+Use **Up / Down** to change channels in windowed or fullscreen views. **F11** toggles fullscreen. **Ctrl+Shift+L** turns captions on or off while the app has focus; turning them on rewinds 15 seconds once. Captions start off.
 
 Whisper and its English models come with the app. You don't need Windows speech files or a speech-service account for the default engine. See the [caption guide](CAPTIONS.md) for color, size, recognition speed, and the optional Windows 11 engine.
 

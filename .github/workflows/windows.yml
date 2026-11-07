@@ -27,3 +27,9 @@ jobs:
           path: |
             dist/*-Setup.exe
             dist/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Spelunkr-Caption-Runtime-Windows-x64
+          path: |
+            native/bin/whisper/*.exe
+            native/bin/whisper/*.dll

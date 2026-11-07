@@ -25,12 +25,14 @@ test('a recognition burst is paged from its beginning with no skipped or repeate
   const h = harness();
   const text = 'one two three four five six seven eight nine ten';
   h.feed(text);
-  h.pages.receive({ enabled: true, text: '', cueId: 1, clearReason: 'pause' });
-  const cards = [h.render()];
-  for (let index = 0; index < 5; index++) { h.advance(4000); cards.push(h.render()); }
+  const cards = [];
+  while (cards.join(' ').split(/\s+/).filter(Boolean).length < text.split(' ').length && cards.length < 10) {
+    cards.push(h.render()); h.advance(4000);
+  }
   assert.equal(cards.filter(Boolean).join(' ').replace(/\s+/g, ' '), text);
   assert.ok(cards.every(card => card.split('\n').length <= 2));
-  assert.equal(cards.at(-1), '');
+  h.pages.receive({ enabled: true, text: '', cueId: 1, clearReason: 'pause' });
+  assert.equal(h.render(), '');
 });
 test('a new card does not flash past before its minimum reading time', () => {
   const h = harness();
@@ -62,10 +64,26 @@ test('resize or larger text reflows the unconsumed words instead of dropping the
   h.feed(text);
   assert.equal(h.render(10), 'one two\nthree four');
   assert.equal(h.render(6), 'one\ntwo');
-  h.pages.receive({ enabled: true, text: '', cueId: 1, clearReason: 'pause' });
-  const cards = [h.render(6)];
-  for (let index = 0; index < 4; index++) { h.advance(4000); cards.push(h.render(6)); }
+  const cards = [];
+  while (cards.join(' ').split(/\s+/).filter(Boolean).length < text.split(' ').length && cards.length < 10) {
+    cards.push(h.render(6)); h.advance(4000);
+  }
   assert.equal(cards.filter(Boolean).join(' ').replace(/\s+/g, ' '), text);
+});
+
+test('a pause discards queued old cards and style updates cannot bring them back', () => {
+  const h = harness();
+  h.feed('one two three four five six seven eight', 1);
+  assert.ok(h.render());
+  h.feed('another pending phrase', 2);
+  h.pages.receive({enabled: true, text: '', cueId: 2, clearReason: 'pause'});
+  assert.equal(h.render(), '');
+  h.advance(20000);
+  h.feed('one two three four five six seven eight', 1);
+  h.feed('another pending phrase', 2);
+  assert.equal(h.render(), '');
+  h.feed('fresh words', 3);
+  assert.equal(h.render(), 'fresh\nwords');
 });
 test('a following phrase queues behind unread cards and old style updates cannot resurrect a finished cue', () => {
   const h = harness();

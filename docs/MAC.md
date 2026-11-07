@@ -27,6 +27,8 @@ If your Mac is managed by a school or workplace, its policy may prevent opening 
 
 Press **Command+Shift+L** and allow system audio recording when macOS asks.
 
+Captions start off. Turning them on rewinds the video 15 seconds once; **Captions → Caption engine → None** turns them off again.
+
 If access was denied, open **System Settings → Privacy & Security → Screen & System Audio Recording**. Depending on the macOS version, you may see a separate **System Audio Recording Only** section. Enable access for Spelunkr Desktop, then quit and reopen the app. [Apple's audio-recording permission guide](https://support.apple.com/guide/mac-help/control-access-screen-system-audio-recording-mchld6aa7d23/mac) shows where these controls live.
 
 Whisper uses speaker output, which can include other apps. It doesn't select a microphone or save audio or transcripts. The included models recognize English. See the [caption guide](CAPTIONS.md) for appearance, speed, and troubleshooting.
@@ -38,7 +40,7 @@ The installers, speech models, and app startup passed automated checks on Intel 
 | Key | Action |
 | --- | --- |
 | Control+Command+F | Fullscreen on / off |
-| Up / Down in fullscreen | Next / previous channel |
+| Up / Down | Next / previous channel in windowed or fullscreen views |
 | Command+Shift+L | Captions on / off |
 | Command+Shift+T | Always on top |
 | Command+R | Refresh |

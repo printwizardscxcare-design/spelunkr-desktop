@@ -113,6 +113,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     let revision = 0;
     const setOverlayEnabled = enabled => {
       const request = ++revision;
+      const rewindOnEnable = enabled && !overlayEnabled;
       overlayEnabled = enabled;
       cues.clear({ keepSnapshot: false });
       cues.setSpeechActive(captionEngine === 'whisper' ? false : null);
@@ -124,6 +125,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         cues.ignoreInitialSnapshot = captionEngine === 'windows';
         captions.configure(captionOptions(nativeRoot, process.platform, captionEngine, captionSpeed));
         captions.start();
+        if (rewindOnEnable && isSite(contents.getURL())) contents.send('desktop:caption-rewind');
       });
       return transition;
     };
@@ -166,10 +168,6 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         {role:'appMenu'}, {label:'File', submenu:[{label:'New Window', accelerator:'Command+N', click:createWindow}]}
       ]));
     });
-    const sendFullscreenState = () => { if (win && !win.isDestroyed() && !contents.isDestroyed()) contents.send('desktop:fullscreen', win.isFullScreen()); };
-    win.on('enter-full-screen', sendFullscreenState);
-    win.on('leave-full-screen', sendFullscreenState);
-    contents.on('did-finish-load', sendFullscreenState);
     contents.on('will-navigate', (event, url) => {
       if (isTrustedNavigation(url)) { failed = false; return; }
       event.preventDefault();
@@ -273,7 +271,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         { label: 'About Linux captions', visible: process.platform === 'linux', click: () => dialog.showMessageBox(win, { title: 'Linux captions', message: 'Local English captions over the video.', detail: 'Press Ctrl+Shift+L to toggle captions. Text color, size, two-line blocks, pause clearing, and fullscreen sizing use the same controls as Windows. Speech is recognized locally using the bundled Whisper English models. Choose Balanced or Faster under Recognition speed. No audio or transcript is saved. Captures your default speaker output, including other apps. After switching audio devices, toggle captions off and on. Requires PulseAudio or PipeWire with PulseAudio compatibility. Recognition quality differs from Windows Live Captions.' }) },
         { label: 'Mac setup and troubleshooting', visible: process.platform === 'darwin', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop/blob/main/docs/MAC.md') },
         { label: 'About built-in captions', click: () => dialog.showMessageBox(win, { title: 'Whisper captions', message: 'Local captions on Windows, Mac, and Linux.', detail: 'Speech recognition and speech detection run on your computer using bundled English models. No audio or transcript is saved. Captures the default speaker output, including other applications. Choose Faster recognition on an older computer. Captions arrive in short batches; speed and accuracy depend on the speech and computer. The transparent overlay, size, color, subtitle blocks, and pause clearing use the same controls on every platform.' }) },
-        { label: '&Keyboard shortcuts', click: () => dialog.showMessageBox(win, { title: 'Keyboard shortcuts', message: 'Your TV, on your desktop.', detail: (process.platform === 'darwin' ? 'On Mac, use Command instead of Ctrl in the shortcuts below. Fullscreen is Control+Command+F.\n\n' : '') + 'F11 — Toggle fullscreen\nUp / Down in fullscreen — Next / Previous channel\nCtrl+Shift+L — Toggle in-app live captions\nCtrl+Shift+T — Always on top\nCtrl+Home — Channel guide\nCtrl+R or F5 — Reload / Retry\nAlt+Left / Right — Back / Forward\nCtrl+Plus / Minus / 0 — Zoom\nCtrl+Shift+O — Open in browser\n\nThe website’s own player shortcuts also work. Press Alt to access the app menu.' }) },
+        { label: '&Keyboard shortcuts', click: () => dialog.showMessageBox(win, { title: 'Keyboard shortcuts', message: 'Your TV, on your desktop.', detail: (process.platform === 'darwin' ? 'On Mac, use Command instead of Ctrl in the shortcuts below. Fullscreen is Control+Command+F.\n\n' : '') + 'F11 — Toggle fullscreen\nUp / Down — Next / Previous channel\nCtrl+Shift+L — Toggle captions; turning them on rewinds 15 seconds\nCtrl+Shift+T — Always on top\nCtrl+Home — Channel guide\nCtrl+R or F5 — Reload / Retry\nAlt+Left / Right — Back / Forward\nCtrl+Plus / Minus / 0 — Zoom\nCtrl+Shift+O — Open in browser\n\nThe website’s own player shortcuts also work. Press Alt to access the app menu.' }) },
         { label: 'Spelunkr &website', click: () => openExternal(HOME) },
         { label: '&Project and updates', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop') },
         { label: '&About this unofficial app', click: about }
