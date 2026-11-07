@@ -12,7 +12,7 @@ The channels and shows come from the live website. The app gives them their own 
 
 The current download is **[0.7.0, a preview](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0)**. You don't need a GitHub account to download it. Watching needs an internet connection.
 
-There's also **[0.8.0 Beta 1](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.1)** if you'd like to try the new subtitle cooldown. It waits until a channel finishes tuning, then gives you five seconds to keep surfing before subtitles load. You can change that wait to anything up to 30 seconds, or turn it off.
+There's also **[0.8.0 Beta 1](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.1)** with [audio settings](docs/AUDIO.md): normalization, a denoiser slider, compression and makeup gain, Pre EQ / Post EQ, a ten-band EQ, and saved classic or personal presets. Optional subtitle-only cleanup has its own unheard feed. The five-second subtitle cooldown after tuning is included too.
 
 | Version | Windows | All platforms |
 | --- | --- | --- |

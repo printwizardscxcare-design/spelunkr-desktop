@@ -18,6 +18,10 @@ The default is **5 seconds**. Choose a preset or use the one-second adjustments 
 
 This setting isn't in 0.7.0. Both the current version and beta are available on the [download page](../README.md#download).
 
+## Separate subtitle audio (audio update)
+
+Listening effects never change Whisper's input: it reads the channel file separately. **Audio → Audio settings → Subtitle audio cleanup** optionally adds gentle denoising and speech-focused filtering to that unheard feed. The setting is off by default and is independent of listening presets. It preserves audio duration; changing it rebuilds the subtitle buffer. A noisy test sample retained speech but showed no wording improvement, so compare on your channel. It does not affect Windows Live Captions. See [Audio help](AUDIO.md).
+
 ## Appearance
 
 Use **Captions → Text color** for white or yellow text. **Text size** has five choices: 80%, 100%, 125%, 150%, and 200%. The app remembers these settings.
