@@ -14,6 +14,11 @@ on:
       linux-check-run:
         description: Optional successful Linux recheck run for exactly the selected Linux build
         required: false
+      replace-beta:
+        description: Replace an existing beta only when explicitly requested by the maintainer
+        type: boolean
+        default: false
+        required: false
 permissions:
   actions: read
   contents: write
@@ -26,6 +31,7 @@ jobs:
       WINDOWS_RUN: ${{ inputs.windows-run }}
       MAC_RUN: ${{ inputs.mac-run }}
       LINUX_CHECK_RUN: ${{ inputs.linux-check-run }}
+      REPLACE_BETA: ${{ inputs.replace-beta }}
     steps:
       - uses: actions/checkout@v7
       - name: Verify both builds passed and use the same source
@@ -93,10 +99,16 @@ jobs:
           test "$TAG_SHA" = "$SOURCE_SHA" || { echo 'Release tag does not match the tested source'; exit 1; }
           DRAFT=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null || true)
           if [ "$DRAFT" = false ]; then
-            echo 'Release is already published; refusing to replace it'
-            exit 1
+            PREVIEW=$(gh release view "$RELEASE_TAG" --json isPrerelease --jq .isPrerelease)
+            if [ "$REPLACE_BETA" != true ] || [ "$PREVIEW" != true ] || [[ "$RELEASE_TAG" != *-beta.* ]]; then
+              echo 'Replacing a published release requires explicit beta replacement; regular releases are protected'
+              exit 1
+            fi
+            gh release edit "$RELEASE_TAG" --draft=true --prerelease --latest=false
           elif [ "$DRAFT" != true ]; then
             gh release create "$RELEASE_TAG" --verify-tag --prerelease --draft --title "Spelunkr Desktop ${RELEASE_TAG#v}" --notes-file "docs/releases/${RELEASE_TAG#v}.md"
           fi
-          gh release upload "$RELEASE_TAG" release/linux/*.deb release/linux/*.rpm release/linux/*.pkg.tar.* release/linux/SHA256SUMS-Linux.txt release/windows/*-Setup.exe release/windows/SHA256SUMS.txt release/mac-*/*.dmg release/mac-*/*.zip release/mac-*/SHA256SUMS-Mac-*.txt
-          gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false
+          UPLOAD_OPTIONS=()
+          if [ "$REPLACE_BETA" = true ] && [[ "$RELEASE_TAG" = *-beta.* ]]; then UPLOAD_OPTIONS+=(--clobber); fi
+          gh release upload "$RELEASE_TAG" "${UPLOAD_OPTIONS[@]}" release/linux/*.deb release/linux/*.rpm release/linux/*.pkg.tar.* release/linux/SHA256SUMS-Linux.txt release/windows/*-Setup.exe release/windows/SHA256SUMS.txt release/mac-*/*.dmg release/mac-*/*.zip release/mac-*/SHA256SUMS-Mac-*.txt
+          gh release edit "$RELEASE_TAG" --notes-file "docs/releases/${RELEASE_TAG#v}.md" --draft=false --prerelease --latest=false
