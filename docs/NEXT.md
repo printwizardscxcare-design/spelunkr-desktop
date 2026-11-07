@@ -9,10 +9,6 @@ Reported November 7, 2026, on the audio update to 0.8.0-beta.1. These are open r
 - [ ] **Audio popping during loading and pauses.** Audible pops occur during loading or pauses. Check loading/buffering, channel changes, pause, and resume; transitions should be quiet without clicks or pops.
 - [ ] **Normalization makes normal volume too quiet.** With normalization enabled, ordinary program audio becomes too quiet. Revisit the level target and gain behavior so normal listening stays comfortably audible while loud commercials and channel differences are controlled.
 
-## Optional usage statistics
-
-**Settings → Usage statistics** offers opt-in active-installation counts and approximate countries through PostHog. A country-only ingestion rule and IP discard are configured; no viewing history, audio, or captions are sent. Declining is remembered. See [usage statistics](USAGE-STATS.md) for data, dashboard definitions, and build configuration.
-
 ## Audio
 
 **Audio → Audio settings** adds normalization, a spectral denoiser slider, paired or independent compression/makeup gain, **Pre EQ / Post EQ** placement, and a ten-band EQ. A memory bank includes six classic presets and up to 32 user presets. All current settings and presets persist atomically. A master bypass restores the direct sound.
