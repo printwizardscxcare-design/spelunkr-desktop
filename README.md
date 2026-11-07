@@ -58,7 +58,7 @@ Press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac, or choose
 
 Whisper generates English captions on your computer using models included in the download. There's no speech account or subscription to set up. Captions listen to speaker output, which can include other apps; they don't select a microphone or save audio or transcripts.
 
-Under **Captions**, choose the text color and size. Choose **Recognition speed → Faster** on an older computer, or leave it on Balanced for the larger model. These choices are saved. Fullscreen captions adjust to the screen, and larger text fits fewer words in each block.
+Under **Captions**, choose the text color and size. Faster recognition is the default for shorter delays. Choose **Recognition speed → Balanced** for the larger model if your computer can keep up. These choices are saved. Fullscreen captions adjust to the screen, and larger text fits fewer words in each block.
 
 Speech detection keeps captions from clearing between recognition batches while dialogue continues. Text appears in short subtitle blocks and clears after pauses, with time to read. Recognition has a delay and can make mistakes. If you change your audio output, turn captions off and on to reconnect.
 

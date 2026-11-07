@@ -72,7 +72,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     let captionColor = 'white';
     let captionSize = 1;
     let captionEngine = 'whisper';
-    let captionSpeed = 'balanced';
+    let captionSpeed = 'fast';
     const saveCaptionPreferences = () => {
       try { fs.writeFileSync(captionPreferences, JSON.stringify({color: captionColor, size: captionSize, engine: captionEngine, speed: captionSpeed})); } catch {}
     };
@@ -80,7 +80,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     try {
       const savedCaptions = JSON.parse(fs.readFileSync(captionPreferences, 'utf8'));
       if (process.platform === 'win32' && savedCaptions.engine === 'windows') captionEngine = 'windows';
-      if (savedCaptions.speed === 'fast') captionSpeed = 'fast';
+      if (savedCaptions.speed === 'balanced') captionSpeed = 'balanced';
       if (savedCaptions.color === 'yellow') captionColor = 'yellow';
       if (captionSizes.includes(savedCaptions.size)) captionSize = savedCaptions.size;
     } catch {}
