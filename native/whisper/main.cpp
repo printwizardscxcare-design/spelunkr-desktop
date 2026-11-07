@@ -1,4 +1,5 @@
 #include "whisper.h"
+#include "ggml-backend.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -266,8 +267,10 @@ int main(int argc, char **argv) {
         }
         if (model!="base.en" && model!="tiny.en") throw std::runtime_error("Unknown speech model");
         whisper_log_set([](ggml_log_level, const char *, void *) {}, nullptr);
+        const auto root = executable_dir(argv[0]);
+        ggml_backend_load_all_from_path(root.u8string().c_str());
         emit("status", "Loading local Whisper model...");
-        Recognizer recognizer(executable_dir(argv[0]), model);
+        Recognizer recognizer(root, model);
         if (!wav.empty()) {
             auto audio=read_wav(fs::u8path(wav)); auto start=std::chrono::steady_clock::now();
             recognizer.append(recognizer.decode(audio));

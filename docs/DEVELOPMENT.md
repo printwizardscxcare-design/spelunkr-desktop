@@ -22,7 +22,7 @@ npm run dist:mac -- --arm64 --publish never
 
 Installers go in `dist/`. For development, run `npm run build:captions` once, then `npm start`. `npm run pack` makes an unpacked Windows app. Packaging always rebuilds the native C++ helper. The generated preload embeds the local caption pagination module so it can run in Electron's renderer sandbox.
 
-The build uses static C++ libraries and disables CPU instructions that would rule out older x64 computers. It does not require Python, a CUDA driver, or a speech-service account on the user's computer. Apple Silicon uses its native ARM CPU implementation. Balanced recognition uses quantized `base.en`; Faster uses quantized `tiny.en`. Both model files are bundled.
+The x64 build ships CPU-specific processing libraries and selects a compatible optimized kernel at runtime, with a baseline fallback. Apple Silicon uses a static native CPU build. It does not require Python, a CUDA driver, or a speech-service account on the user's computer. Apple Silicon uses its native ARM CPU implementation. Balanced recognition uses quantized `base.en`; Faster uses quantized `tiny.en`. Both model files are bundled.
 
 ## Audio and recognition
 
