@@ -2,8 +2,8 @@
 
 function snapshot(raw) {
   const text = String(raw || '').replace(/\s+/g, ' ').trim();
-  const words = [...text.matchAll(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu)]
-    .map(match => ({ key: match[0].toLowerCase(), start: match.index }));
+  const words = [...text.matchAll(/\S+/gu)].filter(match => /[\p{L}\p{N}]/u.test(match[0]))
+    .map(match => ({ key: match[0].toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''), start: match.index }));
   return { text, words };
 }
 
@@ -32,31 +32,38 @@ function compareWords(previous, current) {
 
 class CaptionCues {
   constructor({ onText, now = Date.now, schedule = setTimeout, cancel = clearTimeout,
-    pauseMs = 1500 } = {}) {
+    pauseMs = 1500, ignoreInitialSnapshot = false } = {}) {
     this.onText = onText || (() => {});
     this.now = now;
     this.schedule = schedule;
     this.cancel = cancel;
     this.pauseMs = pauseMs;
+    this.ignoreInitialSnapshot = ignoreInitialSnapshot;
     this.previous = null;
     this.boundary = 0;
     this.visible = false;
     this.text = '';
     this.timer = null;
+    this.cueId = 0;
+    this.wordOffset = 0;
+    this.lastMetadata = '';
   }
 
-  publish(text) {
-    if (text === this.text) return;
+  publish(text, clearReason = '') {
+    const metadata = { cueId: this.cueId, wordOffset: this.wordOffset, clearReason };
+    const key = JSON.stringify(metadata);
+    if (text === this.text && key === this.lastMetadata) return;
     this.text = text;
-    this.onText(text);
+    this.lastMetadata = key;
+    this.onText(text, metadata);
   }
 
-  clear({ keepSnapshot = true } = {}) {
+  clear({ keepSnapshot = true, reason = 'reset' } = {}) {
     if (this.timer !== null) this.cancel(this.timer);
     this.timer = null;
     this.visible = false;
     if (!keepSnapshot) this.previous = null;
-    this.publish('');
+    this.publish('', reason);
   }
 
   update(raw) {
@@ -64,27 +71,27 @@ class CaptionCues {
     const before = this.previous;
     const change = before ? compareWords(before.words, next.words) : { fresh: next.words.length > 0, firstNew: 0, dropped: 0 };
     this.previous = next;
+    // An already-running Windows caption window can contain earlier dialogue.
+    // Establish its baseline and begin with the next newly recognized words.
+    if (!before && this.ignoreInitialSnapshot) return;
     if (!next.words.length) { this.clear(); return; }
     const time = this.now();
     if (!this.visible) {
       // Punctuation/case corrections and repeated snapshots must not resurrect old captions.
       if (!change.fresh) return;
       this.visible = true;
+      this.cueId++;
+      this.wordOffset = 0;
       this.boundary = change.firstNew;
       this.startedAt = time;
     } else {
+      this.wordOffset += Math.max(0, change.dropped - this.boundary);
       this.boundary = Math.max(0, this.boundary - change.dropped);
-      if (change.replaced) { this.boundary = 0; this.startedAt = time; }
+      if (change.replaced) { this.boundary = 0; this.startedAt = time; this.cueId++; this.wordOffset = 0; }
     }
     if (change.fresh) this.lastWordAt = time;
     const start = next.words[Math.min(this.boundary, next.words.length - 1)].start;
-    let text = next.text.slice(start);
-    // Keep enough text for wide fullscreen views while bounding local display work.
-    if (text.length > 360) {
-      text = text.slice(-360);
-      const word = text.indexOf(' ');
-      if (word >= 0 && word < 30) text = text.slice(word + 1);
-    }
+    const text = next.text.slice(start);
     this.publish(text);
     if (this.timer !== null) this.cancel(this.timer);
     // Prepared subtitles often linger briefly after speech. Live Windows text has no
@@ -92,7 +99,7 @@ class CaptionCues {
     // reading window for text arriving in a batch. Corrections do not restart the clock.
     const readingMs = Math.max(833, Math.min(4000, Math.min(text.length, 120) / 20 * 1000));
     const deadline = Math.max(this.lastWordAt + this.pauseMs, this.startedAt + readingMs);
-    this.timer = this.schedule(() => this.clear(), Math.max(0, deadline - time));
+    this.timer = this.schedule(() => this.clear({ reason: 'pause' }), Math.max(0, deadline - time));
   }
 }
 

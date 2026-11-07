@@ -1,6 +1,7 @@
 node_modules/
 dist/
 native/bin/
+src/preload.generated.cjs
 *.log
 .test-profile/
 .smoke-profile/

@@ -111,3 +111,33 @@ test('clearing for a channel switch cancels pending timing and retains the consu
   h.advance(10000);
   assert.equal(h.cues.text, '');
 });
+test('cue metadata tracks rolling word offsets and distinguishes a pause from a reset', () => {
+  let time = 0;
+  let timeout;
+  const output = [];
+  const cues = new CaptionCues({ now: () => time, onText: (text, metadata) => output.push({ text, ...metadata }),
+    schedule: fn => { timeout = fn; return 1; }, cancel() {} });
+  cues.update('A twenty-one year old story continues');
+  const id = output.at(-1).cueId;
+  cues.update('year old story continues today');
+  assert.equal(output.at(-1).cueId, id);
+  assert.equal(output.at(-1).wordOffset, 2);
+  time = 10000;
+  timeout();
+  assert.equal(output.at(-1).clearReason, 'pause');
+  cues.clear();
+  assert.equal(output.at(-1).clearReason, 'reset');
+  cues.update('year old story continues today with more words');
+  assert.ok(output.at(-1).cueId > id);
+  assert.equal(output.at(-1).text, 'with more words');
+});
+test('enabling captions on an existing Windows transcript starts with new speech', () => {
+  const output = [];
+  const cues = new CaptionCues({ ignoreInitialSnapshot: true, onText: text => output.push(text),
+    schedule: () => 1, cancel() {} });
+  cues.update('Earlier words from the Windows caption window.');
+  assert.equal(cues.text, '');
+  cues.update('Earlier words from the Windows caption window. Current dialogue starts here.');
+  assert.equal(cues.text, 'Current dialogue starts here.');
+  cues.clear({ keepSnapshot: false });
+});

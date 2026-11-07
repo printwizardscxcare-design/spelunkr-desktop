@@ -3,6 +3,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
+const { CaptionPages } = require('../src/caption-pages.cjs');
 const source = fs.readFileSync(require.resolve('../src/preload.cjs'), 'utf8');
 
 function setup({ width = 1920, height = 1080 } = {}) {
@@ -14,6 +15,7 @@ function setup({ width = 1920, height = 1080 } = {}) {
     appendChild(child) { child.parentNode = this; this.children.push(child); return child; }
     append(...children) { children.forEach(child => this.appendChild(child)); }
     attachShadow() { this.shadow = new Element('shadow'); return this.shadow; }
+    getContext() { return { font: '', measureText(text) { return { width: text.length * Number(this.font.match(/([\d.]+)px/)[1]) * .56 }; } }; }
   }
   const root = new Element('html');
   const stage = new Element('div');
@@ -22,6 +24,7 @@ function setup({ width = 1920, height = 1080 } = {}) {
   const document = { documentElement: root, fullscreenElement: null, addEventListener: (name, fn) => events.set(name, fn), querySelector: () => video, querySelectorAll: () => [], createElement: tag => new Element(tag) };
   vm.runInNewContext(source, {
     require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn) } }),
+    CaptionPages,
     location: { origin: 'https://spelunkr.tv' }, process: { isMainFrame: true }, document,
     window: { addEventListener() {} }, innerHeight: height, innerWidth: width, setInterval() {}, setTimeout() {}, clearTimeout() {}
   });
@@ -68,11 +71,13 @@ test('viewer-selected size changes text size and reflows without losing transpar
   h.send({ ...incoming, size: 0.8 });
   assert.equal(line.style.fontSize, '20.8px');
 });
-test('long rolling transcripts stay short enough for a subtitle overlay', () => {
+test('long transcripts begin on the first subtitle card instead of showing only the tail', () => {
   const h = setup();
   h.send({ enabled: true, color: 'white', text: 'This sentence repeats. '.repeat(40) });
   const line = h.elements.find(e => e.tag === 'span');
   assert.ok(line.textContent.length <= 120);
+  assert.ok(line.textContent.startsWith('This sentence repeats.'));
+  assert.ok(line.textContent.split('\n').length <= 2);
   assert.equal(line.style.fontSize, '26px');
 });
 test('caption overlay follows the video into HTML fullscreen', () => {

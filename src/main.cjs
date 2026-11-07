@@ -44,7 +44,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       show: false,
       webPreferences: {
         partition: 'persist:spelunkr',
-        preload: path.join(__dirname, 'preload.cjs'),
+        preload: path.join(__dirname, 'preload.generated.cjs'),
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: true,
@@ -78,14 +78,16 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     } catch {}
     let overlayEnabled = false;
     let captionText = '';
+    let captionMetadata = { cueId: 0, wordOffset: 0, clearReason: 'reset' };
     let captionStatus = 'Off';
     const sendCaptions = () => {
       if (win && !win.isDestroyed()) contents.send('desktop:captions', {
         enabled: overlayEnabled && isSite(contents.getURL()), color: captionColor, size: captionSize,
-        text: isSite(contents.getURL()) ? captionText : ''
+        text: isSite(contents.getURL()) ? captionText : '', ...captionMetadata
       });
     };
-    const cues = new CaptionCues({ onText: text => { captionText = text; sendCaptions(); } });
+    const cues = new CaptionCues({ ignoreInitialSnapshot: true,
+      onText: (text, metadata) => { captionText = text; captionMetadata = metadata; sendCaptions(); } });
     const updateCaptionMenu = () => {
       const menu = Menu.getApplicationMenu();
       if (!menu) return;
