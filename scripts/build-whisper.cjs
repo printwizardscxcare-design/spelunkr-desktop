@@ -32,6 +32,13 @@ function checkout(repo, sha, destination) {
 }
 async function build() {
   fs.mkdirSync(output, { recursive: true });
+  const ffmpeg = require('ffmpeg-static');
+  if (!ffmpeg || !fs.existsSync(ffmpeg)) run(process.execPath,[require.resolve('ffmpeg-static/install.js')]);
+  const ffmpegName = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+  fs.copyFileSync(ffmpeg,path.join(output,ffmpegName));
+  if (process.platform !== 'win32') fs.chmodSync(path.join(output,ffmpegName),0o755);
+  fs.copyFileSync(ffmpeg + '.LICENSE',path.join(output,'LICENSE-FFMPEG.txt'));
+  fs.copyFileSync(ffmpeg + '.README',path.join(output,'SOURCE-FFMPEG.txt'));
   const source = path.join(bin, 'whisper-src');
   // Fetch a reviewed source revision, never an unpinned moving branch.
   if (!fs.existsSync(path.join(source, '.git'))) {

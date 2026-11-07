@@ -11,6 +11,7 @@ const { CaptionTiming } = require('./caption-timing.cjs');
 const { captionOptions } = require('./caption-options.cjs');
 const { createControlManager } = require('./control-manager.cjs');
 const { toggleVideoFullscreen } = require('./video-fullscreen.cjs');
+const {createCaptionBufferManager} = require('./caption-buffer-manager.cjs');
 
 app.setName('Spelunkr Desktop');
 app.enableSandbox();
@@ -142,6 +143,14 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     };
     let transition = Promise.resolve();
     let revision = 0;
+    const buffered = createCaptionBufferManager({win,ipcMain,nativeRoot,platform:process.platform,
+      onStatus: status => {if (overlayEnabled && captionEngine === 'whisper') {captionStatus = status;updateCaptionMenu();}},
+      onFailure: async message => {
+        if (!overlayEnabled || captionEngine !== 'whisper') return;
+        await setOverlayEnabled(false);
+        if (win && !win.isDestroyed()) dialog.showMessageBox(win,{type:'info',title:'Buffered subtitles',message,
+          detail:'Subtitles read the channel audio ahead of playback and stay in memory. Try reloading the channel or choosing Faster recognition.'});
+      }});
     const setOverlayEnabled = enabled => {
       const request = ++revision;
       const rewindOnEnable = enabled && !overlayEnabled;
@@ -150,10 +159,13 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       cues.clear({ keepSnapshot: false });
       cues.setSpeechActive(captionEngine === 'whisper' ? false : null);
       captionStatus = enabled ? playbackPaused ? 'Paused' : 'Starting captions…' : 'Off';
+      buffered.set({enabled:enabled && captionEngine === 'whisper',speed:captionSpeed,delayMs:captionDelayMs,
+        rewind:rewindOnEnable,restart:enabled && captionEngine === 'whisper'});
       updateCaptionMenu(); sendCaptions();
       transition = transition.then(async () => {
         await captions.stop();
         if (request !== revision || !overlayEnabled) return;
+        if (captionEngine === 'whisper') return;
         if (rewindOnEnable && isSite(contents.getURL())) contents.send('desktop:caption-rewind');
         if (playbackPaused) return;
         cues.ignoreInitialSnapshot = captionEngine === 'windows';
@@ -186,6 +198,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     const setCaptionDelay = milliseconds => {
       captionDelayMs = Math.max(0, Math.min(10000, Math.round(milliseconds / 100) * 100));
       timing.setDelay(captionDelayMs);
+      buffered.set({delayMs:captionDelayMs,rewind:false,restart:false});
       saveCaptionPreferences();
       updateCaptionMenu();
     };
@@ -201,7 +214,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     });
     contents.on('did-finish-load', sendCaptions);
     contents.on('did-navigate-in-page', () => {
-      if (overlayEnabled && captionEngine === 'whisper') setOverlayEnabled(true);
+      if (overlayEnabled && captionEngine === 'whisper') return; // The renderer resets when the actual video source changes.
       else { cues.clear(); sendCaptions(); }
     });
     win.on('closed', () => {
@@ -285,6 +298,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     };
     const controls = createControlManager({win, BrowserWindow, ipcMain, profileDir: app.getPath('userData'),
       platform: process.platform, actions: nativeControls, io: fs, onPlayback: state => {
+        if (captionEngine === 'whisper') return; // Buffered subtitles follow media time, not speaker-capture restarts.
         if (state === 'playing') {
           const wasPaused = playbackPaused;playbackPaused = false;
           if (wasPaused && overlayEnabled) setOverlayEnabled(true);

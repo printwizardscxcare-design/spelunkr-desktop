@@ -8,10 +8,10 @@ Open **Apple menu → About This Mac** and look for the chip or processor:
 
 | About This Mac says | Download |
 | --- | --- |
-| Apple M1, M2, M3, M4, or another Apple M-series chip | [Apple Silicon installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Mac-arm64.dmg) |
-| Intel processor | [Intel installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Mac-x64.dmg) |
+| Apple M1, M2, M3, M4, or another Apple M-series chip | [Apple Silicon installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-arm64.dmg) |
+| Intel processor | [Intel installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-x64.dmg) |
 
-Both builds run natively. The Apple Silicon version doesn't need Rosetta. The [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) also has ZIP copies of the apps and checksums for each architecture.
+Both builds run natively. The Apple Silicon version doesn't need Rosetta. The [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0) also has ZIP copies of the apps and checksums for each architecture.
 
 ## Install and open
 

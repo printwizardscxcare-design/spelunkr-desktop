@@ -6,20 +6,22 @@ An unofficial desktop app for [spelunkr.tv](https://spelunkr.tv/). Pick a channe
 
 The channels and shows come from the live website. The app gives them their own window and adds English captions that run on your computer.
 
-**[Download the Windows installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Windows-x64-Setup.exe)** · **[All downloads](#download)** · **[Help with captions](docs/CAPTIONS.md)** · **[Report a problem](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues)**
+**[Download the Windows installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe)** · **[All downloads](#download)** · **[Help with captions](docs/CAPTIONS.md)** · **[Report a problem](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues)**
 
 ## Download
 
-The current download is **[0.7.0, a preview](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0)**. You don't need a GitHub account to download it. Watching needs an internet connection.
+**0.7.0 is not released yet. Caption read-ahead buffering is being corrected before publication.**
+
+The current download is **[0.6.0, a preview](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0)**. You don't need a GitHub account to download it. Watching needs an internet connection.
 
 | Your computer | Download | Setup guide |
 | --- | --- | --- |
-| Windows 10 or 11 · Intel/AMD 64-bit | [Windows installer (.exe)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Windows-x64-Setup.exe) | [Windows](docs/WINDOWS.md) |
-| Mac · Apple M-series chip · macOS 14.2+ | [Apple Silicon (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Mac-arm64.dmg) | [Mac](docs/MAC.md) |
-| Mac · Intel processor · macOS 14.2+ | [Intel Mac (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Mac-x64.dmg) | [Mac](docs/MAC.md) |
-| Debian 12+ · Intel/AMD 64-bit | [Debian (.deb)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Debian-amd64.deb) | [Debian](docs/LINUX.md#debian) |
-| Arch Linux · Intel/AMD 64-bit | [Arch (.pkg.tar.xz)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz) | [Arch](docs/LINUX.md#arch-linux) |
-| Fedora Workstation 43+ · Intel/AMD 64-bit | [Fedora (.rpm)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Fedora-x86_64.rpm) | [Fedora](docs/LINUX.md#fedora) |
+| Windows 10 or 11 · Intel/AMD 64-bit | [Windows installer (.exe)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe) | [Windows](docs/WINDOWS.md) |
+| Mac · Apple M-series chip · macOS 14.2+ | [Apple Silicon (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-arm64.dmg) | [Mac](docs/MAC.md) |
+| Mac · Intel processor · macOS 14.2+ | [Intel Mac (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-x64.dmg) | [Mac](docs/MAC.md) |
+| Debian 12+ · Intel/AMD 64-bit | [Debian (.deb)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Debian-amd64.deb) | [Debian](docs/LINUX.md#debian) |
+| Arch Linux · Intel/AMD 64-bit | [Arch (.pkg.tar.xz)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz) | [Arch](docs/LINUX.md#arch-linux) |
+| Fedora Workstation 43+ · Intel/AMD 64-bit | [Fedora (.rpm)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm) | [Fedora](docs/LINUX.md#fedora) |
 
 Not sure which Mac download to choose? Open **Apple menu → About This Mac**. “Chip” followed by an Apple M-series name means Apple Silicon; “Processor” followed by Intel means Intel.
 
@@ -33,19 +35,19 @@ Not sure which Mac download to choose? Open **Apple menu → About This Mac**. �
 
 ```sh
 # Debian
-sudo apt install ./Spelunkr-Desktop-0.7.0-Debian-amd64.deb
+sudo apt install ./Spelunkr-Desktop-0.6.0-Debian-amd64.deb
 
 # Arch — update your system first
 sudo pacman -Syu
-sudo pacman -U ./Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz
+sudo pacman -U ./Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz
 
 # Fedora
-sudo dnf install ./Spelunkr-Desktop-0.7.0-Fedora-x86_64.rpm
+sudo dnf install ./Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm
 ```
 
 Then open **Spelunkr Desktop** from your applications menu. Linux captions need PulseAudio or PipeWire with PulseAudio compatibility; the [Linux guide](docs/LINUX.md#sound-setup) covers sound setup.
 
-Use the installer for your computer, rather than GitHub's **Source code** ZIP. Windows installers are unsigned, and Mac builds aren't notarized by Apple, so first-launch prompts are possible. See the setup guide for your platform. File checksums are on the [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0).
+Use the installer for your computer, rather than GitHub's **Source code** ZIP. Windows installers are unsigned, and Mac builds aren't notarized by Apple, so first-launch prompts are possible. See the setup guide for your platform. File checksums are on the [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).
 
 ## Turn on captions
 
@@ -64,9 +66,9 @@ Generated captions can lag behind speech or get words wrong. **Mac live speaker 
 
 The [caption guide](docs/CAPTIONS.md) covers settings and troubleshooting, including subtitle delay and pause handling.
 
-## New in 0.7.0
+## Coming in 0.7.0
 
-This release adds:
+These changes are being tested before release:
 
 - **Up/Down for channels, Left/Right for volume**, in both windowed and fullscreen views.
 - **Custom keyboard and controller controls.** Open Settings → Controls, click Assign beside an action, press your key or controller input, then Save when you're done. The menu uses the site's fonts, colors, and buttons.

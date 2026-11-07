@@ -21,6 +21,7 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
     let exitFullscreen;
     let line;
     let measureContext;
+    let bufferedCaptions;
     const pages = new CaptionPages({ now: () => performance.now() });
     let state = { enabled: false, color: 'white', size: 1, text: '' };
     const place = () => {
@@ -48,7 +49,9 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
         const width = fullscreen ? innerWidth : rectangle?.width || 900;
         const fontSize = (fullscreen ? Math.max(24, Math.min(80, innerHeight * .04)) : Math.max(20, Math.min(42, width * .026))) * state.size;
         measureContext.font = `600 ${fontSize}px "Segoe UI",sans-serif`;
-        const page = pages.render(Math.max(1, width * (fullscreen ? .9 : .86) - 4), text => measureContext.measureText(text).width);
+        const availableWidth = Math.max(1, width * (fullscreen ? .9 : .86) - 4);
+        const measure = text => measureContext.measureText(text).width;
+        const page = bufferedCaptions?.render(availableWidth,measure) || pages.render(availableWidth,measure);
         line.style.fontSize = `${fontSize * page.scale}px`;
         line.style.maxWidth = fullscreen ? '90%' : '86%';
         line.textContent = page.text;
@@ -81,6 +84,7 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
       place();
     });
     document.addEventListener('DOMContentLoaded', ensureOverlay);
+    bufferedCaptions = installCaptionBuffer({ipcRenderer,document,window,cache:new CaptionCache(),onChange:() => {ensureOverlay();place();}});
     document.addEventListener('fullscreenchange', place);
     window.addEventListener('resize', place);
     window.addEventListener('scroll', place, true);
