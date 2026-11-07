@@ -1,6 +1,6 @@
 # Spelunkr Desktop
 
-I really just wanted ok subtitles, and something separate from my browser. Here you go:
+I really just wanted ok subtitles, and something separate from my browser, but then I kept adding stuff. Here you go:
 
 An unofficial desktop app for [spelunkr.tv](https://spelunkr.tv/). Pick a channel, put the video fullscreen, and turn on captions when you need them.
 
