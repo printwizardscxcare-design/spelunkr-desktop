@@ -21,7 +21,8 @@ subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "
 shutil.copytree(root / "native/bin/frozen/caption-reader", output, dirs_exist_ok=True)
 archive = root / "native/bin/vosk-model-small-en-us-0.15.zip"
 urllib.request.urlretrieve("https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip", archive)
-print("Model SHA256:", hashlib.sha256(archive.read_bytes()).hexdigest())
+if hashlib.sha256(archive.read_bytes()).hexdigest() != "30f26242c4eb449f948e42cb302dd7a686cb29a3423a8367f99ff41780942498":
+    raise ValueError("Speech model download failed its SHA-256 verification")
 with zipfile.ZipFile(archive) as bundle:
     for item in bundle.infolist():
         parts = Path(item.filename).parts

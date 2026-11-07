@@ -6,11 +6,11 @@ The repository is private, so you need a GitHub account with access.
 
 ## Debian
 
-For Debian 12 or newer, download `Spelunkr-Desktop-0.5.0-Debian-x64.deb`, open a
+For Debian 12 or newer, download `Spelunkr-Desktop-0.5.0-Debian-amd64.deb`, open a
 terminal in your Downloads folder, and run:
 
 ```sh
-sudo apt install ./Spelunkr-Desktop-0.5.0-Debian-x64.deb
+sudo apt install ./Spelunkr-Desktop-0.5.0-Debian-amd64.deb
 ```
 
 ## Arch Linux
@@ -27,11 +27,11 @@ app's dependencies from Arch's repositories.
 
 ## Fedora
 
-For Fedora Workstation 43 or newer, download `Spelunkr-Desktop-0.5.0-Fedora-x64.rpm`
+For Fedora Workstation 43 or newer, download `Spelunkr-Desktop-0.5.0-Fedora-x86_64.rpm`
 and run:
 
 ```sh
-sudo dnf install ./Spelunkr-Desktop-0.5.0-Fedora-x64.rpm
+sudo dnf install ./Spelunkr-Desktop-0.5.0-Fedora-x86_64.rpm
 ```
 
 On all three, open **Spelunkr Desktop** from your applications menu. These commands

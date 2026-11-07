@@ -100,7 +100,8 @@
           "from": "native/bin/linux",
           "to": "native/linux"
         }
-      ]
+      ],
+      "syncDesktopName": true
     },
     "deb": {
       "depends": [
@@ -151,5 +152,6 @@
       "artifactName": "Spelunkr-Desktop-${version}-Arch-${arch}.pkg.tar.xz"
     }
   },
-  "homepage": "https://github.com/printwizardscxcare-design/spelunkr-desktop"
+  "homepage": "https://github.com/printwizardscxcare-design/spelunkr-desktop",
+  "desktopName": "spelunkr-desktop.desktop"
 }
