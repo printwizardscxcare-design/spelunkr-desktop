@@ -41,7 +41,7 @@ jobs:
           let rechecked=false;
           if(process.env.LINUX_CHECK_RUN){
             const check=getRun(process.env.LINUX_CHECK_RUN);
-            if(check.conclusion!=='success'||check.name!=='Linux installers'||check.path!=='.github/workflows/linux.yml'||check.head_branch!=='main'||check.event!=='workflow_dispatch'||check.head_repository.full_name!==repo||check.display_title!==`Linux checks for build ${process.env.LINUX_RUN}`) throw Error('Linux recheck must pass against exactly this installer artifact');
+            if(check.conclusion!=='success'||check.name!==`Linux checks for build ${process.env.LINUX_RUN}`||check.path!=='.github/workflows/linux.yml'||check.head_branch!=='main'||check.event!=='workflow_dispatch'||check.head_repository.full_name!==repo||check.display_title!==`Linux checks for build ${process.env.LINUX_RUN}`) throw Error('Linux recheck must pass against exactly this installer artifact');
             rechecked=true;
           }
           const runs=[['LINUX_RUN','Linux installers'],['WINDOWS_RUN','Windows installer'],['MAC_RUN','Mac installers']].map(([key,name])=>{
