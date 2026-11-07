@@ -11,6 +11,9 @@ on:
       mac-run:
         description: Successful Mac installers run ID (Intel and Apple Silicon, same source)
         required: true
+      linux-check-run:
+        description: Optional successful Linux recheck run for exactly the selected Linux build
+        required: false
 permissions:
   actions: read
   contents: write
@@ -22,6 +25,7 @@ jobs:
       LINUX_RUN: ${{ inputs.linux-run }}
       WINDOWS_RUN: ${{ inputs.windows-run }}
       MAC_RUN: ${{ inputs.mac-run }}
+      LINUX_CHECK_RUN: ${{ inputs.linux-check-run }}
     steps:
       - uses: actions/checkout@v7
       - name: Verify both builds passed and use the same source
@@ -30,11 +34,20 @@ jobs:
           const {execFileSync}=require('node:child_process');
           const fs=require('node:fs');
           const repo=process.env.GITHUB_REPOSITORY;
+          const getRun=id=>{
+            if(!/^\d+$/.test(id||'')) throw Error('Invalid run ID');
+            return JSON.parse(execFileSync('gh',['api',`repos/${repo}/actions/runs/${id}`],{encoding:'utf8'}));
+          };
+          let rechecked=false;
+          if(process.env.LINUX_CHECK_RUN){
+            const check=getRun(process.env.LINUX_CHECK_RUN);
+            if(check.conclusion!=='success'||check.name!=='Linux installers'||check.path!=='.github/workflows/linux.yml'||check.head_branch!=='main'||check.event!=='workflow_dispatch'||check.head_repository.full_name!==repo||check.display_title!==`Linux checks for build ${process.env.LINUX_RUN}`) throw Error('Linux recheck must pass against exactly this installer artifact');
+            rechecked=true;
+          }
           const runs=[['LINUX_RUN','Linux installers'],['WINDOWS_RUN','Windows installer'],['MAC_RUN','Mac installers']].map(([key,name])=>{
             const id=process.env[key];
-            if(!/^\d+$/.test(id)) throw Error('Invalid run ID');
-            const run=JSON.parse(execFileSync('gh',['api',`repos/${repo}/actions/runs/${id}`],{encoding:'utf8'}));
-            if(run.conclusion!=='success'||run.name!==name||run.head_repository.full_name!==repo) throw Error('Build has not passed: '+name);
+            const run=getRun(id);
+            if((run.conclusion!=='success'&&!(key==='LINUX_RUN'&&rechecked))||run.name!==name||run.head_repository.full_name!==repo) throw Error('Build has not passed: '+name);
             return run;
           });
           if(runs.some(run=>run.head_sha!==runs[0].head_sha)) throw Error('Installers must use the same source commit');
