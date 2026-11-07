@@ -99,4 +99,4 @@ jobs:
             gh release create "$RELEASE_TAG" --verify-tag --prerelease --draft --title "Spelunkr Desktop ${RELEASE_TAG#v}" --notes-file "docs/releases/${RELEASE_TAG#v}.md"
           fi
           gh release upload "$RELEASE_TAG" release/linux/*.deb release/linux/*.rpm release/linux/*.pkg.tar.* release/linux/SHA256SUMS-Linux.txt release/windows/*-Setup.exe release/windows/SHA256SUMS.txt release/mac-*/*.dmg release/mac-*/*.zip release/mac-*/SHA256SUMS-Mac-*.txt
-          gh release edit "$RELEASE_TAG" --draft=false
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false

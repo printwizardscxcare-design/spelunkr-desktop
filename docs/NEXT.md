@@ -1,6 +1,6 @@
-# Next version — not released
+# 0.8 beta
 
-Development builds use version 0.8.0-dev.1. The current public download is still 0.7.0. These changes are being kept on the `next-version` branch until a release is requested.
+The beta is being developed on the `next-version` branch. The first beta is **0.8.0-beta.1**. [0.7.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) remains the current regular download; the beta will stay separate until a regular release is requested.
 
 ## Subtitle cooldown
 

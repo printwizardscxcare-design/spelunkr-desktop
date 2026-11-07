@@ -43,7 +43,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       ...bounds,
       minWidth: 640,
       minHeight: 480,
-      title: 'Spelunkr Desktop — Unofficial',
+      title: /-beta\./.test(app.getVersion?.() || '') ? `Spelunkr Desktop — Beta ${app.getVersion()}` : 'Spelunkr Desktop — Unofficial',
       backgroundColor: '#1c0a57',
       icon: path.join(__dirname, '../assets/icon.png'),
       show: false,
