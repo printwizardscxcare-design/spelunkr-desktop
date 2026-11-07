@@ -9,16 +9,18 @@ import time
 
 helper, fixture = map(Path, sys.argv[1:])
 # Recognition of recorded speech checks the bundled library, model, and PCM format.
-result = subprocess.run([str(helper), "--test-wav", str(fixture)], capture_output=True, text=True, timeout=60)
+result = subprocess.run([str(helper), "--test-wav", str(fixture)], capture_output=True, text=True, timeout=180)
 assert result.returncode == 0, result.stdout + result.stderr
 events = [json.loads(line) for line in result.stdout.splitlines()]
 assert not any(event["type"] == "error" for event in events), result.stdout
-assert any(event["type"] == "caption" and "one" in event["text"] for event in events), result.stdout
+assert any(event["type"] == "caption" and ("one" in event["text"].lower() or "1" in event["text"]) for event in events), result.stdout
 
 subprocess.run(["pulseaudio", "--start", "--exit-idle-time=-1"], check=True)
 module = subprocess.check_output(["pactl", "load-module", "module-null-sink", "sink_name=spelunkr_test"], text=True).strip()
 subprocess.run(["pactl", "set-default-sink", "spelunkr_test"], check=True)
-child = subprocess.Popen([str(helper)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+capture = subprocess.Popen(['parec', '--device=@DEFAULT_MONITOR@', '--format=s16le', '--rate=16000', '--channels=1'], stdout=subprocess.PIPE)
+child = subprocess.Popen([str(helper), '--pcm', '--model', 'tiny.en'], stdin=capture.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+capture.stdout.close()
 lines = queue.Queue()
 def read_output():
     for line in child.stdout:
@@ -42,11 +44,15 @@ try:
             spoken = True
             break
     assert spoken, "No recognized speaker audio"
-    child.stdin.close()  # Parent EOF must release capture, with no orphan parec process.
+    capture.terminate()
+    capture.wait(timeout=5)  # Capture EOF must stop recognition cleanly.
     assert child.wait(timeout=5) == 0, child.stderr.read()
     assert subprocess.run(["pgrep", "-x", "parec"], stdout=subprocess.DEVNULL).returncode != 0
     print("PASS: bundled recognition, speaker monitor, parent-exit cleanup")
 finally:
+    if capture.poll() is None:
+        capture.terminate()
+        capture.wait(timeout=5)
     if child.poll() is None:
         child.terminate()
         child.wait(timeout=5)

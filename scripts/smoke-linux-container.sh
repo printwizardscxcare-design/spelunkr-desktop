@@ -18,7 +18,7 @@ useradd -m tester
 mkdir -p /tmp/runtime-tester
 chown tester:tester /tmp/runtime-tester
 chmod 700 /tmp/runtime-tester
-su tester -s /bin/bash -c 'export XDG_RUNTIME_DIR=/tmp/runtime-tester; python3 /source/scripts/smoke-linux-captions.py "/opt/Spelunkr Desktop/resources/native/linux/caption-reader" /artifacts/test.wav'
+su tester -s /bin/bash -c 'export XDG_RUNTIME_DIR=/tmp/runtime-tester; python3 /source/scripts/smoke-linux-captions.py "/opt/Spelunkr Desktop/resources/native/whisper/caption-reader" /artifacts/test.wav'
 # The containers run without a desktop login. Disable Chromium sandbox ONLY for
 # this isolated GUI smoke check; installed application launchers keep it enabled.
 su tester -s /bin/bash -c 'export XDG_RUNTIME_DIR=/tmp/runtime-tester; xvfb-run -a bash -c '\''"/opt/Spelunkr Desktop/spelunkr-desktop" --no-sandbox --ozone-platform=x11 > /tmp/spelunkr-startup.log 2>&1 & pid=$!; sleep 12; kill -0 "$pid"; kill "$pid"; wait "$pid" || true'\'''
