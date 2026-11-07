@@ -21,7 +21,7 @@ npm start
 
 `npm run pack` builds an unpacked app. `scripts/make-icon.ps1` regenerates the original app icon. Dependency versions are pinned in `package-lock.json`.
 
-The Windows installer workflow runs manually or on version-tag pushes. It uploads the installer and checksum as workflow artifacts. Release assets are attached separately.
+The Windows installer workflow runs manually or on version-tag pushes. It uploads the installer and checksum as workflow artifacts. The Publish tested installers workflow accepts successful Windows and Linux run IDs, checks that their source commits and versions match, verifies file checksums, and attaches the installers to a prerelease.
 
 ## Build on Linux
 
