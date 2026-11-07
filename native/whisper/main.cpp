@@ -211,12 +211,20 @@ static void capture_windows(Recognizer &recognizer) {
     check(client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 1000000, 0, mix, nullptr));
     const double samples_per_output=mix->nSamplesPerSec/16000.0;
     double weighted=0, weight=0;
+    auto last_packet=std::chrono::steady_clock::now(), last_silence=last_packet;
     check(client->GetService(IID_PPV_ARGS(&capture))); check(client->Start());
     emit("status", "Listening to speakers - local Whisper captions");
     try {
         while (running) {
             UINT32 frames=0; check(capture->GetNextPacketSize(&frames));
-            if (!frames) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); continue; }
+            if (!frames) {
+                auto now=std::chrono::steady_clock::now();
+                if (now-last_packet>=std::chrono::milliseconds(300) && now-last_silence>=std::chrono::milliseconds(32)) {
+                    float silence[512]{}; recognizer.feed(silence,512); last_silence=now;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(5)); continue;
+            }
+            last_packet=std::chrono::steady_clock::now();
             BYTE *data=nullptr; DWORD flags=0; check(capture->GetBuffer(&data, &frames, &flags, nullptr, nullptr));
             std::vector<float> audio;
             for (UINT32 i=0; i<frames; ++i) {

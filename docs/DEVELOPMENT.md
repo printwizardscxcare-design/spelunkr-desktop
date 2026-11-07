@@ -1,61 +1,60 @@
 # Working on Spelunkr Desktop
 
-## Build on Windows
+## Build requirements
 
-Install Node.js 24 or later, then run:
+All platforms need Node.js 24+, Git, CMake 3.21+, and a C++17 compiler. The build downloads pinned Whisper.cpp source and checksum-verified English base/tiny models plus Silero speech detection. Generated files stay under `native/bin/` and aren't committed.
 
-```powershell
-npm ci
-npm test
-npm run dist -- --publish never
-```
+Windows also needs Visual Studio C++ Build Tools and its Windows SDK. The optional Windows Live Captions reader uses Windows' .NET Framework C# compiler. Linux packages build on Ubuntu 22.04 with `g++`, `cmake`, `rpm`, and `libarchive-tools`. Use an older supported glibc build host for compatibility with newer distributions. Mac builds need Xcode command-line tools, Swift 5.9+, and a macOS 14.2+ SDK; use a native Intel or Apple Silicon runner for each architecture.
 
-The installer is written to `dist/`. Packaging compiles `native/CaptionReader.cs` with Windows' .NET Framework C# compiler and builds the sandboxed preload from the local caption-layout code. Generated files and installers aren't committed to Git.
-
-For a local development window:
-
-```powershell
-npm run build:captions
-npm start
-```
-
-`npm run pack` builds an unpacked app. `scripts/make-icon.ps1` regenerates the original app icon. Dependency versions are pinned in `package-lock.json`.
-
-The Windows installer workflow runs manually or on version-tag pushes. It uploads the installer and checksum as workflow artifacts. The Publish tested installers workflow accepts successful Windows and Linux run IDs, checks that their source commits and versions match, verifies file checksums, and attaches the installers to a prerelease.
-
-## Build on Linux
-
-Build on Ubuntu 22.04 or Debian 12 (x64) with Node.js 24, Python 3.10+, RPM tools, and the usual Electron build dependencies. Build the helper on an older supported glibc system so it also runs on newer distributions.
+## Commands
 
 ```sh
-python3 -m venv .caption-venv
-. .caption-venv/bin/activate
-python3 -m pip install -r scripts/linux-caption-requirements.txt
 npm ci
 npm test
+# Windows
+npm run dist -- --publish never
+# Debian, Arch, Fedora
 npm run dist:linux -- --publish never
+# Mac, on the matching architecture
+npm run dist:mac -- --x64 --publish never
+npm run dist:mac -- --arm64 --publish never
 ```
 
-This creates Debian, Fedora, and Arch packages in `dist/`. The Linux workflow builds on Ubuntu 22.04 and installs the packages in three distribution containers. The helper and versioned Vosk English model are bundled at build time; generated files stay under `native/bin/`. Delete that generated Linux directory before rebuilding the helper after a source change. For development, build captions once, then `npm start`.
+Installers go in `dist/`. For development, run `npm run build:captions` once, then `npm start`. `npm run pack` makes an unpacked Windows app. Packaging always rebuilds the native C++ helper. The generated preload embeds the local caption pagination module so it can run in Electron's renderer sandbox.
 
-## How captions work
+The build uses static C++ libraries and disables CPU instructions that would rule out older x64 computers. It does not require Python, a CUDA driver, or a speech-service account on the user's computer. Apple Silicon uses its native ARM CPU implementation. Balanced recognition uses quantized `base.en`; Faster uses quantized `tiny.en`. Both model files are bundled.
 
-On Windows, the native helper starts or attaches to Windows Live Captions, reads its accessible caption-text control, and minimizes its window once connected. It sends text to the main process through a local pipe. It restores an existing caption window when stopped, or closes one it started itself. Setup and microphone/privacy settings are left to the user.
+## Audio and recognition
 
-On Linux, a frozen Python helper uses the bundled Vosk English model and reads 16 kHz mono PCM from `parec` using the default speaker monitor. It uses the same local pipe protocol and caption renderer. Parent EOF and termination stop the capture process. It never falls back to a microphone.
+`native/whisper/main.cpp` loads Whisper and Silero VAD. Windows reads the default rendering endpoint with WASAPI loopback, downmixes the reported speaker format, and resamples it to mono 16 kHz. Linux's `parec` selects `@DEFAULT_MONITOR@`. Mac uses the pinned AudioTee CLI and Core Audio taps with `--sample-rate 16000`. Neither capture path selects a microphone.
 
-The main process follows new recognized words and infers a pause after 1.5 seconds without word activity. Case and punctuation changes don't restart that timer. Existing Windows transcript history is treated as a baseline when captions are enabled.
+The local bridge pipes PCM from the Linux/Mac capture process to the recognizer. It supplies silent PCM after capture callback gaps so the final phrase can finish. EOF, disabling captions, engine changes, and app shutdown stop both processes; forced cleanup is bounded. Windows handles idle speaker packets in the helper.
 
-The renderer measures text with the selected font and available width. It displays cards of up to two lines, carries overflow to the next card, and keeps unread words queued when recognition delivers a batch. Reading holds use about 20 characters per second, bounded between 0.833 and 4 seconds per card. Size changes reflow unconsumed words. Channel changes and turning captions off clear the queue.
+Speech detection uses continuous 512-sample frames. The pipeline keeps a short preroll, ends a phrase after about half a second of detected silence, and caps chunks at about 2.5 seconds with overlap. A bounded inference queue prevents unlimited latency growth. Falling behind produces a status message suggesting Faster mode. Whisper's output is appended to a bounded rolling snapshot, with overlap deduplication. No speech model runs in the website renderer and no audio or transcript is saved.
 
-This adapts the separate-cue pattern in [WebVTT's prepared-subtitle examples](https://www.w3.org/TR/webvtt1/#a-simple-caption-file) and the line/timing guidance in [Netflix's subtitle guide](https://partnerhelp.netflixstudios.com/hc/en-us/articles/217350977-English-USA-Timed-Text-Style-Guide). Windows provides text updates rather than speech timestamps, so the result depends on recognition timing. Changes to Windows' accessible caption window can require updates to the helper.
+The optional Windows engine still reads the accessible Windows Live Captions text control, minimizes its window after connecting, and restores/closes it when stopped. Only that engine needs Windows 11 22H2+ and Windows speech-file setup.
+
+## Subtitle display
+
+The main process follows new words and clears captions after a pause, with bounded reading time. Punctuation and case corrections don't restart the pause clock. Existing Windows native-caption history is a baseline; Whisper starts a new session with no earlier transcript.
+
+The renderer measures text with the selected font and available width. Cards hold up to two lines, carry unread overflow forward, and replace the whole block. Reading holds use about 20 characters per second, between 0.833 and 4 seconds per card. Color and size changes reflow pending text. Channel changes and turning captions off clear the queue. Fullscreen uses the available picture width and height.
+
+This follows the separate-cue pattern in [WebVTT](https://www.w3.org/TR/webvtt1/#a-simple-caption-file) and line/timing guidance in [Netflix's subtitle guide](https://partnerhelp.netflixstudios.com/hc/en-us/articles/217350977-English-USA-Timed-Text-Style-Guide), adapted for delayed live recognition rather than prepared subtitle timestamps.
+
+## Checks and releases
+
+Before compression, `scripts/after-pack.cjs` checks the actual copied native resources. `scripts/check-whisper.cjs` tests both models, reports CPU inference timing, rejects invented captions during silent PCM, recognizes streaming speech, and checks EOF cleanup. CI timing is hardware-specific; it is not a benchmark of every user's computer.
+
+Linux CI installs the packages in Debian 13, Fedora 43, and current Arch containers, then checks speaker-monitor recognition and X11 startup. Mac CI builds separately on Intel and Apple Silicon, verifies the ad-hoc app signature and audio permission description, checks the capture CLI, and launches the app. These tests do not grant privacy permissions or validate physical Mac audio capture. Windows CI compiles for Windows 10 APIs and checks recognition; it is not a separate Windows 10 hardware test.
+
+The Publish tested installers workflow accepts successful Windows, Linux, and Mac run IDs. It requires the same source commit and version, checks installer hashes, then creates a prerelease with all files. Mac DMGs and ZIP alternatives are signed ad hoc but aren't Apple-notarized. Windows installers are unsigned. Trusted Mac distribution will need an Apple Developer ID signing/notarization setup.
 
 ## Desktop boundaries
 
-- Remote pages run with Node integration disabled, context isolation, and Chromium sandboxing.
-- No desktop functions or caption IPC are exposed to website JavaScript. Caption text is displayed in a closed shadow root.
-- Navigation within the app is limited to Spelunkr and its pinned authentication endpoints. Other HTTPS links open in the default browser. File downloads and other URL schemes are blocked.
-- The wrapper saves window bounds, caption preferences, and the website's browser storage locally. Linux captions capture speaker audio in memory while enabled. The wrapper does not save audio or transcripts.
-- Window state, URL policy, caption timing, card replacement, and overlay layout have automated checks in `test/`.
+- Remote pages have Node integration disabled, context isolation, and Chromium sandboxing.
+- No caption or audio-control IPC is exposed to website JavaScript. Caption text is displayed in a closed shadow root.
+- Navigation is limited to Spelunkr and pinned authentication endpoints. Other HTTPS links open in the default browser. Page file downloads and other URL schemes are blocked.
+- The app stores window state, caption preferences, and the website's browser storage locally. It adds no analytics.
 
-The project is independent of Spelunkr. Its website assets and videos aren't bundled with the app and aren't covered by this repository's license.
+The website assets and videos aren't bundled and aren't covered by this repository's license. Third-party speech model and capture licenses ship with their native resources.

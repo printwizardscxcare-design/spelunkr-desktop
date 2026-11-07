@@ -1,16 +1,16 @@
 # Installing on Linux
 
 The Linux build is for **64-bit Intel and AMD PCs**. Download the package for your
-distribution from [Releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.5.0).
+distribution from [Releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).
 The repository is private, so you need a GitHub account with access.
 
 ## Debian
 
-For Debian 12 or newer, download `Spelunkr-Desktop-0.5.0-Debian-amd64.deb`, open a
+For Debian 12 or newer, download `Spelunkr-Desktop-0.6.0-Debian-amd64.deb`, open a
 terminal in your Downloads folder, and run:
 
 ```sh
-sudo apt install ./Spelunkr-Desktop-0.5.0-Debian-amd64.deb
+sudo apt install ./Spelunkr-Desktop-0.6.0-Debian-amd64.deb
 ```
 
 ## Arch Linux
@@ -19,7 +19,7 @@ Update Arch first, then install the downloaded package:
 
 ```sh
 sudo pacman -Syu
-sudo pacman -U ./Spelunkr-Desktop-0.5.0-Arch-x64.pkg.tar.xz
+sudo pacman -U ./Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz
 ```
 
 This is a release download, not an AUR package. The package manager installs the
@@ -27,11 +27,11 @@ app's dependencies from Arch's repositories.
 
 ## Fedora
 
-For Fedora Workstation 43 or newer, download `Spelunkr-Desktop-0.5.0-Fedora-x86_64.rpm`
+For Fedora Workstation 43 or newer, download `Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm`
 and run:
 
 ```sh
-sudo dnf install ./Spelunkr-Desktop-0.5.0-Fedora-x86_64.rpm
+sudo dnf install ./Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm
 ```
 
 On all three, open **Spelunkr Desktop** from your applications menu. These commands
@@ -45,10 +45,10 @@ Press **F11** for fullscreen, then **Up / Down** to change channels. Press
 and a size. Text has a transparent background, uses blocks of up to two lines,
 clears during pauses, and adjusts to the fullscreen picture.
 
-Linux uses **Vosk**, with a small English speech model included in the download.
+Linux uses **Whisper**, with base and tiny English speech models included in the download.
 Recognition runs on your computer. No separate Python installation, speech account,
 model download, or cloud subscription is needed. Its accuracy and language support
-differ from Windows Live Captions; this first Linux release supports English.
+differ from Windows Live Captions; the bundled models support English. Use Captions → Recognition speed → Faster if captions fall behind.
 
 Captions listen to your **default speaker output**, including other applications.
 They do not select a microphone or save audio or transcripts. After changing
