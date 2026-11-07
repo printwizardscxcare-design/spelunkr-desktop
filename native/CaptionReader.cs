@@ -34,7 +34,7 @@ internal static class CaptionReader
         string executable = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "LiveCaptions.exe");
         IntPtr window = IntPtr.Zero;
         int originalStyle = 0;
-        bool hidden = false, originallyMinimized = false, startedHere = false;
+        bool hidden = false, originallyMinimized = false, startedHere = false, prepared = false;
         try
         {
             if (!File.Exists(executable)) { Send("error", "Windows Live Captions requires Windows 11 22H2 or later."); return 1; }
@@ -71,6 +71,15 @@ internal static class CaptionReader
                     if (!String.Equals(process.MainModule.FileName, executable, StringComparison.OrdinalIgnoreCase))
                         throw new InvalidOperationException("The caption window is not the Windows Live Captions application.");
                 }
+                if (!prepared)
+                {
+                    originalStyle = GetWindowLong(window, -20);
+                    originallyMinimized = IsIconic(window);
+                    // Windows may reopen captions minimized after an earlier session.
+                    // Restore once so its accessible text control is initialized.
+                    ShowWindow(window, 9);
+                    prepared = true;
+                }
                 try
                 {
                     if (textBlock == null)
@@ -87,8 +96,6 @@ internal static class CaptionReader
                     string text = textBlock.Current.Name ?? "";
                     if (!hidden)
                     {
-                        originalStyle = GetWindowLong(window, -20);
-                        originallyMinimized = IsIconic(window);
                         SetWindowLong(window, -20, originalStyle | 0x00000080);
                         ShowWindow(window, 6);
                         hidden = true;
