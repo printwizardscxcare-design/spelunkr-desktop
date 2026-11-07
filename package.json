@@ -148,7 +148,7 @@
         "xdg-utils",
         "libpulse"
       ],
-      "artifactName": "Spelunkr-Desktop-${version}-Arch-${arch}.${ext}"
+      "artifactName": "Spelunkr-Desktop-${version}-Arch-${arch}.pkg.tar.xz"
     }
   },
   "homepage": "https://github.com/printwizardscxcare-design/spelunkr-desktop"
