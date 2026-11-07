@@ -56,7 +56,8 @@ async function appHarness(platform) {
     }};
   }
   const Menu = {buildFromTemplate: buildMenu, setApplicationMenu: value => {menu = value;}, getApplicationMenu: () => menu};
-  const electron = {app, BrowserWindow: Window, Menu, dialog: {}, shell: {}, screen: {getAllDisplays: () => []},
+  const ipcMain = Object.assign(new EventEmitter(), {handle() {}, removeHandler() {}});
+  const electron = {app, BrowserWindow: Window, Menu, ipcMain, dialog: {}, shell: {}, screen: {getAllDisplays: () => []},
     session: {fromPartition: () => ({setPermissionRequestHandler() {}, setPermissionCheckHandler() {}, on() {}})}};
   vm.runInNewContext(fs.readFileSync(main, 'utf8'), {
     __dirname: path.dirname(main), process: {platform, env: {}},

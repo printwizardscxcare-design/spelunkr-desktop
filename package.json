@@ -1,6 +1,6 @@
 {
   "name": "spelunkr-desktop-unofficial",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "An independent desktop app for watching spelunkr.tv on Windows, Mac, and Linux.",
   "main": "src/main.cjs",
   "author": {

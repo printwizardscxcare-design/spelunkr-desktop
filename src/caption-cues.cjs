@@ -48,6 +48,9 @@ class CaptionCues {
     this.wordOffset = 0;
     this.lastMetadata = '';
     this.speechActive = null;
+    this.sourceOffset = null;
+    this.sourceUtterance = null;
+    this.lastClearReason = '';
   }
 
   publish(text, clearReason = '') {
@@ -63,7 +66,8 @@ class CaptionCues {
     if (this.timer !== null) this.cancel(this.timer);
     this.timer = null;
     this.visible = false;
-    if (!keepSnapshot) this.previous = null;
+    if (!keepSnapshot) {this.previous = null;this.sourceOffset = this.sourceUtterance = null;}
+    this.lastClearReason = reason;
     this.publish('', reason);
   }
 
@@ -88,11 +92,25 @@ class CaptionCues {
     this.timer = this.schedule(() => this.clear({ reason:'pause' }), Math.max(0, deadline-this.now()));
   }
 
-  update(raw) {
+  update(raw, source) {
     const next = snapshot(raw);
     const before = this.previous;
-    const change = before ? compareWords(before.words, next.words) : { fresh: next.words.length > 0, firstNew: 0, dropped: 0 };
+    const native = source && ['wordOffset','utteranceStart','utteranceId'].every(key => Number.isSafeInteger(source[key]) && source[key] >= 0);
+    const previousUtterance = this.sourceUtterance;
+    let change = before ? compareWords(before.words, next.words) : { fresh: next.words.length > 0, firstNew: 0, dropped: 0 };
+    if (native && before && this.sourceOffset !== null) {
+      const previousEnd = this.sourceOffset + before.words.length;
+      change = {fresh: source.wordOffset + next.words.length > previousEnd,
+        firstNew: Math.max(0, previousEnd - source.wordOffset), dropped: Math.max(0, source.wordOffset - this.sourceOffset)};
+      if (!this.visible && previousUtterance !== source.utteranceId) {
+        change.firstNew = Math.max(0, source.utteranceStart - source.wordOffset);
+        change.fresh = next.words.length > change.firstNew;
+      }
+    }
+    this.sourceOffset = native ? source.wordOffset : null;
+    this.sourceUtterance = native ? source.utteranceId : null;
     this.previous = next;
+    if (native && !this.visible && this.lastClearReason === 'pause' && previousUtterance === source.utteranceId && this.speechActive === false) return;
     // An already-running Windows caption window can contain earlier dialogue.
     // Establish its baseline and begin with the next newly recognized words.
     if (!before && this.ignoreInitialSnapshot) return;

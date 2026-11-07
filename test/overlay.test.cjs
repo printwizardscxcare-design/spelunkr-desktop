@@ -25,6 +25,7 @@ function setup({ width = 1920, height = 1080 } = {}) {
   vm.runInNewContext(source, {
     require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn) } }),
     CaptionPages,
+    ControlsModel: {}, installControls() {},
     location: { origin: 'https://spelunkr.tv' }, process: { isMainFrame: true }, document,
     window: { addEventListener() {} }, innerHeight: height, innerWidth: width, setInterval() {}, setTimeout() {}, clearTimeout() {}
   });

@@ -87,6 +87,28 @@ test('a Whisper pause clears unread cards and the next phrase starts cleanly', (
   h.cues.update('one two three four five six seven eight nine ten new speech');
   assert.equal(pages.render(20, text => text.length).text, 'new speech');
 });
+
+test('Whisper revisions use source positions without creating duplicate subtitle blocks', () => {
+  const output=[];const h=harness((text,metadata)=>output.push({text,...metadata}));
+  const source=(utteranceId,utteranceStart,wordOffset=0)=>({utteranceId,utteranceStart,wordOffset});
+  h.cues.setSpeechActive(true);
+  h.cues.update('one',source(1,0));const cue=output.at(-1).cueId;
+  h.cues.update('10001 90210',source(1,0));
+  assert.equal(output.at(-1).cueId,cue);assert.equal(h.cues.text,'10001 90210');
+  h.cues.setSpeechActive(false);h.advance(4500);assert.equal(h.cues.text,'');
+  h.cues.update('10001 90210 late words',source(1,0));assert.equal(h.cues.text,'');
+  h.cues.setSpeechActive(true);h.cues.update('10001 90210 late words new dialogue',source(2,4));
+  assert.equal(h.cues.text,'new dialogue');assert.ok(output.at(-1).cueId>cue);
+});
+
+test('Whisper rolling history retains the absolute card positions', () => {
+  const output=[];const h=harness((text,metadata)=>output.push({text,...metadata}));
+  h.cues.setSpeechActive(true);
+  h.cues.update('one two three four',{wordOffset:0,utteranceStart:0,utteranceId:1});
+  const cue=output.at(-1).cueId;
+  h.cues.update('three four five six',{wordOffset:2,utteranceStart:4,utteranceId:2});
+  assert.equal(output.at(-1).cueId,cue);assert.equal(output.at(-1).wordOffset,2);
+});
 test('case and punctuation corrections do not extend the pause timer or resurrect captions', () => {
   const h = harness();
   h.cues.update('Hello there');

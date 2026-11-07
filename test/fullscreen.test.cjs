@@ -3,24 +3,27 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
+const ControlsModel = require('../src/controls-model.js');
+const installControls = require('../src/controls-runtime.cjs');
 const source = fs.readFileSync(require.resolve('../src/preload.cjs'), 'utf8');
 
 function harness({ origin = 'https://spelunkr.tv', mainFrame = true, htmlFullscreen = false, dialog = false, rewindButton = null, video = null } = {}) {
   const listeners = new Map();
   const sent = [];
   const ipc = new Map();
+  class KeyEvent {constructor(type, args) {this.type = type;Object.assign(this,args);}}
   const context = {
-    require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn) } }),
+    require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn), send() {} } }),
+    ControlsModel, installControls,
     location: { origin }, process: { isMainFrame: mainFrame },
     document: { fullscreenElement: htmlFullscreen ? {} : null,
       querySelector: selector => selector === '#stage-key-rw' ? rewindButton : video,
       querySelectorAll: () => dialog ? [{ getClientRects: () => [1] }] : [] },
-    window: { addEventListener: (name, fn) => listeners.set(name, fn), dispatchEvent: e => sent.push(e) },
-    KeyboardEvent: class { constructor(type, args) { this.type = type; Object.assign(this, args); } }
+    window: { KeyboardEvent: KeyEvent, addEventListener: (name, fn) => listeners.set(name, fn), dispatchEvent: e => sent.push(e) }
   };
   vm.runInNewContext(source, context);
   return { sent, listeners, ipc, rewind: () => ipc.get('desktop:caption-rewind')?.({}), key(key, overrides = {}) {
-    const event = { key, target: { closest: () => null }, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; }, ...overrides };
+    const event = { key, isTrusted: true, target: { closest: () => null }, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; }, ...overrides };
     listeners.get('keydown')?.(event);
     return event;
   } };
