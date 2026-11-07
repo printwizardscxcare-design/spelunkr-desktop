@@ -36,6 +36,21 @@ test('a short caption clears after a 1.5-second pause and stays blank', () => {
   h.advance(20000);
   assert.equal(h.cues.text, '');
 });
+
+test('Whisper batching does not clear subtitles while speech is still active', () => {
+  const h=harness();
+  h.cues.setSpeechActive(true);h.cues.update('Speech continues.');
+  h.advance(6000);assert.equal(h.cues.text,'Speech continues.');
+  h.cues.setSpeechActive(false);h.advance(1499);assert.equal(h.cues.text,'Speech continues.');
+  h.advance(1);assert.equal(h.cues.text,'');
+});
+
+test('new speech cancels a pending pause clear while the next batch is recognized', () => {
+  const h=harness();h.cues.update('First caption.');h.advance(1000);
+  h.cues.setSpeechActive(true);h.advance(4000);assert.equal(h.cues.text,'First caption.');
+  h.cues.update('First caption. Next words.');
+  h.cues.setSpeechActive(false);h.advance(1500);assert.equal(h.cues.text,'');
+});
 test('case and punctuation corrections do not extend the pause timer or resurrect captions', () => {
   const h = harness();
   h.cues.update('Hello there');

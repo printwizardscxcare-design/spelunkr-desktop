@@ -27,7 +27,7 @@ class CaptionBridge extends EventEmitter {
     lines.on('line', line => {
       try {
         const item = JSON.parse(line);
-        if (!['caption', 'status', 'error'].includes(item.type) || typeof item.text !== 'string') return;
+        if (!['caption', 'status', 'error', 'activity'].includes(item.type) || typeof item.text !== 'string') return;
         if (item.type === 'error') fail(item.text.slice(-8192));
         else if (!this.stopping) this.emit(item.type, item.text.slice(-8192));
       } catch {}
