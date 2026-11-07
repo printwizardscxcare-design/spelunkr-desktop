@@ -5,3 +5,6 @@ src/preload.generated.cjs
 *.log
 .test-profile/
 .smoke-profile/
+
+.caption-venv/
+__pycache__/

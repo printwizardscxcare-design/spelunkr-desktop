@@ -1,0 +1,58 @@
+name: Linux installers
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+      - run: sudo apt-get update -qq && sudo apt-get install -y rpm
+      - run: python3 -m pip install -r scripts/linux-caption-requirements.txt
+      - run: npm ci
+      - run: npm test
+      - run: npm run dist:linux -- --publish never
+      - name: Download upstream recognition test fixture
+        run: curl --fail --location --retry 3 https://raw.githubusercontent.com/alphacep/vosk-api/v0.3.45/python/example/test.wav -o dist/test.wav
+      - name: Write checksums
+        run: cd dist && sha256sum *.deb *.rpm *.pkg.tar.* > SHA256SUMS-Linux.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Spelunkr-Desktop-Linux-x64
+          path: |
+            dist/*.deb
+            dist/*.rpm
+            dist/*.pkg.tar.*
+            dist/SHA256SUMS-Linux.txt
+            dist/test.wav
+  check:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: debian
+            image: debian:13
+          - distro: fedora
+            image: fedora:43
+          - distro: arch
+            image: archlinux:base
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: Spelunkr-Desktop-Linux-x64
+          path: artifacts
+      - name: Install package and check captions and startup
+        run: docker run --rm -v "$PWD:/source:ro" -v "$PWD/artifacts:/artifacts:ro" "${{ matrix.image }}" bash /source/scripts/smoke-linux-container.sh "${{ matrix.distro }}"

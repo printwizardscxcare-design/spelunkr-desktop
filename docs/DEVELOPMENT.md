@@ -23,9 +23,26 @@ npm start
 
 The Windows installer workflow runs manually or on version-tag pushes. It uploads the installer and checksum as workflow artifacts. Release assets are attached separately.
 
+## Build on Linux
+
+Build on Ubuntu 22.04 or Debian 12 (x64) with Node.js 24, Python 3.10+, RPM tools, and the usual Electron build dependencies. Build the helper on an older supported glibc system so it also runs on newer distributions.
+
+```sh
+python3 -m venv .caption-venv
+. .caption-venv/bin/activate
+python3 -m pip install -r scripts/linux-caption-requirements.txt
+npm ci
+npm test
+npm run dist:linux -- --publish never
+```
+
+This creates Debian, Fedora, and Arch packages in `dist/`. The Linux workflow builds on Ubuntu 22.04 and installs the packages in three distribution containers. The helper and versioned Vosk English model are bundled at build time; generated files stay under `native/bin/`. Delete that generated Linux directory before rebuilding the helper after a source change. For development, build captions once, then `npm start`.
+
 ## How captions work
 
-The native helper starts or attaches to Windows Live Captions, reads its accessible caption-text control, and minimizes its window once connected. It sends text to the main process through a local pipe. It restores an existing caption window when stopped, or closes one it started itself. Setup and microphone/privacy settings are left to the user.
+On Windows, the native helper starts or attaches to Windows Live Captions, reads its accessible caption-text control, and minimizes its window once connected. It sends text to the main process through a local pipe. It restores an existing caption window when stopped, or closes one it started itself. Setup and microphone/privacy settings are left to the user.
+
+On Linux, a frozen Python helper uses the bundled Vosk English model and reads 16 kHz mono PCM from `parec` using the default speaker monitor. It uses the same local pipe protocol and caption renderer. Parent EOF and termination stop the capture process. It never falls back to a microphone.
 
 The main process follows new recognized words and infers a pause after 1.5 seconds without word activity. Case and punctuation changes don't restart that timer. Existing Windows transcript history is treated as a baseline when captions are enabled.
 
@@ -38,7 +55,7 @@ This adapts the separate-cue pattern in [WebVTT's prepared-subtitle examples](ht
 - Remote pages run with Node integration disabled, context isolation, and Chromium sandboxing.
 - No desktop functions or caption IPC are exposed to website JavaScript. Caption text is displayed in a closed shadow root.
 - Navigation within the app is limited to Spelunkr and its pinned authentication endpoints. Other HTTPS links open in the default browser. File downloads and other URL schemes are blocked.
-- The wrapper saves window bounds, caption preferences, and the website's browser storage locally. It doesn't capture audio or save transcripts.
+- The wrapper saves window bounds, caption preferences, and the website's browser storage locally. Linux captions capture speaker audio in memory while enabled. The wrapper does not save audio or transcripts.
 - Window state, URL policy, caption timing, card replacement, and overlay layout have automated checks in `test/`.
 
 The project is independent of Spelunkr. Its website assets and videos aren't bundled with the app and aren't covered by this repository's license.
