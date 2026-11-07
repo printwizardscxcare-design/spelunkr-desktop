@@ -3,14 +3,14 @@ set -euo pipefail
 case "$1" in
   debian)
     apt-get update -qq
-    DEBIAN_FRONTEND=noninteractive apt-get install -y /artifacts/*.deb pulseaudio python3 xvfb xauth procps
+    DEBIAN_FRONTEND=noninteractive apt-get install -y /artifacts/*.deb pulseaudio python3 nodejs xvfb xauth procps
     ;;
   fedora)
-    dnf install -y /artifacts/*.rpm pulseaudio python3 xorg-x11-server-Xvfb xorg-x11-xauth procps-ng
+    dnf install -y /artifacts/*.rpm pulseaudio python3 nodejs xorg-x11-server-Xvfb xorg-x11-xauth procps-ng
     ;;
   arch)
     pacman -Syu --noconfirm
-    pacman -S --needed --noconfirm pulseaudio python xorg-server-xvfb xorg-xauth procps-ng
+    pacman -S --needed --noconfirm pulseaudio python nodejs xorg-server-xvfb xorg-xauth procps-ng
     pacman -U --noconfirm /artifacts/*.pkg.tar.*
     ;;
 esac
