@@ -1,4 +1,5 @@
 name: Linux installers
+run-name: ${{ inputs.artifact-run && format('Linux checks for build {0}', inputs.artifact-run) || 'Linux installers' }}
 on:
   workflow_dispatch:
     inputs:
