@@ -1,0 +1,45 @@
+{
+  "name": "spelunkr-desktop-unofficial",
+  "version": "0.1.0",
+  "description": "An independent Windows desktop app for watching spelunkr.tv.",
+  "main": "src/main.cjs",
+  "author": "Spelunkr Desktop contributors",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "dist": "electron-builder --win nsis --x64",
+    "pack": "electron-builder --win --x64 --dir"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "io.github.printwizardscxcare-design.spelunkrdesktop",
+    "productName": "Spelunkr Desktop",
+    "asar": true,
+    "directories": { "output": "dist" },
+    "files": ["src/**/*", "assets/icon.png", "LICENSE", "package.json"],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "Spelunkr-Desktop-${version}-Windows-${arch}-Setup.${ext}",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Spelunkr Desktop (Unofficial)",
+      "uninstallDisplayName": "Spelunkr Desktop (Unofficial)",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": false,
+      "license": "LICENSE"
+    }
+  }
+}
