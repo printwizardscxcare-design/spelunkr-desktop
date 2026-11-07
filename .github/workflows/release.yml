@@ -35,6 +35,9 @@ jobs:
           });
           if(runs[0].head_sha!==runs[1].head_sha) throw Error('Installers must use the same source commit');
           const version=require('./package.json').version;
+          const metadata=JSON.parse(execFileSync('gh',['api',`repos/${repo}/contents/package.json?ref=${runs[0].head_sha}`],{encoding:'utf8'}));
+          const builtVersion=JSON.parse(Buffer.from(metadata.content,'base64').toString()).version;
+          if(version!==builtVersion) throw Error('Build version differs from the release notes version');
           fs.appendFileSync(process.env.GITHUB_ENV,`SOURCE_SHA=${runs[0].head_sha}\nRELEASE_TAG=v${version}\n`);
           JS
       - uses: actions/download-artifact@v8
