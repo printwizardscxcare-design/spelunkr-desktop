@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { HOME, isSite, isTrustedNavigation, isExternalUrl, safeWindowState } = require('./policy.cjs');
+const { CaptionBridge } = require('./caption-bridge.cjs');
 
 app.setName('Spelunkr Desktop');
 app.enableSandbox();
@@ -62,6 +63,52 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     });
 
     const contents = win.webContents;
+    const captions = new CaptionBridge(app.isPackaged
+      ? path.join(process.resourcesPath, 'native/CaptionReader.exe')
+      : path.join(__dirname, '../native/bin/CaptionReader.exe'));
+    const captionPreferences = path.join(app.getPath('userData'), 'captions.json');
+    let captionColor = 'white';
+    try { if (JSON.parse(fs.readFileSync(captionPreferences, 'utf8')).color === 'yellow') captionColor = 'yellow'; } catch {}
+    let overlayEnabled = false;
+    let captionText = '';
+    let captionStatus = 'Off';
+    const sendCaptions = () => {
+      if (win && !win.isDestroyed()) contents.send('desktop:captions', {
+        enabled: overlayEnabled && isSite(contents.getURL()), color: captionColor,
+        text: isSite(contents.getURL()) ? captionText : ''
+      });
+    };
+    const updateCaptionMenu = () => {
+      const menu = Menu.getApplicationMenu();
+      if (!menu) return;
+      const toggle = menu.getMenuItemById('caption-overlay');
+      if (toggle) toggle.checked = overlayEnabled;
+      const status = menu.getMenuItemById('caption-status');
+      if (status) status.label = captionStatus;
+    };
+    const setOverlayEnabled = async enabled => {
+      overlayEnabled = enabled;
+      captionText = '';
+      captionStatus = enabled ? 'Connecting to Windows captions…' : 'Off';
+      updateCaptionMenu();
+      sendCaptions();
+      if (enabled) captions.start();
+      else await captions.stop();
+    };
+    const setCaptionColor = color => {
+      captionColor = color;
+      try { fs.writeFileSync(captionPreferences, JSON.stringify({ color })); } catch {}
+      sendCaptions();
+    };
+    captions.on('caption', text => { captionText = text; sendCaptions(); });
+    captions.on('status', status => { captionStatus = status; updateCaptionMenu(); });
+    captions.on('failure', async message => {
+      await setOverlayEnabled(false);
+      if (win && !win.isDestroyed()) dialog.showMessageBox(win, { type: 'info', title: 'In-app captions', message, detail: 'The Windows captions window is still available from Captions → Open Windows caption window.' });
+    });
+    contents.on('did-finish-load', sendCaptions);
+    contents.on('did-navigate-in-page', () => { captionText = ''; sendCaptions(); });
+    win.on('closed', () => { captions.stop(); });
     const sendFullscreenState = () => contents.send('desktop:fullscreen', win.isFullScreen());
     win.on('enter-full-screen', sendFullscreenState);
     win.on('leave-full-screen', sendFullscreenState);
@@ -88,7 +135,8 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     contents.on('render-process-gone', showRecovery);
 
     const reload = () => failed ? loadHome() : contents.reload();
-    const startLiveCaptions = () => {
+    const startLiveCaptions = async () => {
+      await setOverlayEnabled(false);
       // A fixed OS executable, never a path or command supplied by the website.
       const executable = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'LiveCaptions.exe');
       const unavailable = () => dialog.showMessageBox(win, {
@@ -133,14 +181,21 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         { role: 'zoomIn' }, { role: 'zoomOut' }, { role: 'resetZoom' }
       ] },
       { label: '&Captions', submenu: [
-        { label: 'Start Windows &Live Captions', accelerator: 'CmdOrCtrl+Shift+L', click: startLiveCaptions },
+        { id: 'caption-overlay', label: '&In-app live captions', type: 'checkbox', accelerator: 'CmdOrCtrl+Shift+L', click: item => setOverlayEnabled(item.checked) },
+        { label: '&Text color', submenu: [
+          { label: '&White', type: 'radio', checked: captionColor === 'white', click: () => setCaptionColor('white') },
+          { label: '&Yellow', type: 'radio', checked: captionColor === 'yellow', click: () => setCaptionColor('yellow') }
+        ] },
+        { id: 'caption-status', label: 'Off', enabled: false },
+        { type: 'separator' },
+        { label: '&Open Windows caption window', click: startLiveCaptions },
         { label: 'About Windows captions', click: () => dialog.showMessageBox(win, {
           title: 'Windows Live Captions', message: 'Captions for whatever is playing.',
-          detail: 'Choose Captions → Start Windows Live Captions, or press Ctrl+Shift+L, including while fullscreen.\n\nWindows controls the caption bar, language, position, and closing it. On first use, complete Windows’ speech-file setup. Live Captions requires Windows 11 22H2 or newer.\n\nThis captions all PC audio. Original subtitle tracks remain available through the website’s CC control. To close Windows captions, use the caption bar’s Close button.'
+          detail: 'Press Ctrl+Shift+L to toggle transparent, text-only captions inside the video. Choose white or yellow under Captions → Text color.\n\nWindows Live Captions generates the text locally. Its window is minimized while in-app captions run. Complete Windows’ first-time setup if prompted. Requires Windows 11 22H2 or newer.\n\nThis captions all PC audio. Caption text is read through Windows accessibility and is not saved. Windows updates may affect this integration; Open Windows caption window is the fallback. Original subtitle tracks remain available through the website’s CC control.'
         }) }
       ] },
       { label: '&Help', submenu: [
-        { label: '&Keyboard shortcuts', click: () => dialog.showMessageBox(win, { title: 'Keyboard shortcuts', message: 'Your TV, on your desktop.', detail: 'F11 — Toggle fullscreen\nUp / Down in fullscreen — Next / Previous channel\nCtrl+Shift+L — Start Windows Live Captions\nCtrl+Shift+T — Always on top\nCtrl+Home — Channel guide\nCtrl+R or F5 — Reload / Retry\nAlt+Left / Right — Back / Forward\nCtrl+Plus / Minus / 0 — Zoom\nCtrl+Shift+O — Open in browser\n\nThe website’s own player shortcuts also work. Press Alt to access the app menu.' }) },
+        { label: '&Keyboard shortcuts', click: () => dialog.showMessageBox(win, { title: 'Keyboard shortcuts', message: 'Your TV, on your desktop.', detail: 'F11 — Toggle fullscreen\nUp / Down in fullscreen — Next / Previous channel\nCtrl+Shift+L — Toggle in-app live captions\nCtrl+Shift+T — Always on top\nCtrl+Home — Channel guide\nCtrl+R or F5 — Reload / Retry\nAlt+Left / Right — Back / Forward\nCtrl+Plus / Minus / 0 — Zoom\nCtrl+Shift+O — Open in browser\n\nThe website’s own player shortcuts also work. Press Alt to access the app menu.' }) },
         { label: 'Spelunkr &website', click: () => openExternal(HOME) },
         { label: '&Project and updates', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop') },
         { label: '&About this unofficial app', click: about }
