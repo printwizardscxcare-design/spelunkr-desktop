@@ -2,82 +2,95 @@
 
 I really just wanted ok subtitles, and something separate from my browser. Here you go:
 
-Watch [spelunkr.tv](https://spelunkr.tv/) in its own app on Windows, Mac, or Linux. Go fullscreen, change channels with the arrow keys, and put captions over the video.
+An unofficial desktop app for [spelunkr.tv](https://spelunkr.tv/). Pick a channel, put the video fullscreen, and turn on captions when you need them.
 
-This is an unofficial app. It opens the live website, so the channels, schedules, and optional sign-in still come from Spelunkr.
+The channels and shows come from the live website. The app gives them their own window and adds English captions that run on your computer.
+
+**[Download the Windows installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe)** · **[All downloads](#download)** · **[Help with captions](docs/CAPTIONS.md)** · **[Report a problem](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues)**
 
 ## Download
 
-**Current preview: [0.6.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).** You'll need an internet connection to watch. You don't need a GitHub account to download an installer.
+The current download is **[0.6.0, a preview](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0)**. You don't need a GitHub account to download it. Watching needs an internet connection.
 
-The new control assignments, subtitle delay, and unified video fullscreen are being tested for 0.7.0. They aren't in the installers below yet.
+**0.7.0 is still being tested.** Custom controls, subtitle delay, the fullscreen fix, and the other changes [listed below](#coming-in-070) aren't in these installers yet. The next set of downloads will be published together after testing.
 
-| Computer | Installer | Instructions |
+| Your computer | Download | Setup guide |
 | --- | --- | --- |
-| Windows 10 or 11, Intel/AMD 64-bit | [Windows .exe](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe) | [Windows setup](docs/WINDOWS.md) |
-| Mac with an Intel processor, macOS 14.2+ | [Intel Mac .dmg](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-x64.dmg) | [Mac setup](docs/MAC.md) |
-| Mac with an Apple M-series chip, macOS 14.2+ | [Apple Silicon .dmg](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-arm64.dmg) | [Mac setup](docs/MAC.md) |
-| Debian 12+, Intel/AMD 64-bit | [Debian .deb](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Debian-amd64.deb) | [Linux setup](docs/LINUX.md#debian) |
-| Arch Linux, Intel/AMD 64-bit | [Arch .pkg.tar.xz](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz) | [Linux setup](docs/LINUX.md#arch-linux) |
-| Fedora Workstation 43+, Intel/AMD 64-bit | [Fedora .rpm](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm) | [Linux setup](docs/LINUX.md#fedora) |
+| Windows 10 or 11 · Intel/AMD 64-bit | [Windows installer (.exe)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe) | [Windows](docs/WINDOWS.md) |
+| Mac · Apple M-series chip · macOS 14.2+ | [Apple Silicon (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-arm64.dmg) | [Mac](docs/MAC.md) |
+| Mac · Intel processor · macOS 14.2+ | [Intel Mac (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-x64.dmg) | [Mac](docs/MAC.md) |
+| Debian 12+ · Intel/AMD 64-bit | [Debian (.deb)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Debian-amd64.deb) | [Debian](docs/LINUX.md#debian) |
+| Arch Linux · Intel/AMD 64-bit | [Arch (.pkg.tar.xz)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz) | [Arch](docs/LINUX.md#arch-linux) |
+| Fedora Workstation 43+ · Intel/AMD 64-bit | [Fedora (.rpm)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm) | [Fedora](docs/LINUX.md#fedora) |
 
-Windows installers aren't digitally signed. Mac builds are signed locally but aren't notarized by Apple. The setup guides explain the first-launch prompts. Mac speaker capture and its permission flow still need a physical-Mac test; see [what's been tested](docs/TESTING.md).
+Not sure which Mac download to choose? Open **Apple menu → About This Mac**. “Chip” followed by an Apple M-series name means Apple Silicon; “Processor” followed by Intel means Intel.
 
-## Watching
+## Install and start watching
 
-Open the app and choose a channel. **Up** goes to the next channel and **Down** goes to the previous one, in both windowed and fullscreen views. Use **F11** for fullscreen on Windows or Linux, or **Control+Command+F** on Mac.
+**Windows:** Open the downloaded `.exe`, follow the installer, then launch **Spelunkr Desktop (Unofficial)** from Start or your desktop shortcut. It installs for your account without administrator access.
 
-**Left / Right** adjusts volume. The View menu uses the video's fullscreen mode, just like the player button. Press **Escape** or click **Exit fullscreen** to return to the window.
+**Mac:** Open the `.dmg`, drag **Spelunkr Desktop** into **Applications**, then open it from there.
 
-Open **Settings → Controls…** to change keys or assign a controller. Click **Assign**, press the control you want, then **Save** when you're done. See the [controls guide](docs/CONTROLS.md).
+**Linux:** Download your distribution's package and install it from the download folder:
 
-The **View** menu also has an always-on-top option. On Linux, that option is disabled when a Wayland session is detected.
+```sh
+# Debian
+sudo apt install ./Spelunkr-Desktop-0.6.0-Debian-amd64.deb
 
-## Captions
+# Arch — update your system first
+sudo pacman -Syu
+sudo pacman -U ./Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz
 
-Press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac. The app needs keyboard focus for its shortcuts to work.
+# Fedora
+sudo dnf install ./Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm
+```
 
-Captions start off. Turning them on rewinds the video **15 seconds** once so you get the lead-in. Choose **Captions → Caption engine → None** to turn them off.
+Then open **Spelunkr Desktop** from your applications menu. Linux captions need PulseAudio or PipeWire with PulseAudio compatibility; the [Linux guide](docs/LINUX.md#sound-setup) covers sound setup.
 
-Whisper generates English captions locally. Both speech models are included in the installer; there's no speech account, subscription, or separate model download. Captions listen to speaker output, which can include other apps playing at the same time.
+Use the installer for your computer, rather than GitHub's **Source code** ZIP. Windows installers are unsigned, and Mac builds aren't notarized by Apple, so first-launch prompts are possible. See the setup guide for your platform. File checksums are on the [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).
 
-Under **Captions**, choose white or yellow text and a size. The background stays transparent. Text fills up to two lines, then moves to a fresh block. It clears after pauses, with a little time left to read.
+## Turn on captions
 
-**Captions → Subtitle delay** adds up to 10 seconds in 0.1-second steps. The app remembers your setting. Pausing, seeking, or changing channels clears pending captions.
+Click the app, then press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac. You can also use **Captions → In-app live captions**. Captions start off; the same shortcut turns them off again.
 
-**Faster** recognition is the default. Try **Balanced** for the larger model if your computer can keep up. Captions have a delay and can make mistakes. Windows 11 users can also choose Windows Live Captions as an alternative.
+Whisper and both English speech models come with the installer. There's no speech account, subscription, or separate model download. Recognition runs locally and uses speaker output, so speech from another app can show up too.
 
-See the [caption guide](docs/CAPTIONS.md) for settings and troubleshooting.
+The **Captions** menu lets you choose:
 
-## Keyboard shortcuts
+- **White or yellow text**, with a transparent background.
+- **Five text sizes**, with wider two-line blocks in video fullscreen.
+- **Faster or Balanced recognition.** Faster is the default; Balanced uses the larger model.
+- **Windows Live Captions** as an optional alternative on Windows 11 22H2 or newer. Whisper also works on Windows 10.
 
-| Action | Windows / Linux | Mac |
-| --- | --- | --- |
-| Fullscreen | F11 | Control+Command+F |
-| Next / previous channel | Up / Down | Up / Down |
-| Volume up / down | Right / Left | Right / Left |
-| Controls settings | Ctrl+, | Command+, |
-| Exit fullscreen | Escape | Escape |
-| Captions on / off | Ctrl+Shift+L | Command+Shift+L |
-| Always on top | Ctrl+Shift+T | Command+Shift+T |
-| Channel guide | Ctrl+Home | Command+Home |
-| Refresh | Ctrl+R | Command+R |
-| Open the channel in your browser | Ctrl+Shift+O | Command+Shift+O |
+Generated captions can lag behind speech or get words wrong. Timing and pause handling are being improved for the next release. **Mac live speaker capture and its permission prompts still need a physical-Mac test.** The [testing notes](docs/TESTING.md) explain what's been checked.
 
-On Windows and Linux, **Alt** opens the app menu. These are the defaults; saved assignments replace them. Keep the app focused to use keyboard or controller controls.
+The [caption guide](docs/CAPTIONS.md) covers settings and troubleshooting, including changes being prepared for 0.7.0.
+
+## Coming in 0.7.0
+
+These changes are in the source code and are being checked before release:
+
+- **Up/Down for channels, Left/Right for volume**, in both windowed and fullscreen views.
+- **Custom keyboard and controller controls.** Open Settings → Controls, click Assign beside an action, press your key or controller input, then Save when you're done. The menu uses the site's fonts, colors, and buttons.
+- **One video fullscreen mode** for the menu, keyboard shortcut, and video button, with a visible Exit fullscreen button and Escape to leave it.
+- **A None caption option** and a single 15-second rewind when captions go from off to on.
+- **Subtitle delay from 0–10 seconds**, adjustable in 0.1-second steps and saved between launches.
+- **Revised Whisper caption handling**, including fresh blocks after pauses and immediate clearing when you pause, seek, or change channels.
+
+The same changes are shared by Windows, both Mac builds, Debian, Arch, and Fedora. See the [controls guide](docs/CONTROLS.md) for the new defaults and assignments.
 
 ## Updates and help
 
-Download the new installer from [Releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases) to update; there's no automatic updater yet. Each platform's setup guide covers updating and uninstalling.
+To update, quit the app and install the newer download from [Releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases). There's no automatic updater yet. The setup guides also cover uninstalling.
 
-If something breaks, [open an issue](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues) with your app version, operating system, and what happened. For caption problems, include the selected caption engine and recognition speed.
+If something breaks, [open an issue](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues) with your operating system, app version, and what happened. For caption problems, include the engine and recognition speed.
+
+Want to check installer download counts? There's a [short guide](docs/DOWNLOADS.md). Want to build or change the app? Start with [development setup](docs/DEVELOPMENT.md).
 
 ## About this app
 
-Spelunkr Desktop isn't affiliated with Spelunkr or the Internet Archive. Their website, names, artwork, and videos belong to their respective owners.
+Spelunkr Desktop isn't affiliated with or endorsed by Spelunkr or the Internet Archive. Their website, names, artwork, and videos belong to their respective owners.
 
-The app doesn't host videos, save audio or caption transcripts, or add analytics. It keeps preferences and the website's browser storage on your computer. The live website makes its own network requests.
+The app doesn't host videos, save audio or caption transcripts, or add analytics. Preferences and website storage stay on your computer. The live website makes its own network requests.
 
-The wrapper and original icon use the [MIT license](LICENSE). Speech and capture components have their own [licenses and credits](native/WHISPER-NOTICES.md).
-
-For development and maintenance: [build from source](docs/DEVELOPMENT.md), [test coverage](docs/TESTING.md), or [check installer download counts](docs/DOWNLOADS.md).
+The app's code and original icon use the [MIT license](LICENSE). Speech and capture components have their own [licenses and credits](native/WHISPER-NOTICES.md).
