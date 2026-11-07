@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, Menu, dialog, shell, session, screen } = require('electron');
+const { app, BrowserWindow, Menu, dialog, shell, session, screen, ipcMain } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -8,6 +8,7 @@ const { HOME, isSite, isTrustedNavigation, isExternalUrl, safeWindowState } = re
 const { CaptionBridge } = require('./caption-bridge.cjs');
 const { CaptionCues } = require('./caption-cues.cjs');
 const { captionOptions } = require('./caption-options.cjs');
+const { createControlManager } = require('./control-manager.cjs');
 
 app.setName('Spelunkr Desktop');
 app.enableSandbox();
@@ -108,6 +109,10 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       if (status) status.label = captionStatus;
       const speedMenu = menu.getMenuItemById('caption-speed');
       if (speedMenu) speedMenu.enabled = overlayEnabled && captionEngine === 'whisper';
+      for (const id of [`caption-speed-${captionSpeed}`, `caption-color-${captionColor}`, `caption-size-${captionSize}`]) {
+        const choice = menu.getMenuItemById(id);
+        if (choice) choice.checked = true;
+      }
     };
     let transition = Promise.resolve();
     let revision = 0;
@@ -134,20 +139,22 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       setOverlayEnabled(true);
     };
     const setCaptionSpeed = speed => {
-      captionSpeed = speed; saveCaptionPreferences();
+      captionSpeed = speed; saveCaptionPreferences(); updateCaptionMenu();
       if (overlayEnabled) setOverlayEnabled(true);
     };
     const setCaptionColor = color => {
       captionColor = color;
       saveCaptionPreferences();
+      updateCaptionMenu();
       sendCaptions();
     };
     const setCaptionSize = size => {
       captionSize = size;
       saveCaptionPreferences();
+      updateCaptionMenu();
       sendCaptions();
     };
-    captions.on('caption', text => { if (overlayEnabled) cues.update(text); });
+    captions.on('caption', (text, source) => { if (overlayEnabled) cues.update(text, source); });
     captions.on('activity', activity => {
       if (overlayEnabled && captionEngine === 'whisper' && ['speech','silence'].includes(activity)) cues.setSpeechActive(activity === 'speech');
     });
@@ -216,47 +223,67 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       detail: 'An independent desktop app for spelunkr.tv. Not affiliated with or endorsed by Spelunkr or the Internet Archive.\n\nThis app opens the live website. Internet access is required. The site controls channels, playback, and sign-in.\n\nSpelunkr’s name, website, artwork, and programming belong to their respective owners. The app adds no tracking and does not download or host videos.',
       buttons: ['OK']
     });
+    const nativeControls = {
+      guide: loadHome, reload, back,
+      forwardPage: () => {if (contents.navigationHistory.canGoForward()) contents.navigationHistory.goForward();},
+      openBrowser: () => openExternal(isSite(contents.getURL()) ? contents.getURL() : HOME),
+      fullscreen: () => win.setFullScreen(!win.isFullScreen()),
+      alwaysOnTop: () => {
+        if (process.platform === 'linux' && process.env.WAYLAND_DISPLAY) return;
+        const value = !win.isAlwaysOnTop();win.setAlwaysOnTop(value);
+        const item = Menu.getApplicationMenu()?.getMenuItemById('always-on-top');if (item) item.checked = value;
+      },
+      captions: () => setOverlayEnabled(!overlayEnabled), captionsNone: () => setOverlayEnabled(false),
+      captionsWhisper: () => setCaptionEngine('whisper'), captionsWindows: () => {if (process.platform === 'win32') setCaptionEngine('windows');},
+      captionLarger: () => setCaptionSize(captionSizes[Math.min(captionSizes.length - 1, captionSizes.indexOf(captionSize) + 1)]),
+      captionSmaller: () => setCaptionSize(captionSizes[Math.max(0, captionSizes.indexOf(captionSize) - 1)]),
+      captionWhite: () => setCaptionColor('white'), captionYellow: () => setCaptionColor('yellow'),
+      captionFaster: () => setCaptionSpeed('fast'), captionBalanced: () => setCaptionSpeed('balanced'),
+      zoomIn: () => contents.setZoomLevel(Math.min(5, contents.getZoomLevel() + .5)),
+      zoomOut: () => contents.setZoomLevel(Math.max(-3, contents.getZoomLevel() - .5)), zoomReset: () => contents.setZoomLevel(0)
+    };
+    const controls = createControlManager({win, BrowserWindow, ipcMain, profileDir: app.getPath('userData'),
+      platform: process.platform, actions: nativeControls, io: fs});
     Menu.setApplicationMenu(Menu.buildFromTemplate([
       ...(process.platform === 'darwin' ? [{role: 'appMenu'}] : []),
       { label: '&Spelunkr', submenu: [
-        { label: 'Channel &guide', accelerator: 'CmdOrCtrl+Home', click: loadHome },
-        { label: '&Open in browser', accelerator: 'CmdOrCtrl+Shift+O', click: () => openExternal(isSite(contents.getURL()) ? contents.getURL() : HOME) },
+        { label: 'Channel &guide', click: loadHome },
+        { label: '&Open in browser', click: nativeControls.openBrowser },
         { type: 'separator' },
         { label: 'E&xit', visible: process.platform !== 'darwin', accelerator: 'Alt+F4', click: () => app.quit() }
       ] },
       { label: '&Navigate', submenu: [
-        { label: '&Back', accelerator: 'Alt+Left', click: back },
-        { label: '&Forward', accelerator: 'Alt+Right', click: () => { if (contents.navigationHistory.canGoForward()) contents.navigationHistory.goForward(); } },
-        { label: '&Reload / Retry connection', accelerator: 'CmdOrCtrl+R', click: reload },
-        { label: 'Reload', accelerator: 'F5', visible: false, click: reload }
+        { label: '&Back', click: back },
+        { label: '&Forward', click: nativeControls.forwardPage },
+        { label: '&Reload / Retry connection', click: reload }
       ] },
       { label: '&View', submenu: [
-        { label: '&Fullscreen', accelerator: process.platform === 'darwin' ? 'Ctrl+Command+F' : 'F11', click: () => win.setFullScreen(!win.isFullScreen()) },
-        { label: '&Always on top', enabled: !(process.platform === 'linux' && Boolean(process.env.WAYLAND_DISPLAY)), accelerator: 'CmdOrCtrl+Shift+T', type: 'checkbox', click: item => win.setAlwaysOnTop(item.checked) },
+        { label: '&Fullscreen', click: nativeControls.fullscreen },
+        { id: 'always-on-top', label: '&Always on top', enabled: !(process.platform === 'linux' && Boolean(process.env.WAYLAND_DISPLAY)), type: 'checkbox', click: item => win.setAlwaysOnTop(item.checked) },
         { type: 'separator' },
-        { role: 'zoomIn' }, { role: 'zoomOut' }, { role: 'resetZoom' }
+        { label: 'Zoom in', click: nativeControls.zoomIn }, { label: 'Zoom out', click: nativeControls.zoomOut }, { label: 'Reset zoom', click: nativeControls.zoomReset }
       ] },
       { label: '&Captions', submenu: [
-        { id: 'caption-overlay', label: '&In-app live captions', type: 'checkbox', accelerator: 'CmdOrCtrl+Shift+L', click: item => setOverlayEnabled(item.checked) },
+        { id: 'caption-overlay', label: '&In-app live captions', type: 'checkbox', click: item => setOverlayEnabled(item.checked) },
         { label: 'Caption engine', submenu: [
           { id: 'caption-engine-none', label: 'None', type: 'radio', checked: !overlayEnabled, click: () => setOverlayEnabled(false) },
           { id: 'caption-engine-whisper', label: 'Built-in captions (Whisper)', type: 'radio', checked: overlayEnabled && captionEngine === 'whisper', click: () => setCaptionEngine('whisper') },
           { id: 'caption-engine-windows', label: 'Windows Live Captions (Windows 11)', visible: process.platform === 'win32', type: 'radio', checked: overlayEnabled && captionEngine === 'windows', click: () => setCaptionEngine('windows') }
         ] },
         { id: 'caption-speed', label: 'Recognition speed', enabled: overlayEnabled && captionEngine === 'whisper', submenu: [
-          { label: 'Balanced (base English)', type: 'radio', checked: captionSpeed === 'balanced', click: () => setCaptionSpeed('balanced') },
-          { label: 'Faster (tiny English)', type: 'radio', checked: captionSpeed === 'fast', click: () => setCaptionSpeed('fast') }
+          { id: 'caption-speed-balanced', label: 'Balanced (base English)', type: 'radio', checked: captionSpeed === 'balanced', click: () => setCaptionSpeed('balanced') },
+          { id: 'caption-speed-fast', label: 'Faster (tiny English)', type: 'radio', checked: captionSpeed === 'fast', click: () => setCaptionSpeed('fast') }
         ] },
         { label: '&Text color', submenu: [
-          { label: '&White', type: 'radio', checked: captionColor === 'white', click: () => setCaptionColor('white') },
-          { label: '&Yellow', type: 'radio', checked: captionColor === 'yellow', click: () => setCaptionColor('yellow') }
+          { id: 'caption-color-white', label: '&White', type: 'radio', checked: captionColor === 'white', click: () => setCaptionColor('white') },
+          { id: 'caption-color-yellow', label: '&Yellow', type: 'radio', checked: captionColor === 'yellow', click: () => setCaptionColor('yellow') }
         ] },
         { label: 'Text &size', submenu: [
-          { label: 'Small (80%)', type: 'radio', checked: captionSize === 0.8, click: () => setCaptionSize(0.8) },
-          { label: 'Medium (100%)', type: 'radio', checked: captionSize === 1, click: () => setCaptionSize(1) },
-          { label: 'Large (125%)', type: 'radio', checked: captionSize === 1.25, click: () => setCaptionSize(1.25) },
-          { label: 'Extra large (150%)', type: 'radio', checked: captionSize === 1.5, click: () => setCaptionSize(1.5) },
-          { label: 'Largest (200%)', type: 'radio', checked: captionSize === 2, click: () => setCaptionSize(2) }
+          { id: 'caption-size-0.8', label: 'Small (80%)', type: 'radio', checked: captionSize === 0.8, click: () => setCaptionSize(0.8) },
+          { id: 'caption-size-1', label: 'Medium (100%)', type: 'radio', checked: captionSize === 1, click: () => setCaptionSize(1) },
+          { id: 'caption-size-1.25', label: 'Large (125%)', type: 'radio', checked: captionSize === 1.25, click: () => setCaptionSize(1.25) },
+          { id: 'caption-size-1.5', label: 'Extra large (150%)', type: 'radio', checked: captionSize === 1.5, click: () => setCaptionSize(1.5) },
+          { id: 'caption-size-2', label: 'Largest (200%)', type: 'radio', checked: captionSize === 2, click: () => setCaptionSize(2) }
         ] },
         { id: 'caption-status', label: 'Off', enabled: false },
         { type: 'separator' },
@@ -266,12 +293,13 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
           detail: 'Press Ctrl+Shift+L to toggle transparent, text-only captions inside the video. Choose white/yellow and a text size under Captions. Fullscreen captions adapt to the screen width and height.\n\nCaptions clear after roughly 1.5 seconds without new words, with up to 4 seconds of initial reading time for a batch of text. Windows supplies no exact speech-end timings, so pauses are inferred from recognition updates. Old words stay cleared when the next phrase begins.\n\nWindows Live Captions generates the text locally. Its window is minimized while in-app captions run. This optional engine requires Windows 11 22H2 or newer. Choose it under Caption engine. Built-in Whisper captions work on Windows 10 and 11. This captions all PC audio; no audio or transcript is saved. Open Windows caption window remains available as a fallback.'
         }) }
       ] },
+      { label: '&Settings', submenu: [{id: 'controls-settings', label: '&Controls…', accelerator: 'CmdOrCtrl+,', click: controls.open}] },
       { label: '&Help', submenu: [
         { label: 'Linux setup and troubleshooting', visible: process.platform === 'linux', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop/blob/main/docs/LINUX.md') },
         { label: 'About Linux captions', visible: process.platform === 'linux', click: () => dialog.showMessageBox(win, { title: 'Linux captions', message: 'Local English captions over the video.', detail: 'Press Ctrl+Shift+L to toggle captions. Text color, size, two-line blocks, pause clearing, and fullscreen sizing use the same controls as Windows. Speech is recognized locally using the bundled Whisper English models. Choose Balanced or Faster under Recognition speed. No audio or transcript is saved. Captures your default speaker output, including other apps. After switching audio devices, toggle captions off and on. Requires PulseAudio or PipeWire with PulseAudio compatibility. Recognition quality differs from Windows Live Captions.' }) },
         { label: 'Mac setup and troubleshooting', visible: process.platform === 'darwin', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop/blob/main/docs/MAC.md') },
         { label: 'About built-in captions', click: () => dialog.showMessageBox(win, { title: 'Whisper captions', message: 'Local captions on Windows, Mac, and Linux.', detail: 'Speech recognition and speech detection run on your computer using bundled English models. No audio or transcript is saved. Captures the default speaker output, including other applications. Choose Faster recognition on an older computer. Captions arrive in short batches; speed and accuracy depend on the speech and computer. The transparent overlay, size, color, subtitle blocks, and pause clearing use the same controls on every platform.' }) },
-        { label: '&Keyboard shortcuts', click: () => dialog.showMessageBox(win, { title: 'Keyboard shortcuts', message: 'Your TV, on your desktop.', detail: (process.platform === 'darwin' ? 'On Mac, use Command instead of Ctrl in the shortcuts below. Fullscreen is Control+Command+F.\n\n' : '') + 'F11 — Toggle fullscreen\nUp / Down — Next / Previous channel\nCtrl+Shift+L — Toggle captions; turning them on rewinds 15 seconds\nCtrl+Shift+T — Always on top\nCtrl+Home — Channel guide\nCtrl+R or F5 — Reload / Retry\nAlt+Left / Right — Back / Forward\nCtrl+Plus / Minus / 0 — Zoom\nCtrl+Shift+O — Open in browser\n\nThe website’s own player shortcuts also work. Press Alt to access the app menu.' }) },
+        { label: '&Keyboard and controller controls', click: controls.open },
         { label: 'Spelunkr &website', click: () => openExternal(HOME) },
         { label: '&Project and updates', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop') },
         { label: '&About this unofficial app', click: about }

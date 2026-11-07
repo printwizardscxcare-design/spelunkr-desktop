@@ -1,5 +1,6 @@
 #include "whisper.h"
 #include "ggml-backend.h"
+#include "transcript.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -44,6 +45,12 @@ static void emit(const std::string &type, const std::string &text) {
     std::lock_guard<std::mutex> lock(output_mutex);
     std::cout << "{\"type\":" << json_string(type) << ",\"text\":" << json_string(text) << "}" << std::endl;
 }
+static void emit_caption(const TranscriptSnapshot &snapshot) {
+    std::lock_guard<std::mutex> lock(output_mutex);
+    std::cout << "{\"type\":\"caption\",\"text\":" << json_string(snapshot.text)
+        << ",\"wordOffset\":" << snapshot.word_offset << ",\"utteranceStart\":" << snapshot.utterance_start
+        << ",\"utteranceId\":" << snapshot.utterance_id << "}" << std::endl;
+}
 static fs::path executable_dir(const char *arg) {
 #ifdef _WIN32
     wchar_t buffer[32768];
@@ -84,23 +91,20 @@ static std::vector<float> read_wav(const fs::path &file) {
 class Recognizer {
     whisper_context *ctx = nullptr;
     whisper_vad_context *vad = nullptr;
-    std::deque<std::string> history;
+    Transcript transcript;
+    struct Job {std::vector<float> audio;uint64_t id;bool final, continuation;};
     std::mutex mutex;
     std::condition_variable available;
-    std::deque<std::vector<float>> queue;
+    std::deque<Job> queue;
     std::thread worker;
     std::vector<float> phrase, pending, preroll;
     int quiet = 0, voiced = 0;
     bool speech_active = false;
-    bool fast = false, compact_context = true;
-    static std::string key(std::string word) {
-        std::string result;
-        for (unsigned char c : word) if (std::isalnum(c)) result += char(std::tolower(c));
-        return result;
-    }
+    bool fast = false, continuation = false;
+    uint64_t utterance = 0;
+    size_t next_submit = 16384;
 public:
-    Recognizer(const fs::path &root, const std::string &model, bool full_context = false)
-        : fast(model == "tiny.en"), compact_context(!full_context) {
+    Recognizer(const fs::path &root, const std::string &model) : fast(model == "tiny.en") {
         auto cp = whisper_context_default_params(); cp.use_gpu = false;
         ctx = whisper_init_from_file_with_params((root / ("ggml-" + model + "-q5_1.bin")).u8string().c_str(), cp);
         if (!ctx) throw std::runtime_error("The bundled Whisper model could not load. Reinstall the app.");
@@ -119,14 +123,6 @@ public:
         p.language = "en"; p.translate = false; p.no_context = true;
         p.print_realtime = p.print_progress = p.print_timestamps = p.print_special = false;
         p.suppress_blank = true; p.suppress_nst = true; p.temperature_inc = 0;
-        if (fast) {
-            p.no_timestamps = true; p.single_segment = true; p.greedy.best_of = 1;
-            if (audio.size() <= 48000) p.max_tokens = 48;
-            // Short live chunks don't need the encoder's full 30-second window.
-            // Leave at least a second of padding and round up to a whole block.
-            const int frames = int((audio.size() + 319) / 320);
-            if (compact_context) p.audio_ctx = std::min(1500, std::max(256, ((frames + 50 + 63) / 64) * 64));
-        }
         p.abort_callback = [](void *) { return !running.load(); };
         if (whisper_full(ctx, p, audio.data(), int(audio.size())) != 0) {
             if (running) throw std::runtime_error("Whisper could not process this audio.");
@@ -139,42 +135,32 @@ public:
         return text;
     }
     void append(const std::string &text) {
-        std::istringstream input(text); std::vector<std::string> words; std::string word;
-        while (input >> word) words.push_back(word);
-        size_t overlap = std::min({size_t(12), words.size(), history.size()});
-        for (; overlap > 0; --overlap) {
-            bool match = true;
-            for (size_t i=0; i<overlap; ++i) if (key(history[history.size()-overlap+i]) != key(words[i])) { match=false; break; }
-            if (match) break;
-        }
-        for (size_t i=overlap; i<words.size(); ++i) history.push_back(words[i]);
-        while (history.size() > 512) history.pop_front();
-        std::string snapshot;
-        for (const auto &item : history) { if (!snapshot.empty()) snapshot += ' '; snapshot += item; }
-        if (!words.empty()) emit("caption", snapshot);
+        const auto snapshot = transcript.update(++utterance, text, true);
+        if (snapshot) emit_caption(*snapshot);
     }
     void start() {
         worker = std::thread([this] {
             try {
                 while (running) {
-                    std::vector<float> audio;
+                    Job job;
                     { std::unique_lock<std::mutex> lock(mutex);
                       available.wait(lock, [this] { return !running || !queue.empty(); });
                       if (!running) break;
-                      audio = std::move(queue.front()); queue.pop_front(); }
-                    auto text = decode(audio);
-                    if (running) append(text);
+                      job = std::move(queue.front()); queue.pop_front(); }
+                    const auto snapshot = transcript.update(job.id, decode(job.audio), job.final, job.continuation);
+                    if (running && snapshot) emit_caption(*snapshot);
                 }
             } catch (const std::exception &e) { emit("error", e.what()); running = false; }
         });
     }
-    void submit() {
+    void submit(bool final = true) {
         if (voiced >= 4) {
             std::lock_guard<std::mutex> lock(mutex);
-            if (!queue.empty()) {
+            queue.erase(std::remove_if(queue.begin(), queue.end(), [this](const Job &job) {return job.id == utterance;}), queue.end());
+            if (queue.size() >= 2) {
                 queue.pop_front(); emit("status", "Catching up with live audio...");
             }
-            queue.push_back(phrase); available.notify_one();
+            queue.push_back(Job{phrase, utterance, final, continuation}); available.notify_one();
         }
     }
     void feed(const float *samples, size_t count) {
@@ -186,7 +172,7 @@ public:
             float probability = whisper_vad_n_probs(vad) ? whisper_vad_probs(vad)[0] : 0;
             bool speech = probability >= .5f;
             if (speech && !speech_active) { speech_active=true; emit("activity","speech"); }
-            if (speech && phrase.empty()) { phrase = preroll; quiet = voiced = 0; }
+            if (speech && phrase.empty()) { phrase = preroll; quiet = voiced = 0;utterance++;continuation=false;next_submit=16384; }
             if (!phrase.empty() || speech) {
                 phrase.insert(phrase.end(), frame, frame + 512);
                 if (speech) { voiced++; quiet=0; } else quiet++;
@@ -194,9 +180,11 @@ public:
                     submit(); phrase.clear(); quiet=voiced=0;
                     if (speech_active) { speech_active=false; emit("activity","silence"); }
                 }
-                else if (phrase.size() >= (fast ? 24576u : 40960u)) {
+                else if (phrase.size() >= (fast ? 128000u : 40960u)) {
                     submit(); phrase.erase(phrase.begin(), phrase.end() - (fast ? 8192 : 4096)); voiced=1;
+                    utterance++;continuation=true;next_submit=16384;
                 }
+                else if (fast && phrase.size() >= next_submit) {submit(false);next_submit=phrase.size()+8192;}
             }
             preroll.insert(preroll.end(), frame, frame+512);
             if (preroll.size() > 4096) preroll.erase(preroll.begin(), preroll.end()-4096);
@@ -272,13 +260,12 @@ static void capture_windows(Recognizer &recognizer) {
 
 int main(int argc, char **argv) {
     try {
-        std::string model="base.en", wav; bool wasapi=false, full_context=false;
+        std::string model="base.en", wav; bool wasapi=false;
         for (int i=1; i<argc; ++i) {
             std::string arg=argv[i];
             if (arg=="--model" && i+1<argc) model=argv[++i];
             else if (arg=="--test-wav" && i+1<argc) wav=argv[++i];
             else if (arg=="--wasapi") wasapi=true;
-            else if (arg=="--full-context") full_context=true;
             else if (arg!="--pcm") throw std::runtime_error("Unknown caption helper argument");
         }
         if (model!="base.en" && model!="tiny.en") throw std::runtime_error("Unknown speech model");
@@ -286,7 +273,7 @@ int main(int argc, char **argv) {
         const auto root = executable_dir(argv[0]);
         ggml_backend_load_all_from_path(root.u8string().c_str());
         emit("status", "Loading local Whisper model...");
-        Recognizer recognizer(root, model, full_context);
+        Recognizer recognizer(root, model);
         if (!wav.empty()) {
             auto audio=read_wav(fs::u8path(wav)); auto start=std::chrono::steady_clock::now();
             recognizer.append(recognizer.decode(audio));

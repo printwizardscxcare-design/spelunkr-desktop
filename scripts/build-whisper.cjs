@@ -43,7 +43,8 @@ async function build() {
   if (process.platform === 'win32') configure.push('-A', 'x64');
   if (process.platform === 'darwin') configure.push('-DCMAKE_OSX_DEPLOYMENT_TARGET=14.2');
   run('cmake', configure);
-  run('cmake', ['--build', buildDir, '--config', 'Release', '--parallel', '4', '--target', 'caption-reader']);
+  run('cmake', ['--build', buildDir, '--config', 'Release', '--parallel', '4', '--target', 'caption-reader', 'caption-transcript-test']);
+  run(path.join(buildDir, 'bin', process.platform === 'win32' ? 'Release' : '', 'caption-transcript-test' + (process.platform === 'win32' ? '.exe' : '')) , []);
   const filename = process.platform === 'win32' ? 'caption-reader.exe' : 'caption-reader';
   fs.copyFileSync(path.join(buildDir, 'bin', process.platform === 'win32' ? 'Release' : '', filename), path.join(output, filename));
   function copyLibraries(directory) {

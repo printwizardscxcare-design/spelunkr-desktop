@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Controls — Spelunkr Desktop</title>
+  <link rel="stylesheet" href="controls.css">
+  <script src="controls-model.js" defer></script>
+  <script src="controls-ui.js" defer></script>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">SPELUNKR DESKTOP</p>
+    <h1>Controls</h1>
+    <p>Click <strong>Assign</strong> next to an action, then press a key or controller button. Sticks and triggers work too.</p>
+    <p class="hint">Up / Down changes channels. Left / Right adjusts volume. Changes take effect when you save.</p>
+    <div class="toolbar"><label for="search">Find a control</label><input id="search" type="search" placeholder="Search actions…" autocomplete="off"><span id="controllers">Connect a controller and press a button to detect it.</span></div>
+  </header>
+  <main id="list" aria-label="Control assignments"></main>
+  <div id="capture" class="capture" hidden role="dialog" aria-modal="true" aria-labelledby="capture-title">
+    <div class="capture-card"><p class="eyebrow">ASSIGN A CONTROL</p><h2 id="capture-title"></h2><p id="capture-instruction">Press a keyboard key, controller button, trigger, or stick direction.</p><button id="cancel-capture">Cancel assignment</button></div>
+  </div>
+  <footer><div class="footer-top"><button id="reset" class="quiet">Restore defaults</button><p id="status" role="status" aria-live="polite">Loading controls…</p></div><div class="footer-actions"><button id="cancel">Cancel</button><button id="save" class="primary" disabled>Save</button></div></footer>
+</body>
+</html>

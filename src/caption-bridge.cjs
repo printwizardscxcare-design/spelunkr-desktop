@@ -29,7 +29,11 @@ class CaptionBridge extends EventEmitter {
         const item = JSON.parse(line);
         if (!['caption', 'status', 'error', 'activity'].includes(item.type) || typeof item.text !== 'string') return;
         if (item.type === 'error') fail(item.text.slice(-8192));
-        else if (!this.stopping) this.emit(item.type, item.text.slice(-8192));
+        else if (!this.stopping) {
+          const source = item.type === 'caption' && ['wordOffset','utteranceStart','utteranceId'].every(key => Number.isSafeInteger(item[key]) && item[key] >= 0) ?
+            {wordOffset: item.wordOffset, utteranceStart: item.utteranceStart, utteranceId: item.utteranceId} : undefined;
+          this.emit(item.type, item.text.slice(-8192), source);
+        }
       } catch {}
     });
     child.stderr.resume();
