@@ -2,6 +2,12 @@
 
 Version **0.6.0 is a preview**. The automated checks cover the app's logic, packaged speech models, and several installation paths. They don't cover every desktop, sound device, or recording.
 
+## Work in progress: 0.7.0
+
+All 73 JavaScript checks pass locally. These include saved keyboard/controller assignments, cancelling drafts, subtitle-delay scheduling, immediate clearing on pause/seek/channel changes, and one-time rewind on caption activation. Windows, Mac, and Linux run the same fullscreen command and overlay code.
+
+The Windows source build has been checked on screen: entering video fullscreen through the menu and F11, leaving with the visible Exit button and Escape, the page-matched Controls window, saving F8 for next channel, and reopening settings to verify the saved assignment. A physical gamepad hasn't been tested. Final installer checks and live caption timing checks remain before publication.
+
 ## Checks for 0.6.0
 
 | Platform | Checked | Still needs a manual check |

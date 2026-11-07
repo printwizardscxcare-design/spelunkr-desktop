@@ -10,6 +10,7 @@ const model=require('../src/controls-model.js');
 function setup(saved) {
   const files=new Map(saved?[[path.join('/profile','controls.json'),JSON.stringify(saved)]]:[]), handlers=new Map();
   let child, focused=true, writes=0, failWrite=false, invoked=0;
+  const playback=[];
   class Contents extends EventEmitter {
     constructor(url){super();this.mainFrame={url};this.messages=[];this.session={setPermissionRequestHandler(){}};}
     getURL(){return this.mainFrame.url;}
@@ -20,14 +21,14 @@ function setup(saved) {
   class Settings extends EventEmitter {
     constructor(){super();child=this;this.webContents=new Contents('');this.destroyed=false;}
     setMenu(){}show(){}focus(){}isDestroyed(){return this.destroyed;}
-    loadFile(file){this.webContents.mainFrame.url=pathToFileURL(file).href;}
+    async loadFile(file){this.webContents.mainFrame.url=pathToFileURL(file).href;}
     close(){this.destroyed=true;this.emit('closed');}
   }
   const ipc=Object.assign(new EventEmitter(),{handle:(name,fn)=>handlers.set(name,fn),removeHandler:name=>handlers.delete(name)});
   const io={readFileSync:file=>{if(!files.has(file))throw Error('Missing');return files.get(file);},writeFileSync(file,text){if(failWrite)throw Object.assign(Error('Denied'),{code:'EACCES'});writes++;files.set(file,text);},renameSync(from,to){files.set(to,files.get(from));files.delete(from);}};
-  const manager=createControlManager({win:parent,BrowserWindow:Settings,ipcMain:ipc,profileDir:'/profile',platform:'win32',io,actions:{captions:()=>{invoked++;}}});
+  const manager=createControlManager({win:parent,BrowserWindow:Settings,ipcMain:ipc,profileDir:'/profile',platform:'win32',io,actions:{captions:()=>{invoked++;}},onPlayback:state=>playback.push(state)});
   const source=contents=>({sender:contents,senderFrame:contents.mainFrame});
-  return {manager,ipc,files,parent,source,handlers,get child(){return child;},get writes(){return writes;},get invoked(){return invoked;},setFocused:value=>{focused=value;},failWrite:()=>{failWrite=true;},
+  return {manager,ipc,files,parent,source,handlers,playback,get child(){return child;},get writes(){return writes;},get invoked(){return invoked;},setFocused:value=>{focused=value;},failWrite:()=>{failWrite=true;},
     load:()=>handlers.get('controls:load')(source(child.webContents)),save:value=>handlers.get('controls:save')(source(child.webContents),value)};
 }
 test('Cancel discards a draft and Save atomically persists all assignments for the next launch',()=>{
@@ -70,4 +71,13 @@ test('page buttons are added to settings and a saved assignment remains availabl
   h.ipc.emit('controls:close',h.source(h.child.webContents));
   h.ipc.emit('controls:catalog',h.source(h.parent.webContents),[]);
   assert.ok(h.manager.snapshot().actions.some(a=>a.id===action.id));h.manager.destroy();
+});
+
+test('only the player main frame can report a supported playback timing change',()=>{
+  const h=setup(), event=h.source(h.parent.webContents);
+  for (const state of ['pause','playing','reset']) h.ipc.emit('controls:playback',event,state);
+  h.ipc.emit('controls:playback',event,'arbitrary');
+  h.ipc.emit('controls:playback',{...event,senderFrame:{url:'https://spelunkr.tv/'}},'pause');
+  assert.deepEqual(h.playback,['pause','playing','reset']);h.manager.destroy();
+  h.ipc.emit('controls:playback',event,'pause');assert.equal(h.playback.length,3);
 });

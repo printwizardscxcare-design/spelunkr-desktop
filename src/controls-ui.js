@@ -1,7 +1,7 @@
 'use strict';
 (async function () {
   const model = window.ControlsModel, api = window.controlsSettings;
-  const list = document.getElementById('list'), search = document.getElementById('search'), saveButton = document.getElementById('save');
+  const list = document.getElementById('list'), saveButton = document.getElementById('save');
   const status = document.getElementById('status'), capture = document.getElementById('capture');
   let snapshot, draft, original, listening = null, previousFocus = null, saving = false;
   const tracker = new model.GamepadTracker();
@@ -28,10 +28,8 @@
   }
   function render() {
     list.replaceChildren();
-    const query = search.value.trim().toLowerCase();
-    let group = '', rows = 0;
+    let group = '';
     for (const action of snapshot.actions) {
-      if (query && !`${action.label} ${action.group}`.toLowerCase().includes(query)) continue;
       if (group !== action.group) {group = action.group;const heading = document.createElement('h2');heading.className = 'group';heading.textContent = group;list.append(heading);}
       const row = document.createElement('div');row.className = 'row';row.dataset.action = action.id;
       const name = document.createElement('div');name.className = 'action-name';name.textContent = action.label;
@@ -48,9 +46,8 @@
       }
       if (!bindings.childNodes.length) {const empty = document.createElement('span');empty.className = 'unassigned';empty.textContent = 'Not assigned';bindings.append(empty);}
       const assign = document.createElement('button');assign.type = 'button';assign.className = 'assign';assign.textContent = 'Assign';assign.setAttribute('aria-label', `Assign ${action.label}`);assign.addEventListener('click', () => begin(action.id));
-      row.append(name,bindings,assign);list.append(row);rows++;
+      row.append(name,bindings,assign);list.append(row);
     }
-    if (!rows) {const empty = document.createElement('p');empty.className = 'empty';empty.textContent = 'No matching controls.';list.append(empty);}
     updateSave();
   }
   async function save() {
@@ -62,15 +59,18 @@
       else {saving = false;say(result.error, true);updateSave();}
     } catch {saving = false;say('Your controls could not be saved. Try again.',true);updateSave();}
   }
-  snapshot = await api.load();draft = structuredClone(snapshot.config.bindings);original = JSON.stringify(draft);
+  let pendingSnapshot;
   api.onCatalog(next => {
+    if (!snapshot) {pendingSnapshot = next;return;}
     const wasDirty = dirty();
     for (const [id, value] of Object.entries(next.config.bindings)) if (!Object.hasOwn(draft,id)) draft[id] = structuredClone(value);
     snapshot = next;
     if (!wasDirty) original = JSON.stringify(draft);
     render();
   });
-  search.addEventListener('input',render);
+  snapshot = await api.load();
+  if (pendingSnapshot) snapshot = pendingSnapshot;
+  draft = structuredClone(snapshot.config.bindings);original = JSON.stringify(draft);
   document.getElementById('cancel-capture').addEventListener('click',stopCapture);
   document.getElementById('cancel').addEventListener('click',() => api.close());
   document.getElementById('save').addEventListener('click',save);

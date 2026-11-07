@@ -76,10 +76,11 @@ module.exports = function installControls({model, ipcRenderer, document, window,
     }
   }
   window.addEventListener('keydown', event => {
-    if (event.isTrusted !== true || suspended || blocked(event.target)) return;
+    if (event.code === 'Escape' && document.fullscreenElement) return; // Keep the browser's fullscreen exit available.
+    if (event.isTrusted !== true || blocked(event.target)) return;
     const action = model.keyAction(event, current);
     if (action) {
-      event.preventDefault();event.stopImmediatePropagation();run(action, event.repeat === true);
+      event.preventDefault();event.stopImmediatePropagation();if (!suspended) run(action, event.repeat === true);
     } else if (!event.ctrlKey && !event.metaKey && !event.altKey && legacyKeys.has(model.normalizeKey(event)?.code)) {
       // An unassigned key must not fall through to the site's older shortcuts.
       event.preventDefault();event.stopImmediatePropagation();

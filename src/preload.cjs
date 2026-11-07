@@ -13,14 +13,29 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
     video.currentTime = Math.max(start, video.currentTime - 15);
   });
   if (document.addEventListener) {
+    for (const eventName of ['pause', 'playing', 'seeking', 'emptied']) document.addEventListener(eventName, event => {
+      if (event.target !== document.querySelector('.stage-video-col video, video')) return;
+      ipcRenderer.send('controls:playback', ['pause', 'playing'].includes(eventName) ? eventName : 'reset');
+    }, true);
     let overlay;
+    let exitFullscreen;
     let line;
     let measureContext;
-    const pages = new CaptionPages({ now: () => Date.now() });
+    const pages = new CaptionPages({ now: () => performance.now() });
     let state = { enabled: false, color: 'white', size: 1, text: '' };
     const place = () => {
       if (!overlay) return;
       const root = document.fullscreenElement || document.documentElement;
+      if (document.fullscreenElement) {
+        if (!exitFullscreen) {
+          exitFullscreen = document.createElement('button');
+          exitFullscreen.textContent = 'Exit fullscreen (Esc)';
+          exitFullscreen.setAttribute('aria-label', 'Exit fullscreen (Escape)');
+          exitFullscreen.style.cssText = 'position:fixed!important;top:14px!important;right:18px!important;z-index:2147483647!important;padding:8px 14px!important;border:2px solid #2652b2!important;border-radius:0!important;background:#21285a!important;color:#ffff00!important;font:18px Star4000,"Courier New",monospace!important;cursor:pointer!important;pointer-events:auto!important;';
+          exitFullscreen.addEventListener('click', () => document.exitFullscreen()?.catch?.(() => {}));
+        }
+        if (exitFullscreen.parentNode !== root) root.appendChild(exitFullscreen);
+      } else if (exitFullscreen) {exitFullscreen.remove();exitFullscreen = null;}
       if (overlay.parentNode !== root) root.appendChild(overlay);
       const video = document.querySelector('.stage-video-col video, video');
       const rectangle = video?.getBoundingClientRect();

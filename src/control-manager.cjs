@@ -5,7 +5,7 @@ const {pathToFileURL} = require('node:url');
 const model = require('./controls-model.js');
 const {isSite} = require('./policy.cjs');
 
-function createControlManager({win, BrowserWindow, ipcMain, profileDir, platform, actions, io = fs}) {
+function createControlManager({win, BrowserWindow, ipcMain, profileDir, platform, actions, onPlayback = () => {}, io = fs}) {
   const file = path.join(profileDir, 'controls.json');
   const settingsFile = path.join(__dirname, 'controls.html');
   const settingsUrl = pathToFileURL(settingsFile).href;
@@ -24,8 +24,8 @@ function createControlManager({win, BrowserWindow, ipcMain, profileDir, platform
   };
   function open() {
     if (settingsWindow && !settingsWindow.isDestroyed()) {settingsWindow.focus();return;}
-    settingsWindow = new BrowserWindow({parent: win, modal: true, width: 1000, height: 780, minWidth: 760, minHeight: 540,
-      title: 'Controls — Spelunkr Desktop', backgroundColor: '#181421', show: false,
+    settingsWindow = new BrowserWindow({width: 1000, height: 780, minWidth: 760, minHeight: 540,
+      title: 'Controls — Spelunkr Desktop', backgroundColor: '#1c0a57', show: true,
       webPreferences: {preload: path.join(__dirname, 'controls-preload.cjs'), partition: 'controls-settings',
         nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true}});
     if (platform !== 'darwin') settingsWindow.setMenu(null);
@@ -33,11 +33,13 @@ function createControlManager({win, BrowserWindow, ipcMain, profileDir, platform
     settingsWindow.webContents.setWindowOpenHandler(() => ({action: 'deny'}));
     settingsWindow.webContents.on('will-navigate', event => event.preventDefault());
     settingsWindow.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
-    settingsWindow.once('ready-to-show', () => settingsWindow?.show());
     settingsWindow.on('closed', () => {settingsWindow = null;push();if (!win.isDestroyed()) win.focus();});
     push();
     win.webContents.send('desktop:controls-query');
-    settingsWindow.loadFile(settingsFile);
+    settingsWindow.loadFile(settingsFile).catch(error => {
+      console.error('Controls settings failed to load:', error.message);
+      if (settingsWindow && !settingsWindow.isDestroyed()) settingsWindow.close();
+    });
   }
   const ready = event => {if (fromPlayer(event)) push();};
   const receivedCatalog = (event, values) => {
@@ -70,16 +72,19 @@ function createControlManager({win, BrowserWindow, ipcMain, profileDir, platform
     } catch (error) {return {ok: false, error: error.code ? 'Your controls could not be saved. Try again.' : error.message};}
   };
   const close = event => {if (fromSettings(event)) settingsWindow.close();};
+  const playback = (event, state) => {if (fromPlayer(event) && ['pause', 'playing', 'reset'].includes(state)) onPlayback(state);};
   ipcMain.on('controls:ready', ready);
   ipcMain.on('controls:catalog', receivedCatalog);
   ipcMain.on('controls:action', perform);
   ipcMain.on('controls:close', close);
+  ipcMain.on('controls:playback', playback);
   ipcMain.handle('controls:load', load);
   ipcMain.handle('controls:save', save);
   win.webContents.on('did-finish-load', push);
   const destroy = () => {
     ipcMain.removeListener('controls:ready', ready);ipcMain.removeListener('controls:catalog', receivedCatalog);
     ipcMain.removeListener('controls:action', perform);ipcMain.removeListener('controls:close', close);
+    ipcMain.removeListener('controls:playback', playback);
     ipcMain.removeHandler('controls:load');ipcMain.removeHandler('controls:save');
     win.webContents.removeListener('did-finish-load', push);
     if (settingsWindow && !settingsWindow.isDestroyed()) settingsWindow.close();

@@ -7,7 +7,7 @@ const { CaptionPages } = require('../src/caption-pages.cjs');
 const source = fs.readFileSync(require.resolve('../src/preload.cjs'), 'utf8');
 
 function setup({ width = 1920, height = 1080 } = {}) {
-  const ipc = new Map();
+  const ipc = new Map(), sent = [];
   const events = new Map();
   const elements = [];
   class Element {
@@ -15,6 +15,9 @@ function setup({ width = 1920, height = 1080 } = {}) {
     appendChild(child) { child.parentNode = this; this.children.push(child); return child; }
     append(...children) { children.forEach(child => this.appendChild(child)); }
     attachShadow() { this.shadow = new Element('shadow'); return this.shadow; }
+    setAttribute(name, value) {this[name] = value;}
+    addEventListener(name, callback) {(this.events ||= {})[name] = callback;}
+    remove() {this.parentNode = null;}
     getContext() { return { font: '', measureText(text) { return { width: text.length * Number(this.font.match(/([\d.]+)px/)[1]) * .56 }; } }; }
   }
   const root = new Element('html');
@@ -23,13 +26,13 @@ function setup({ width = 1920, height = 1080 } = {}) {
   const video = { getBoundingClientRect: stage.getBoundingClientRect };
   const document = { documentElement: root, fullscreenElement: null, addEventListener: (name, fn) => events.set(name, fn), querySelector: () => video, querySelectorAll: () => [], createElement: tag => new Element(tag) };
   vm.runInNewContext(source, {
-    require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn) } }),
+    require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn), send: (...args) => sent.push(args) } }),
     CaptionPages,
     ControlsModel: {}, installControls() {},
     location: { origin: 'https://spelunkr.tv' }, process: { isMainFrame: true }, document,
-    window: { addEventListener() {} }, innerHeight: height, innerWidth: width, setInterval() {}, setTimeout() {}, clearTimeout() {}
+    window: { addEventListener() {} }, performance, innerHeight: height, innerWidth: width, setInterval() {}, setTimeout() {}, clearTimeout() {}
   });
-  return { document, root, stage, elements, events, send: value => ipc.get('desktop:captions')({}, value) };
+  return { document, root, stage, video, elements, events, sent, send: value => ipc.get('desktop:captions')({}, value) };
 }
 
 test('overlay uses transparent background and white or yellow text without rendering HTML', () => {
@@ -91,4 +94,19 @@ test('caption overlay follows the video into HTML fullscreen', () => {
   assert.equal(overlay.parentNode, h.stage);
   assert.equal(overlay.style.width, '100%');
   assert.equal(overlay.style.bottom, '8%');
+  const exit = h.elements.find(e => e.tag === 'button');
+  assert.equal(exit.textContent, 'Exit fullscreen (Esc)');
+  assert.equal(exit.parentNode, h.stage);
+  let exited = 0;h.document.exitFullscreen = () => {exited++;return Promise.resolve();};
+  exit.events.click();assert.equal(exited,1);
+  h.document.fullscreenElement = null;h.events.get('fullscreenchange')();assert.equal(exit.parentNode,null);
+});
+
+test('only the current player video reports pause, resume, and seek resets', () => {
+  const h = setup();
+  for (const name of ['pause','playing','seeking','emptied']) h.events.get(name)({target: h.video});
+  h.events.get('pause')({target: {}});
+  assert.deepEqual(h.sent.map(args => [...args]), [
+    ['controls:playback','pause'],['controls:playback','playing'],['controls:playback','reset'],['controls:playback','reset']
+  ]);
 });

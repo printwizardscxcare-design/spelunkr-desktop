@@ -10,6 +10,8 @@ This is an unofficial app. It opens the live website, so the channels, schedules
 
 **Current preview: [0.6.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).** You'll need an internet connection to watch. You don't need a GitHub account to download an installer.
 
+The new control assignments, subtitle delay, and unified video fullscreen are being tested for 0.7.0. They aren't in the installers below yet.
+
 | Computer | Installer | Instructions |
 | --- | --- | --- |
 | Windows 10 or 11, Intel/AMD 64-bit | [Windows .exe](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe) | [Windows setup](docs/WINDOWS.md) |
@@ -25,6 +27,10 @@ Windows installers aren't digitally signed. Mac builds are signed locally but ar
 
 Open the app and choose a channel. **Up** goes to the next channel and **Down** goes to the previous one, in both windowed and fullscreen views. Use **F11** for fullscreen on Windows or Linux, or **Control+Command+F** on Mac.
 
+**Left / Right** adjusts volume. The View menu uses the video's fullscreen mode, just like the player button. Press **Escape** or click **Exit fullscreen** to return to the window.
+
+Open **Settings → Controls…** to change keys or assign a controller. Click **Assign**, press the control you want, then **Save** when you're done. See the [controls guide](docs/CONTROLS.md).
+
 The **View** menu also has an always-on-top option. On Linux, that option is disabled when a Wayland session is detected.
 
 ## Captions
@@ -37,6 +43,8 @@ Whisper generates English captions locally. Both speech models are included in t
 
 Under **Captions**, choose white or yellow text and a size. The background stays transparent. Text fills up to two lines, then moves to a fresh block. It clears after pauses, with a little time left to read.
 
+**Captions → Subtitle delay** adds up to 10 seconds in 0.1-second steps. The app remembers your setting. Pausing, seeking, or changing channels clears pending captions.
+
 **Faster** recognition is the default. Try **Balanced** for the larger model if your computer can keep up. Captions have a delay and can make mistakes. Windows 11 users can also choose Windows Live Captions as an alternative.
 
 See the [caption guide](docs/CAPTIONS.md) for settings and troubleshooting.
@@ -47,13 +55,16 @@ See the [caption guide](docs/CAPTIONS.md) for settings and troubleshooting.
 | --- | --- | --- |
 | Fullscreen | F11 | Control+Command+F |
 | Next / previous channel | Up / Down | Up / Down |
+| Volume up / down | Right / Left | Right / Left |
+| Controls settings | Ctrl+, | Command+, |
+| Exit fullscreen | Escape | Escape |
 | Captions on / off | Ctrl+Shift+L | Command+Shift+L |
 | Always on top | Ctrl+Shift+T | Command+Shift+T |
 | Channel guide | Ctrl+Home | Command+Home |
-| Refresh | Ctrl+R or F5 | Command+R |
+| Refresh | Ctrl+R | Command+R |
 | Open the channel in your browser | Ctrl+Shift+O | Command+Shift+O |
 
-On Windows and Linux, **Alt** opens the app menu. The website's own player shortcuts also work.
+On Windows and Linux, **Alt** opens the app menu. These are the defaults; saved assignments replace them. Keep the app focused to use keyboard or controller controls.
 
 ## Updates and help
 

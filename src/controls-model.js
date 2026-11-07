@@ -18,6 +18,9 @@
     ['captionLarger', 'Larger subtitles', 'Captions', true], ['captionSmaller', 'Smaller subtitles', 'Captions', true],
     ['captionWhite', 'White subtitles', 'Captions', true], ['captionYellow', 'Yellow subtitles', 'Captions', true],
     ['captionFaster', 'Faster recognition', 'Captions', true], ['captionBalanced', 'Balanced recognition', 'Captions', true],
+    ['captionDelayLess', 'Reduce subtitle delay (0.1 s)', 'Captions', true, true],
+    ['captionDelayMore', 'Increase subtitle delay (0.1 s)', 'Captions', true, true],
+    ['captionDelayReset', 'Reset subtitle delay', 'Captions', true],
     ['alwaysOnTop', 'Always on top', 'Window', true], ['zoomIn', 'Zoom in', 'Window', true, true],
     ['zoomOut', 'Zoom out', 'Window', true, true], ['zoomReset', 'Reset zoom', 'Window', true],
     ['reload', 'Reload / retry', 'App', true], ['back', 'Go back', 'App', true],
@@ -67,7 +70,7 @@
     if (value.type === 'key') {
       const result = normalizeKey(value);
       if (!result) throw Error('Press a key together with any modifiers you want.');
-      if ((result.alt && ['F4', 'Tab'].includes(result.code)) || (result.ctrl && result.alt && result.code === 'Delete') ||
+      if (result.code === 'Escape' || (result.alt && ['F4', 'Tab'].includes(result.code)) || (result.ctrl && result.alt && result.code === 'Delete') ||
         (platform === 'darwin' && result.meta && result.code === 'KeyQ') ||
         (platform !== 'darwin' && result.meta) ||
         (result.code === 'Comma' && (platform === 'darwin' ? result.meta : result.ctrl))) {
