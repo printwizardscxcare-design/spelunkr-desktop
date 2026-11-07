@@ -19,7 +19,8 @@ jobs:
       - name: Check Chromium audio and saved settings
         shell: pwsh
         run: |
-          $audioCheck = Start-Process -FilePath node_modules/electron/dist/electron.exe -ArgumentList scripts/check-audio-app.cjs -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput audio-check.out.log -RedirectStandardError audio-check.err.log
+          $audioExecutable = Join-Path $PWD 'node_modules/electron/dist/electron.exe'
+          $audioCheck = Start-Process -FilePath $audioExecutable -ArgumentList scripts/check-audio-app.cjs -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput audio-check.out.log -RedirectStandardError audio-check.err.log
           Get-Content audio-check.out.log
           Get-Content audio-check.err.log
           if ($audioCheck.ExitCode -ne 0) { exit $audioCheck.ExitCode }
