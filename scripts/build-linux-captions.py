@@ -9,13 +9,14 @@ import zipfile
 
 root = Path(__file__).resolve().parent.parent
 output = root / "native/bin/linux"
-if (output / ".complete").is_file():
+if (output / ".complete").is_file() and (root / "native/bin/test.wav").is_file():
     print("Linux captions already built; using native/bin/linux")
     sys.exit(0)
 
 subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir",
                 "--name", "caption-reader", "--collect-all", "vosk", "--hidden-import", "_cffi_backend",
-                "--recursive-copy-metadata", "vosk", "--distpath", str(root / "native/bin/frozen"),
+                "--collect-all", "backports.tarfile", "--recursive-copy-metadata", "vosk",
+                "--distpath", str(root / "native/bin/frozen"),
                 "--workpath", str(root / "native/bin/build"), "--specpath", str(root / "native/bin"),
                 str(root / "native/linux_caption_reader.py")], check=True)
 shutil.copytree(root / "native/bin/frozen/caption-reader", output, dirs_exist_ok=True)
@@ -37,3 +38,5 @@ for filename, url in {
 }.items():
     urllib.request.urlretrieve(url, output / filename)
 (output / ".complete").write_text("vosk 0.3.45 / model-small-en-us 0.15\n")
+urllib.request.urlretrieve("https://raw.githubusercontent.com/alphacep/vosk-api/v0.3.45/python/example/test.wav",
+                           root / "native/bin/test.wav")

@@ -150,7 +150,8 @@
         "libpulse"
       ],
       "artifactName": "Spelunkr-Desktop-${version}-Arch-${arch}.pkg.tar.xz"
-    }
+    },
+    "afterPack": "scripts/after-pack.cjs"
   },
   "homepage": "https://github.com/printwizardscxcare-design/spelunkr-desktop",
   "desktopName": "spelunkr-desktop.desktop"
