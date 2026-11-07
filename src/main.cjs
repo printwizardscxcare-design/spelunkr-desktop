@@ -3,7 +3,6 @@
 const { app, BrowserWindow, Menu, dialog, shell, session, screen } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
-const { execFile } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 const { HOME, isSite, isTrustedNavigation, isExternalUrl, safeWindowState } = require('./policy.cjs');
 
@@ -99,7 +98,10 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         buttons: ['OK']
       });
       if (process.platform !== 'win32' || !fs.existsSync(executable)) return unavailable();
-      execFile(executable, [], { windowsHide: true }, error => { if (error && win && !win.isDestroyed()) unavailable(); });
+      // Normal Windows application activation keeps the captions window visible.
+      shell.openPath(executable).then(error => {
+        if (error && win && !win.isDestroyed()) unavailable();
+      }).catch(() => { if (win && !win.isDestroyed()) unavailable(); });
     };
     const back = () => {
       if (failed) loadHome();
