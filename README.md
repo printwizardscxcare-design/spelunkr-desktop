@@ -60,22 +60,22 @@ The **Captions** menu lets you choose:
 - **Faster or Balanced recognition.** Faster is the default; Balanced uses the larger model.
 - **Windows Live Captions** as an optional alternative on Windows 11 22H2 or newer. Whisper also works on Windows 10.
 
-Generated words and their estimated timings can be imperfect. Full viewing on physical Macs and physical-controller hardware have not been tested. The [testing notes](docs/TESTING.md) explain what's been checked.
+Whisper sometimes gets words or timing wrong, especially on noisy recordings. See the [testing notes](docs/TESTING.md) for what's been checked so far.
 
 The [caption guide](docs/CAPTIONS.md) covers settings and troubleshooting, including subtitle delay and pause handling.
 
 ## New in 0.7.0
 
-This release adds:
+The biggest change is how captions catch up with the video. Whisper now works ahead and keeps 15 seconds of subtitles ready before playback resumes. Captions follow the video when you pause or skip, and you can add up to 10 seconds of subtitle delay if needed.
 
-- **Up/Down for channels, Left/Right for volume**, in both windowed and fullscreen views.
-- **Custom keyboard and controller controls.** Open Settings → Controls, click Assign beside an action, press your key or controller input, then Save when you're done. The menu uses the site's fonts, colors, and buttons.
-- **One video fullscreen mode** for the menu, keyboard shortcut, and video button, with a visible Exit fullscreen button and Escape to leave it.
-- **A None caption option** and a single 15-second rewind when captions go from off to on.
-- **Subtitle delay from 0–10 seconds**, adjustable in 0.1-second steps and saved between launches.
-- **A real 15-second caption cache.** The app reads the channel audio ahead of the picture, prepares timestamped subtitles, and then resumes playback. Pauses and seeks follow the video clock. Old tape audio is cleaned up before recognition.
+The controls got some attention too:
 
-The same changes are shared by Windows, both Mac builds, Debian, Arch, and Fedora. See the [controls guide](docs/CONTROLS.md) for the new defaults and assignments.
+- **Up/Down changes channels; Left/Right adjusts volume.** Both work in the window and fullscreen.
+- **Settings → Controls** lets you assign keys or controller inputs. Click Assign, press the control you want, and Save when you're done.
+- **Fullscreen works the same** from the menu, shortcut, or video button. Press Escape or click Exit fullscreen to leave.
+- **Captions start off.** Choose None or use the caption shortcut to turn them off again.
+
+0.7.0 is available for Windows, Intel and Apple Silicon Macs, Debian, Arch, and Fedora. The [controls guide](docs/CONTROLS.md) has the full shortcut list.
 
 ## Updates and help
 
