@@ -13,13 +13,26 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
       const root = document.fullscreenElement || document.documentElement;
       if (overlay.parentNode !== root) root.appendChild(overlay);
       const video = document.querySelector('.stage-video-col video, video');
-      const rectangle = (video?.closest('.stage-video-col') || video)?.getBoundingClientRect();
+      const rectangle = video?.getBoundingClientRect();
       const fullscreen = !!document.fullscreenElement;
       const visibleVideo = rectangle && rectangle.width > 0 && rectangle.height > 0 && rectangle.bottom > 0 && rectangle.top < innerHeight;
       overlay.style.display = state.enabled && state.text && (fullscreen || visibleVideo) ? 'flex' : 'none';
       overlay.style.left = fullscreen ? '0px' : `${Math.max(0, rectangle?.left || 0)}px`;
       overlay.style.width = fullscreen ? '100%' : `${rectangle?.width || 0}px`;
-      overlay.style.bottom = fullscreen ? '8%' : `${Math.max(0, innerHeight - (rectangle?.bottom || 0)) + 28}px`;
+      overlay.style.bottom = fullscreen ? '8%' : `${Math.max(0, innerHeight - (rectangle?.bottom || 0)) + Math.max(18, (rectangle?.height || 0) * .06)}px`;
+      if (line) {
+        const width = fullscreen ? innerWidth : rectangle?.width || 900;
+        const fontSize = Math.max(20, Math.min(42, width * .026));
+        const limit = Math.max(48, Math.min(180, Math.floor(Math.min(width * .86, 1200) / (fontSize * .56) * 1.8)));
+        let visibleText = state.text;
+        if (visibleText.length > limit) {
+          visibleText = visibleText.slice(-limit);
+          const word = visibleText.indexOf(' ');
+          if (word >= 0 && word < 25) visibleText = visibleText.slice(word + 1);
+        }
+        line.style.fontSize = `${fontSize}px`;
+        line.textContent = visibleText;
+      }
     };
     const ensureOverlay = () => {
       if (overlay || !document.documentElement) return;

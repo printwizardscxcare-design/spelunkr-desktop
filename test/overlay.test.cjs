@@ -18,12 +18,12 @@ function setup() {
   const root = new Element('html');
   const stage = new Element('div');
   stage.getBoundingClientRect = () => ({ left: 100, top: 100, bottom: 700, width: 1000, height: 600 });
-  const video = { closest: () => stage };
+  const video = { getBoundingClientRect: stage.getBoundingClientRect };
   const document = { documentElement: root, fullscreenElement: null, addEventListener: (name, fn) => events.set(name, fn), querySelector: () => video, querySelectorAll: () => [], createElement: tag => new Element(tag) };
   vm.runInNewContext(source, {
     require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn) } }),
     location: { origin: 'https://spelunkr.tv' }, process: { isMainFrame: true }, document,
-    window: { addEventListener() {} }, innerHeight: 1080, setInterval() {}, setTimeout() {}, clearTimeout() {}
+    window: { addEventListener() {} }, innerHeight: 1080, innerWidth: 1920, setInterval() {}, setTimeout() {}, clearTimeout() {}
   });
   return { document, root, stage, elements, events, send: value => ipc.get('desktop:captions')({}, value) };
 }
@@ -38,10 +38,18 @@ test('overlay uses transparent background and white or yellow text without rende
   assert.equal(line.style.color, '#ffffff');
   assert.equal(line.textContent, '<b>These are subtitles</b>');
   assert.equal(overlay.style.display, 'flex');
+  assert.equal(overlay.style.bottom, '416px');
   h.send({ enabled: true, color: 'yellow', text: 'Yellow captions' });
   assert.equal(line.style.color, '#ffeb3b');
   h.send({ enabled: false, color: 'yellow', text: '' });
   assert.equal(overlay.style.display, 'none');
+});
+test('long rolling transcripts stay short enough for a subtitle overlay', () => {
+  const h = setup();
+  h.send({ enabled: true, color: 'white', text: 'This sentence repeats. '.repeat(40) });
+  const line = h.elements.find(e => e.tag === 'span');
+  assert.ok(line.textContent.length <= 120);
+  assert.equal(line.style.fontSize, '26px');
 });
 test('caption overlay follows the video into HTML fullscreen', () => {
   const h = setup();
