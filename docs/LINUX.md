@@ -1,6 +1,6 @@
 # Installing on Linux
 
-The Linux packages are for **64-bit Intel and AMD PCs**. Choose your distribution below. You'll need an internet connection to watch and a GitHub account with access to download while the repository is private.
+The Linux packages are for **64-bit Intel and AMD PCs**. Choose your distribution below. You'll need an internet connection to watch.
 
 ## Debian
 

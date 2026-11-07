@@ -4,7 +4,7 @@ The app is an Electron wrapper around the live Spelunkr website. The desktop cod
 
 ## Get the source
 
-Clone the repository with an account that has access, then open its folder:
+Clone the repository, then open its folder:
 
 ```sh
 git clone https://github.com/printwizardscxcare-design/spelunkr-desktop.git

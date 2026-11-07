@@ -8,7 +8,7 @@ This is an unofficial app. It opens the live website, so the channels, schedules
 
 ## Download
 
-**Current preview: [0.6.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).** You'll need an internet connection to watch. The repository is private for now, so sign in to a GitHub account with access before downloading.
+**Current preview: [0.6.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).** You'll need an internet connection to watch. You don't need a GitHub account to download an installer.
 
 | Computer | Installer | Instructions |
 | --- | --- | --- |
