@@ -39,7 +39,7 @@ there's no speech account, Python setup, model download, or cloud subscription.
 The app selects speaker output, including other applications, and doesn't select
 a microphone. It doesn't save audio or transcripts.
 
-Choose **Captions → Recognition speed → Faster** if captions fall behind. Balanced
+Faster recognition is the default. If your Mac can keep up with the larger model, choose **Captions → Recognition speed → Balanced**. Balanced
 uses the base English model; Faster uses the smaller tiny English model. Recognition
 arrives in short batches, so it has a delay and can make mistakes. Color, size,
 transparent text, two-line blocks, and pause clearing work like the other versions.
