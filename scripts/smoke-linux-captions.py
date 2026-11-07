@@ -9,7 +9,8 @@ import time
 
 helper, fixture = map(Path, sys.argv[1:])
 # Recognition of recorded speech checks the bundled library, model, and PCM format.
-result = subprocess.run([str(helper), "--test-wav", str(fixture)], capture_output=True, text=True, timeout=60, check=True)
+result = subprocess.run([str(helper), "--test-wav", str(fixture)], capture_output=True, text=True, timeout=60)
+assert result.returncode == 0, result.stdout + result.stderr
 events = [json.loads(line) for line in result.stdout.splitlines()]
 assert not any(event["type"] == "error" for event in events), result.stdout
 assert any(event["type"] == "caption" and "one" in event["text"] for event in events), result.stdout
