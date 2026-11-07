@@ -69,7 +69,7 @@ pactl list short sources
 ```
 
 The second command should include a monitor for your output. Recognition quality
-depends on the speech and background sound; pauses are inferred from text updates.
+depends on the speech and background sound. Speech detection keeps text visible during ongoing dialogue; captions clear after a detected pause and a short reading hold.
 
 ## Window-manager differences
 

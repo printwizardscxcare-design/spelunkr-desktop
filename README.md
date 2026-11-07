@@ -60,7 +60,7 @@ Whisper generates English captions on your computer using models included in the
 
 Under **Captions**, choose the text color and size. Choose **Recognition speed → Faster** on an older computer, or leave it on Balanced for the larger model. These choices are saved. Fullscreen captions adjust to the screen, and larger text fits fewer words in each block.
 
-Speech detection helps filter silence, and text appears in short subtitle blocks. Recognition has a delay and can make mistakes. If you change your audio output, turn captions off and on to reconnect.
+Speech detection keeps captions from clearing between recognition batches while dialogue continues. Text appears in short subtitle blocks and clears after pauses, with time to read. Recognition has a delay and can make mistakes. If you change your audio output, turn captions off and on to reconnect.
 
 On Windows 11, **Captions → Caption engine → Windows Live Captions** keeps the original Windows option available. Its window is minimized while the app displays its text. First-use speech downloads and Windows' setup apply only to that optional engine. The video's own CC tracks, when available, are separate.
 
