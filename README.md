@@ -6,7 +6,7 @@ An independent, installable Windows app for **[spelunkr.tv](https://spelunkr.tv/
 
 ## Install
 
-Download `Spelunkr-Desktop-0.1.1-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
+Download `Spelunkr-Desktop-0.2.0-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
 
 Requires Windows 10/11 x64 and an internet connection. This first build is unsigned, so Windows may show an unknown-publisher or SmartScreen warning. No automatic updater is included; use this private repository's Releases for new builds. Never install a copy from an unknown source.
 
@@ -16,7 +16,7 @@ Requires Windows 10/11 x64 and an internet connection. This first build is unsig
 | --- | --- |
 | F11 | Toggle app fullscreen |
 | **↑ / ↓ while fullscreen** | **Next / previous channel**, in both app and website video fullscreen |
-| Ctrl+Shift+L | Start **Windows Live Captions** |
+| Ctrl+Shift+L | Toggle **in-app live captions** |
 | Ctrl+Shift+T | Toggle always on top |
 | Ctrl+Home | Return to channel guide |
 | Ctrl+R or F5 | Reload / retry connection |
@@ -24,11 +24,15 @@ Requires Windows 10/11 x64 and an internet connection. This first build is unsig
 | Ctrl+Plus / Minus / 0 | Zoom in / out / reset |
 | Ctrl+Shift+O | Open current Spelunkr page in your browser |
 
-The app menu has the same controls, including **Captions → Start Windows Live Captions**. Press Alt to access the menu. Arrow overrides leave text fields, sliders, subtitle menus, and dialogs alone. Holding an arrow does not repeatedly skip channels. The site's normal shortcuts remain available outside fullscreen.
+The app menu has the same controls, including **Captions → In-app live captions**. Choose **Captions → Text color → White / Yellow**. Captions have a fully transparent background: only text with a small dark shadow appears over the picture. The overlay follows the video into fullscreen and does not intercept clicks. Press Alt to access the menu. Arrow overrides leave text fields, sliders, subtitle menus, and dialogs alone. Holding an arrow does not repeatedly skip channels. The site's normal shortcuts remain available outside fullscreen.
 
 ### Windows native captions
 
-The Captions command starts Windows' built-in Live Captions application using the fixed system executable. Requires **Windows 11 22H2 or later**; it is unavailable on Windows 10. Windows controls the caption overlay and may prompt for a first-time speech-file download. Complete that setup yourself. Use the Windows caption bar to pick a language, change its position, or close it. The command starts the service; it does not toggle it off.
+In-app captions use Windows' built-in Live Captions to generate text. Requires **Windows 11 22H2 or later** and the Windows .NET Framework desktop components normally included in Windows 11. Complete Windows' first-time speech-file setup if prompted. A small native helper reads only the Live Captions text control through Windows accessibility, minimizes the Windows caption window, and sends updates locally to the app. Text appears in a closed shadow root; no caption IPC or desktop functions are exposed to site JavaScript.
+
+Ctrl+Shift+L toggles the in-app overlay while the app has focus. Color is remembered; captions start off each time the app opens. Turning captions off or closing Spelunkr restores a pre-existing Windows caption window; if the bridge started Windows captions itself, it closes that window. Captions clear after 12 seconds without new text. No transcript or audio is saved by the wrapper.
+
+This uses Windows' accessible window structure rather than a public Live Captions text API, so a Windows update can require adjustments. **Captions → Open Windows caption window** remains available as a fallback and for changing the Windows language/settings. The helper does not complete setup or change microphone/privacy settings.
 
 Live Captions captions all PC audio, including this app, using Windows' on-device speech recognition. It is separate from existing subtitle tracks on the website's CC control. The wrapper does not record audio, request microphone permission, or send audio to a transcription service. See [Microsoft's Live Captions guide](https://support.microsoft.com/en-us/accessibility/windows/use-live-captions-to-better-understand-audio).
 
@@ -51,7 +55,7 @@ npm test
 npm run dist -- --publish never
 ```
 
-The installer is written to `dist/`. `npm start` runs the app locally; `npm run pack` creates an unpacked app for testing. Original icons are checked in; regenerate with `powershell -File scripts/make-icon.ps1` if needed. Dependencies and runtime versions are pinned in `package-lock.json`.
+The installer is written to `dist/`. Packaging automatically compiles the native captions helper with Windows' .NET Framework C# compiler. Run `npm run build:captions` before `npm start` when developing. `npm run pack` creates an unpacked app for testing. Original icons are checked in; regenerate with `powershell -File scripts/make-icon.ps1` if needed. Dependencies and runtime versions are pinned in `package-lock.json`.
 
 The Windows GitHub Actions workflow builds an installer and checksum on manual dispatch or version-tag pushes. It does not publish anything publicly.
 
