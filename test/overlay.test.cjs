@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const source = fs.readFileSync(require.resolve('../src/preload.cjs'), 'utf8');
 
-function setup() {
+function setup({ width = 1920, height = 1080 } = {}) {
   const ipc = new Map();
   const events = new Map();
   const elements = [];
@@ -23,7 +23,7 @@ function setup() {
   vm.runInNewContext(source, {
     require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn) } }),
     location: { origin: 'https://spelunkr.tv' }, process: { isMainFrame: true }, document,
-    window: { addEventListener() {} }, innerHeight: 1080, innerWidth: 1920, setInterval() {}, setTimeout() {}, clearTimeout() {}
+    window: { addEventListener() {} }, innerHeight: height, innerWidth: width, setInterval() {}, setTimeout() {}, clearTimeout() {}
   });
   return { document, root, stage, elements, events, send: value => ipc.get('desktop:captions')({}, value) };
 }
@@ -43,6 +43,30 @@ test('overlay uses transparent background and white or yellow text without rende
   assert.equal(line.style.color, '#ffeb3b');
   h.send({ enabled: false, color: 'yellow', text: '' });
   assert.equal(overlay.style.display, 'none');
+});
+test('fullscreen text uses screen width and scales with a larger display', () => {
+  for (const [width, height, expectedFont] of [[1920, 1080, '43.2px'], [3840, 2160, '80px']]) {
+    const h = setup({ width, height });
+    h.document.fullscreenElement = h.stage;
+    h.send({ enabled: true, color: 'white', text: 'Readable fullscreen captions' });
+    const line = h.elements.find(e => e.tag === 'span');
+    assert.equal(line.style.maxWidth, '90%');
+    assert.equal(line.style.fontSize, expectedFont);
+  }
+});
+test('viewer-selected size changes text size and reflows without losing transparency', () => {
+  const h = setup();
+  const incoming = { enabled: true, color: 'yellow', text: 'Adjustable subtitle size' };
+  h.send({ ...incoming, size: 1 });
+  const line = h.elements.find(e => e.tag === 'span');
+  assert.equal(line.style.fontSize, '26px');
+  h.send({ ...incoming, size: 1.5 });
+  assert.equal(line.style.fontSize, '39px');
+  assert.equal(line.style.color, '#ffeb3b');
+  h.send({ ...incoming, size: 99 });
+  assert.equal(line.style.fontSize, '26px');
+  h.send({ ...incoming, size: 0.8 });
+  assert.equal(line.style.fontSize, '20.8px');
 });
 test('long rolling transcripts stay short enough for a subtitle overlay', () => {
   const h = setup();

@@ -6,7 +6,7 @@ An independent, installable Windows app for **[spelunkr.tv](https://spelunkr.tv/
 
 ## Install
 
-Download `Spelunkr-Desktop-0.2.0-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
+Download `Spelunkr-Desktop-0.3.0-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
 
 Requires Windows 10/11 x64 and an internet connection. This first build is unsigned, so Windows may show an unknown-publisher or SmartScreen warning. No automatic updater is included; use this private repository's Releases for new builds. Never install a copy from an unknown source.
 
@@ -24,13 +24,21 @@ Requires Windows 10/11 x64 and an internet connection. This first build is unsig
 | Ctrl+Plus / Minus / 0 | Zoom in / out / reset |
 | Ctrl+Shift+O | Open current Spelunkr page in your browser |
 
-The app menu has the same controls, including **Captions → In-app live captions**. Choose **Captions → Text color → White / Yellow**. Captions have a fully transparent background: only text with a small dark shadow appears over the picture. The overlay follows the video into fullscreen and does not intercept clicks. Press Alt to access the menu. Arrow overrides leave text fields, sliders, subtitle menus, and dialogs alone. Holding an arrow does not repeatedly skip channels. The site's normal shortcuts remain available outside fullscreen.
+The app menu has the same controls, including **Captions → In-app live captions**. Choose **Captions → Text color → White / Yellow** and **Captions → Text size** (80%, 100%, 125%, 150%, or 200%). Both choices are remembered. Captions have a fully transparent background: only text with a small dark shadow appears over the picture. Fullscreen captions use up to 90% of the screen width and scale with display height; changing size also reflows the text. The overlay follows the video into fullscreen and does not intercept clicks. Press Alt to access the menu. Arrow overrides leave text fields, sliders, subtitle menus, and dialogs alone. Holding an arrow does not repeatedly skip channels. The site's normal shortcuts remain available outside fullscreen.
 
 ### Windows native captions
 
 In-app captions use Windows' built-in Live Captions to generate text. Requires **Windows 11 22H2 or later** and the Windows .NET Framework desktop components normally included in Windows 11. Complete Windows' first-time speech-file setup if prompted. A small native helper reads only the Live Captions text control through Windows accessibility, minimizes the Windows caption window, and sends updates locally to the app. Text appears in a closed shadow root; no caption IPC or desktop functions are exposed to site JavaScript.
 
-Ctrl+Shift+L toggles the in-app overlay while the app has focus. Color is remembered; captions start off each time the app opens. Turning captions off or closing Spelunkr restores a pre-existing Windows caption window; if the bridge started Windows captions itself, it closes that window. Captions clear after 12 seconds without new text. No transcript or audio is saved by the wrapper.
+Ctrl+Shift+L toggles the in-app overlay while the app has focus. Captions start off each time the app opens. Turning captions off or closing Spelunkr restores a pre-existing Windows caption window; if the bridge started Windows captions itself, it closes that window. No transcript or audio is saved by the wrapper.
+
+### Subtitle timing and pauses
+
+The display clears after **1.5 seconds without new recognized words**. A batch of text gets initial reading time of about 20 characters per second, bounded between 0.833 and 4 seconds. Continuous speech keeps the cue current. Case/punctuation-only corrections do not restart its pause timer. After clearing, the next cue contains only newly recognized words, even if Windows keeps earlier text in its rolling transcript. Changing color, size, or fullscreen layout does not revive a cleared caption or restart the timer.
+
+Windows Live Captions supplies text rather than word timestamps or an audio-silence signal. The pause detector therefore follows recognition activity; quiet speech, processing delays, or background audio can affect timing. Audio is not captured by the wrapper. Native Windows captions remain available as a fallback.
+
+The design adapts [Netflix's timing guidance](https://partnerhelp.netflixstudios.com/hc/en-us/articles/360051554394-Timed-Text-Style-Guide-Subtitle-Timing-Guidelines), which favors a short hold after speech and avoiding flicker, and its [general requirements](https://partnerhelp.netflixstudios.com/hc/en-us/articles/215758617-Timed-Text-Style-Guide-General-Requirements), which specify a minimum event duration of five-sixths of a second. The 1.5-second recognition-pause threshold and four-second initial-reading cap are this app's live-caption settings. Prepared subtitles with known speech/shot timestamps can follow those guidelines more precisely.
 
 This uses Windows' accessible window structure rather than a public Live Captions text API, so a Windows update can require adjustments. **Captions → Open Windows caption window** remains available as a fallback and for changing the Windows language/settings. The helper does not complete setup or change microphone/privacy settings.
 
