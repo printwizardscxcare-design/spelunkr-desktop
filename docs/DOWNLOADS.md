@@ -8,7 +8,7 @@ GitHub counts downloads for each file attached to a release. The report adds up 
 2. Choose **Run workflow**, leave the branch on **main**, and start it.
 3. Open the finished run. Its **Summary** lists each installer and the total.
 
-The report shows the counts at the time it runs. Run it again for updated numbers. You'll need repository access while the project is private.
+The report shows the counts at the time it runs. Anyone can read a finished report; starting a new one requires permission to run workflows in this repository.
 
 ## Run it locally
 

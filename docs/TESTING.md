@@ -14,7 +14,7 @@ The packaged speech checks feed recorded speech and silent PCM into the actual h
 
 The JavaScript tests cover fullscreen channel arrows, two-line caption blocks, pause clearing, size and color settings, URL restrictions, window state, and capture-process cleanup.
 
-Run records: [Windows build](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42344144335), [Linux package recheck](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42345511438), and [clean Mac installer checks](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42345215264). These links need repository access.
+Run records: [Windows build](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42344144335), [Linux package recheck](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42345511438), and [clean Mac installer checks](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42345215264).
 
 ## Known limits
 

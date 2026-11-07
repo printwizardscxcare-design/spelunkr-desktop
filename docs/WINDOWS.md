@@ -10,7 +10,7 @@ You'll need **Windows 10 or Windows 11 on a 64-bit Intel or AMD PC** and an inte
 
 The installer isn't digitally signed, so Windows may show an unknown-publisher or SmartScreen warning. Download it from this repository's [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0). That page also includes a SHA-256 checksum in `SHA256SUMS.txt`.
 
-Downloads require a GitHub account with access while the repository is private. GitHub's **Source code** ZIP contains the project files; use the `.exe` to install the app.
+GitHub's **Source code** ZIP contains the project files; use the `.exe` to install the app.
 
 ## Start watching
 

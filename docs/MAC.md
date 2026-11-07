@@ -1,6 +1,6 @@
 # Installing on a Mac
 
-You'll need **macOS 14.2 or newer** and an internet connection to watch. Downloads require a GitHub account with access while the repository is private.
+You'll need **macOS 14.2 or newer** and an internet connection to watch.
 
 ## Choose your installer
 
