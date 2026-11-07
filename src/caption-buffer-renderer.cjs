@@ -1,7 +1,9 @@
 'use strict';
 
-module.exports = function installCaptionBuffer({ipcRenderer,document,window,cache,onChange}) {
+module.exports = function installCaptionBuffer({ipcRenderer,document,window,cache,onChange,now = () => performance.now()}) {
   let enabled = false, speed = 'fast', delayMs = 0, session = Date.now(), video = null, url = '', buffering = false;
+  let active = false, cooldownSeconds = 5, cooldownUntil = 0, cooling = false;
+  let observedVideo = null, observedSource = '', observedPath = window.location?.pathname || '';
   let resumeAfterBuffer = false, selfSeek = false, pendingSeek = false, pendingRewind = false, untilMs = 0, complete = false, failed = false;
   let expectedSeek = 0;
   let lastClockMs = null;
@@ -24,9 +26,33 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
     if (canClick) {button.click();if (!paused) expectedSeek = video.currentTime;}
     else if (!siteKey(' ')) {if (paused) video.pause();else video.play()?.catch?.(() => {});}
   };
+  const finishCooldown = () => {
+    if (!cooling) return;
+    cooling = false;cooldownUntil = 0;ipcRenderer.send('buffer:cooldown',false);onChange();
+  };
+  const channelChanged = () => {
+    if (!active) return;
+    // Let surfing continue even if the previous channel was still buffering.
+    if (buffering && resumeAfterBuffer && video === currentVideo()) pausePlayer(false);
+    session++;cache.reset(session);ipcRenderer.send('buffer:stop');
+    buffering = failed = complete = pendingSeek = pendingRewind = false;
+    selfSeek = false;untilMs = 0;lastClockMs = null;video = null;url = '';
+    if (cooldownSeconds > 0) {
+      cooling = true;cooldownUntil = 0;
+      ipcRenderer.send('buffer:cooldown',true);
+    } else finishCooldown();
+    onChange();
+  };
+  const observeChannel = () => {
+    const player = currentVideo(), source = player?.currentSrc || '', pathname = window.location?.pathname || '';
+    const changed = pathname !== observedPath || source && observedSource && (source !== observedSource || player !== observedVideo);
+    observedPath = pathname;
+    if (source) {observedSource = source;observedVideo = player;}
+    if (changed) channelChanged();
+  };
   const prepare = rewind => {
     const player = currentVideo();
-    if (!enabled || !player?.currentSrc || !Number.isFinite(player.currentTime) || player.seeking || Number.isInteger(player.readyState) && player.readyState < 2) return;
+    if (!enabled || cooling || !player?.currentSrc || !Number.isFinite(player.currentTime) || player.seeking || Number.isInteger(player.readyState) && player.readyState < 2) return;
     video = player;
     const shouldResume = buffering ? resumeAfterBuffer : !playerPaused();
     url = player.currentSrc;session++;cache.reset(session);
@@ -47,7 +73,7 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
   };
   const maybeResume = () => {
     if (!enabled || failed || !video || !buffering) return;
-    if (video !== currentVideo() || video.currentSrc !== url) {prepare(false);return;}
+    if (video !== currentVideo() || video.currentSrc !== url) {observeChannel();if (!cooling) prepare(false);return;}
     if (untilMs >= video.currentTime * 1000 + 15000 || complete && untilMs >= video.currentTime * 1000) {
       buffering = false;
       if (resumeAfterBuffer) pausePlayer(false);
@@ -57,6 +83,18 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
   ipcRenderer.on('desktop:caption-buffer',(_event,config) => {
     const wasEnabled = enabled, previousSpeed = speed;
     enabled = config?.enabled === true;speed = config?.speed === 'balanced' ? 'balanced' : 'fast';
+    const wasActive = active;
+    active = config?.active === true || enabled;
+    const previousCooldown = cooldownSeconds;
+    cooldownSeconds = Number.isInteger(config?.cooldownSeconds) && config.cooldownSeconds >= 0 && config.cooldownSeconds <= 30 ? config.cooldownSeconds : 5;
+    if (!wasActive && active) {
+      observedVideo = currentVideo();observedSource = observedVideo?.currentSrc || '';observedPath = window.location?.pathname || '';
+    }
+    if (!active) finishCooldown();
+    else if (cooling && cooldownSeconds !== previousCooldown) {
+      if (cooldownSeconds) cooldownUntil = 0;
+      else finishCooldown();
+    }
     if (!wasEnabled && enabled) pendingRewind = config.rewind === true;
     delayMs = Number.isInteger(config?.delayMs) ? Math.max(0,Math.min(10000,config.delayMs)) : 0;
     if (!enabled) {
@@ -84,6 +122,7 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
     buffering = false;cache.reset();onChange();
   });
   document.addEventListener('seeking',event => {
+    if (active && event.target === currentVideo() && event.target.currentSrc !== observedSource) {observeChannel();return;}
     if (enabled && event.target === video && !(selfSeek && Math.abs(video.currentTime-expectedSeek)<1)) {
       // The site's own resume control corrects its DVR clock by a second or two.
       // Already prepared timestamps remain valid across that small correction.
@@ -100,9 +139,24 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
     }
   },true);
   document.addEventListener('emptied',event => {
-    if (enabled && event.target === video) {session++;cache.reset(session);url = '';ipcRenderer.send('buffer:stop');onChange();}
+    if (active && (event.target === video || event.target === observedVideo)) channelChanged();
   },true);
+  window.addEventListener('spelunkr:navigate',() => {if (active) observeChannel();});
+  window.addEventListener('popstate',() => {if (active) observeChannel();});
   const interval = window.setInterval(() => {
+    if (!active) return;
+    observeChannel();
+    if (cooling) {
+      const player = currentVideo();
+      const slate = document.querySelector('.tuning-slate');
+      const tuning = slate && (!slate.getClientRects || slate.getClientRects().length > 0);
+      if (tuning || !player?.currentSrc || player.seeking || player.error || player.readyState < 3) {
+        cooldownUntil = 0;onChange();return;
+      }
+      if (!cooldownUntil) cooldownUntil = now() + cooldownSeconds * 1000;
+      if (now() < cooldownUntil) {onChange();return;}
+      finishCooldown();
+    }
     if (!enabled || failed) return;
     const player = currentVideo();
     if (player?.currentSrc && (player !== video || player.currentSrc !== url || pendingSeek)) {prepare(pendingRewind);return;}
@@ -117,7 +171,11 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
   },250);
   window.addEventListener('beforeunload',() => window.clearInterval(interval),{once:true});
   return {
+    channelChanged,
+    waitingForTune() {return active && cooling && !cooldownUntil;},
+    cooldown() {return active && cooling && cooldownUntil ? Math.max(1,Math.ceil((cooldownUntil-now())/1000)) : 0;},
     render(width,measure) {
+      if (active && cooling) return {text:'',scale:1};
       if (!enabled) return null;
       if (buffering || !video || pendingSeek) return {text:'Preparing subtitles…',scale:1};
       if (failed || !video || video.paused) return {text:'',scale:1};

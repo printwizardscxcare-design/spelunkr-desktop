@@ -88,8 +88,10 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     let captionEngine = 'whisper';
     let captionSpeed = 'fast';
     let captionDelayMs = 0;
+    let subtitleCooldown = 5;
+    let subtitleCoolingDown = false;
     const saveCaptionPreferences = () => {
-      try { fs.writeFileSync(captionPreferences, JSON.stringify({color: captionColor, size: captionSize, engine: captionEngine, speed: captionSpeed, delayMs: captionDelayMs})); } catch {}
+      try { fs.writeFileSync(captionPreferences, JSON.stringify({color: captionColor, size: captionSize, engine: captionEngine, speed: captionSpeed, delayMs: captionDelayMs, cooldownSeconds: subtitleCooldown})); } catch {}
     };
     const captionSizes = [0.8, 1, 1.25, 1.5, 2];
     try {
@@ -99,6 +101,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       if (savedCaptions.color === 'yellow') captionColor = 'yellow';
       if (captionSizes.includes(savedCaptions.size)) captionSize = savedCaptions.size;
       if (Number.isInteger(savedCaptions.delayMs) && savedCaptions.delayMs >= 0 && savedCaptions.delayMs <= 10000) captionDelayMs = savedCaptions.delayMs;
+      if (Number.isInteger(savedCaptions.cooldownSeconds) && savedCaptions.cooldownSeconds >= 0 && savedCaptions.cooldownSeconds <= 30) subtitleCooldown = savedCaptions.cooldownSeconds;
     } catch {}
     let overlayEnabled = false;
     let playbackPaused = false;
@@ -132,6 +135,15 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       const lessDelay = menu.getMenuItemById('caption-delay-less'), moreDelay = menu.getMenuItemById('caption-delay-more');
       if (lessDelay) lessDelay.enabled = captionDelayMs > 0;
       if (moreDelay) moreDelay.enabled = captionDelayMs < 10000;
+      const cooldownMenu = menu.getMenuItemById('subtitle-cooldown');
+      if (cooldownMenu) cooldownMenu.label = `Subtitle cooldown: ${subtitleCooldown ? `${subtitleCooldown} s` : 'Off'}`;
+      const lessCooldown = menu.getMenuItemById('subtitle-cooldown-less'), moreCooldown = menu.getMenuItemById('subtitle-cooldown-more');
+      if (lessCooldown) lessCooldown.enabled = subtitleCooldown > 0;
+      if (moreCooldown) moreCooldown.enabled = subtitleCooldown < 30;
+      for (const seconds of [0,5,10,15,20,30]) {
+        const choice = menu.getMenuItemById(`subtitle-cooldown-${seconds}`);
+        if (choice) choice.checked = subtitleCooldown === seconds;
+      }
       for (const delay of [0, 500, 1000, 2000, 3000, 5000, 10000]) {
         const item = menu.getMenuItemById(`caption-delay-${delay}`);
         if (item) item.checked = delay === captionDelayMs;
@@ -144,6 +156,15 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     let transition = Promise.resolve();
     let revision = 0;
     const buffered = createCaptionBufferManager({win,ipcMain,nativeRoot,platform:process.platform,
+      onCooldown: waiting => {
+        subtitleCoolingDown = waiting;
+        if (waiting && overlayEnabled) {captionStatus = 'Subtitle cooldown…';updateCaptionMenu();}
+        if (!overlayEnabled || captionEngine === 'whisper') return;
+        if (!waiting) {setOverlayEnabled(true);return;}
+        ++revision;captureAccepting = false;cues.clear({keepSnapshot:false});
+        captionStatus = 'Subtitle cooldown…';updateCaptionMenu();sendCaptions();
+        transition = transition.then(() => captions.stop());
+      },
       onStatus: status => {if (overlayEnabled && captionEngine === 'whisper') {captionStatus = status;updateCaptionMenu();}},
       onFailure: async message => {
         if (!overlayEnabled || captionEngine !== 'whisper') return;
@@ -155,11 +176,12 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       const request = ++revision;
       const rewindOnEnable = enabled && !overlayEnabled;
       overlayEnabled = enabled;
+      if (!enabled) subtitleCoolingDown = false;
       captureAccepting = false;
       cues.clear({ keepSnapshot: false });
       cues.setSpeechActive(captionEngine === 'whisper' ? false : null);
       captionStatus = enabled ? playbackPaused ? 'Paused' : 'Starting captions…' : 'Off';
-      buffered.set({enabled:enabled && captionEngine === 'whisper',speed:captionSpeed,delayMs:captionDelayMs,
+      buffered.set({enabled:enabled && captionEngine === 'whisper',active:enabled,speed:captionSpeed,delayMs:captionDelayMs,cooldownSeconds:subtitleCooldown,
         rewind:rewindOnEnable,restart:enabled && captionEngine === 'whisper'});
       updateCaptionMenu(); sendCaptions();
       transition = transition.then(async () => {
@@ -167,7 +189,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         if (request !== revision || !overlayEnabled) return;
         if (captionEngine === 'whisper') return;
         if (rewindOnEnable && isSite(contents.getURL())) contents.send('desktop:caption-rewind');
-        if (playbackPaused) return;
+        if (playbackPaused || subtitleCoolingDown) return;
         cues.ignoreInitialSnapshot = captionEngine === 'windows';
         captions.configure(captionOptions(nativeRoot, process.platform, captionEngine, captionSpeed));
         captureAccepting = true;
@@ -201,6 +223,11 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       buffered.set({delayMs:captionDelayMs,rewind:false,restart:false});
       saveCaptionPreferences();
       updateCaptionMenu();
+    };
+    const setSubtitleCooldown = seconds => {
+      subtitleCooldown = Math.max(0,Math.min(30,Math.round(seconds)));
+      buffered.set({cooldownSeconds:subtitleCooldown,rewind:false,restart:false});
+      saveCaptionPreferences();updateCaptionMenu();
     };
     captions.on('caption', (text, source) => { if (overlayEnabled && captureAccepting) cues.update(text, source); });
     captions.on('activity', activity => {
@@ -357,6 +384,14 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
           ...[0, 500, 1000, 2000, 3000, 5000, 10000].map(delay => ({id: `caption-delay-${delay}`,
             label: delay ? `${(delay / 1000).toFixed(1)} seconds` : 'No added delay', type: 'checkbox', checked: captionDelayMs === delay,
             click: () => setCaptionDelay(delay)}))
+        ] },
+        { id: 'subtitle-cooldown', label: `Subtitle cooldown: ${subtitleCooldown ? `${subtitleCooldown} s` : 'Off'}`, submenu: [
+          {label:'Wait after channel changes before loading subtitles',enabled:false},
+          {id:'subtitle-cooldown-less',label:'Shorter (−1 s)',enabled:subtitleCooldown > 0,click:() => setSubtitleCooldown(subtitleCooldown-1)},
+          {id:'subtitle-cooldown-more',label:'Longer (+1 s)',enabled:subtitleCooldown < 30,click:() => setSubtitleCooldown(subtitleCooldown+1)},
+          {type:'separator'},
+          ...[0,5,10,15,20,30].map(seconds => ({id:`subtitle-cooldown-${seconds}`,label:seconds ? `${seconds} seconds${seconds === 5 ? ' (default)' : ''}` : 'Off',
+            type:'checkbox',checked:subtitleCooldown === seconds,click:() => setSubtitleCooldown(seconds)}))
         ] },
         { id: 'caption-status', label: 'Off', enabled: false },
         { type: 'separator' },

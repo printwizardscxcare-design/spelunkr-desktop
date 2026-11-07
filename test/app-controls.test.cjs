@@ -13,7 +13,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 async function appHarness(platform, savedCaptions) {
   let window, bridge, menu;
   const messages = [], radioWrites = [], preferences = [];
-  let bufferConfig = {enabled:false};
+  let bufferConfig = {enabled:false}, bufferOptions;
   const app = Object.assign(new EventEmitter(), {
     isPackaged: false, setName() {}, enableSandbox() {}, requestSingleInstanceLock: () => true,
     whenReady: () => Promise.resolve(), getPath: () => '/profile', setAppUserModelId() {}, quit() {}
@@ -72,14 +72,14 @@ async function appHarness(platform, savedCaptions) {
         writeFileSync(file, value) {if (file.endsWith('captions.json')) preferences.push(JSON.parse(value));}
       };
       if (name === './caption-bridge.cjs') return {CaptionBridge: Bridge};
-      if (name === './caption-buffer-manager.cjs') return {createCaptionBufferManager: () => ({
+      if (name === './caption-buffer-manager.cjs') return {createCaptionBufferManager: options => {bufferOptions=options;return {
         set(value){bufferConfig={...bufferConfig,...value};messages.push({channel:'desktop:caption-buffer',value:{...bufferConfig}});},destroy(){}
-      })};
+      };}};
       return realRequire(name);
     }
   });
   await flush();
-  return {window, bridge, menu, messages, preferences, radioWrites, bufferedEnabled:()=>bufferConfig.enabled, playback: state => ipcMain.emit('controls:playback',
+  return {window, bridge, menu, messages, preferences, radioWrites, cooldown:waiting=>bufferOptions.onCooldown(waiting), bufferedEnabled:()=>bufferConfig.enabled, playback: state => ipcMain.emit('controls:playback',
     {sender: window.webContents, senderFrame: window.webContents.mainFrame}, state),
     rewindCount: () => messages.filter(m => m.channel === 'desktop:caption-rewind' || m.channel === 'desktop:caption-buffer' && m.value.enabled && m.value.rewind).length};
 }
@@ -151,5 +151,43 @@ test('subtitle delay is saved, bounded, and restored without enabling captions',
   item('caption-delay-10000').click();item('caption-delay-more').click();assert.equal(h.preferences.at(-1).delayMs,10000);
   item('caption-delay-0').click();item('caption-delay-less').click();assert.equal(h.preferences.at(-1).delayMs,0);
   assert.equal(item('caption-delay-less').enabled,false);assert.equal(item('caption-delay-0').checked,true);
+  h.window.emit('closed');await flush();
+});
+
+for (const platform of ['win32','darwin','linux']) test(`${platform}: subtitle cooldown defaults to five seconds and saves every whole second through thirty`,async () => {
+  const h=await appHarness(platform),item=id=>h.menu.getMenuItemById(id);
+  assert.equal(item('subtitle-cooldown').label,'Subtitle cooldown: 5 s');
+  assert.equal(h.bufferedEnabled(),false);
+  item('subtitle-cooldown-more').click();assert.equal(h.preferences.at(-1).cooldownSeconds,6);
+  item('subtitle-cooldown-30').click();item('subtitle-cooldown-more').click();
+  assert.equal(h.preferences.at(-1).cooldownSeconds,30);assert.equal(item('subtitle-cooldown-more').enabled,false);
+  item('subtitle-cooldown-0').click();item('subtitle-cooldown-less').click();
+  assert.equal(h.preferences.at(-1).cooldownSeconds,0);assert.equal(item('subtitle-cooldown').label,'Subtitle cooldown: Off');
+  item('subtitle-cooldown-5').click();assert.equal(h.preferences.at(-1).cooldownSeconds,5);
+  item('caption-engine-whisper').click();await flush();
+  assert.equal(h.messages.filter(m=>m.channel==='desktop:caption-buffer').at(-1).value.cooldownSeconds,5);
+  h.window.emit('closed');await flush();
+  const restored=await appHarness(platform,{cooldownSeconds:23});
+  assert.equal(restored.menu.getMenuItemById('subtitle-cooldown').label,'Subtitle cooldown: 23 s');
+  assert.equal(restored.bufferedEnabled(),false);restored.window.emit('closed');await flush();
+});
+
+test('invalid saved cooldown settings fall back to five seconds',async () => {
+  for (const cooldownSeconds of [-1,31,1.5,'20',null]) {
+    const h=await appHarness('linux',{cooldownSeconds});
+    assert.equal(h.menu.getMenuItemById('subtitle-cooldown').label,'Subtitle cooldown: 5 s');
+    h.window.emit('closed');await flush();
+  }
+});
+
+test('Windows captions stop during surfing and restart only after cooldown without another rewind',async () => {
+  const h=await appHarness('win32');h.menu.getMenuItemById('caption-engine-windows').click();await flush();
+  assert.equal(h.bridge.active,true);const rewinds=h.rewindCount();
+  h.cooldown(true);await flush();assert.equal(h.bridge.active,false);
+  h.playback('playing');await flush();assert.equal(h.bridge.active,false);
+  h.cooldown(true);await flush();assert.equal(h.bridge.active,false);
+  h.cooldown(false);await flush();assert.equal(h.bridge.active,true);assert.equal(h.rewindCount(),rewinds);
+  h.cooldown(true);await flush();h.menu.getMenuItemById('caption-engine-none').click();await flush();
+  h.cooldown(false);await flush();assert.equal(h.bridge.active,false);
   h.window.emit('closed');await flush();
 });

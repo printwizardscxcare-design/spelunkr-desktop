@@ -3,6 +3,7 @@
 // Runs in an isolated world. No Node or IPC functions are exposed to the site.
 const { ipcRenderer } = require('electron');
 if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
+  let bufferedCaptions;
   ipcRenderer.on('desktop:caption-rewind', () => {
     const rewind = document.querySelector('#stage-key-rw');
     if (rewind && !rewind.disabled) { rewind.click(); return; }
@@ -20,8 +21,8 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
     let overlay;
     let exitFullscreen;
     let line;
+    let cooldownBadge, cooldownLabel;
     let measureContext;
-    let bufferedCaptions;
     const pages = new CaptionPages({ now: () => performance.now() });
     let state = { enabled: false, color: 'white', size: 1, text: '' };
     const place = () => {
@@ -42,6 +43,16 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
       const rectangle = video?.getBoundingClientRect();
       const fullscreen = !!document.fullscreenElement;
       const visibleVideo = rectangle && rectangle.width > 0 && rectangle.height > 0 && rectangle.bottom > 0 && rectangle.top < innerHeight;
+      if (cooldownBadge) {
+        if (cooldownBadge.parentNode !== root) root.appendChild(cooldownBadge);
+        const remaining = bufferedCaptions?.cooldown?.() || 0;
+        const tuning = bufferedCaptions?.waitingForTune?.() || false;
+        cooldownLabel.textContent = tuning ? 'Subtitles after tuning' : remaining ? `Subtitles in ${remaining}s` : '';
+        cooldownBadge.style.display = state.enabled && (remaining || tuning) && (fullscreen || visibleVideo) ? 'block' : 'none';
+        cooldownBadge.style.right = `${fullscreen ? 20 : Math.max(0, innerWidth - (rectangle?.right ?? (rectangle?.left || 0) + (rectangle?.width || 0))) + 12}px`;
+        cooldownBadge.style.bottom = `${fullscreen ? 80 : Math.max(0, innerHeight - (rectangle?.bottom || 0)) + 18}px`;
+        cooldownBadge.style.maxWidth = `${Math.max(0, (fullscreen ? innerWidth : rectangle?.width || 0) - 40)}px`;
+      }
       overlay.style.left = fullscreen ? '0px' : `${Math.max(0, rectangle?.left || 0)}px`;
       overlay.style.width = fullscreen ? '100%' : `${rectangle?.width || 0}px`;
       overlay.style.bottom = fullscreen ? '8%' : `${Math.max(0, innerHeight - (rectangle?.bottom || 0)) + Math.max(18, (rectangle?.height || 0) * .06)}px`;
@@ -69,6 +80,14 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
       line = document.createElement('span');
       measureContext = document.createElement('canvas').getContext('2d');
       shadow.append(style, line);
+      cooldownBadge = document.createElement('div');
+      cooldownBadge.id = 'spelunkr-desktop-subtitle-cooldown';
+      cooldownBadge.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none!important;';
+      const badgeShadow = cooldownBadge.attachShadow({mode:'closed'});
+      const badgeStyle = document.createElement('style');
+      badgeStyle.textContent = 'span{display:block;padding:6px 10px;background:#21285ae6;color:#ffff00;border:1px solid #2652b2;font:clamp(14px,1.4vw,22px) Star4000,"Courier New",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}';
+      cooldownLabel = document.createElement('span');
+      badgeShadow.append(badgeStyle,cooldownLabel);
       place();
     };
     ipcRenderer.on('desktop:captions', (_event, incoming) => {
@@ -92,5 +111,6 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
     setInterval(place, 100);
   }
   installControls({model: ControlsModel, ipcRenderer, document, window,
+    onChannelChange: () => bufferedCaptions?.channelChanged(),
     navigator: typeof navigator === 'object' ? navigator : {}, platform: process.platform || 'win32'});
 }

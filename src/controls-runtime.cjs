@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function installControls({model, ipcRenderer, document, window, navigator = {}, platform = 'win32'}) {
+module.exports = function installControls({model, ipcRenderer, document, window, navigator = {}, platform = 'win32', onChannelChange = () => {}}) {
   let current = model.defaults(platform), suspended = false;
   const tracker = new model.GamepadTracker();
   const legacyKeys = new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyM','KeyR','KeyC','KeyF','KeyG','KeyH','KeyW','KeyS',
@@ -48,6 +48,7 @@ module.exports = function installControls({model, ipcRenderer, document, window,
     if (definition.native) {ipcRenderer.send('controls:action', id);return true;}
     switch (id) {
       case 'channelNext': case 'channelPrevious':
+        onChannelChange();
         window.dispatchEvent(new window.KeyboardEvent('keydown', {key: id === 'channelNext' ? 'ChannelUp' : 'ChannelDown', bubbles: true, cancelable: true}));return true;
       case 'volumeUp': return changeVolume(.05);
       case 'volumeDown': return changeVolume(-.05);
@@ -59,7 +60,7 @@ module.exports = function installControls({model, ipcRenderer, document, window,
       case 'rewind': return document.querySelector('#stage-key-rw') ? click('#stage-key-rw') : seek(-15);
       case 'forward': return document.querySelector('#stage-key-ff') ? click('#stage-key-ff') : seek(15);
       case 'live': return click(null, /^(?:LIVE|Go live|Return to live|Back to live)$/i);
-      case 'randomChannel': return click(null, /Random Channel|^SPELUNK(?:\s*\(R\))?$/i);
+      case 'randomChannel': onChannelChange();return click(null, /Random Channel|^SPELUNK(?:\s*\(R\))?$/i);
       case 'pictureInPicture': return click('#stage-key-float');
       case 'hideComments': return click('#stage-key-hide');
       case 'watch': return click(null, /^WATCH$/i);

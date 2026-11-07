@@ -10,6 +10,7 @@ function setup({ width = 1920, height = 1080 } = {}) {
   const ipc = new Map(), sent = [];
   const events = new Map();
   const elements = [];
+  let remaining = 0, tuning = false;
   class Element {
     constructor(tag) { this.tag = tag; this.style = {}; this.children = []; elements.push(this); }
     appendChild(child) { child.parentNode = this; this.children.push(child); return child; }
@@ -29,11 +30,11 @@ function setup({ width = 1920, height = 1080 } = {}) {
     require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn), send: (...args) => sent.push(args) } }),
     CaptionPages,
     ControlsModel: {}, installControls() {},
-    CaptionCache: class {}, installCaptionBuffer() {return null;},
+    CaptionCache: class {}, installCaptionBuffer() {return {cooldown:()=>remaining,waitingForTune:()=>tuning,render:()=>remaining || tuning ? {text:'',scale:1} : null};},
     location: { origin: 'https://spelunkr.tv' }, process: { isMainFrame: true }, document,
     window: { addEventListener() {} }, performance, innerHeight: height, innerWidth: width, setInterval() {}, setTimeout() {}, clearTimeout() {}
   });
-  return { document, root, stage, video, elements, events, sent, send: value => ipc.get('desktop:captions')({}, value) };
+  return { document, root, stage, video, elements, events, sent, tuning:value=>{tuning=value;events.get('fullscreenchange')();},cooldown:value=>{remaining=value;events.get('fullscreenchange')();}, send: value => ipc.get('desktop:captions')({}, value) };
 }
 
 test('overlay uses transparent background and white or yellow text without rendering HTML', () => {
@@ -110,4 +111,20 @@ test('only the current player video reports pause, resume, and seek resets', () 
   assert.deepEqual(h.sent.map(args => [...args]), [
     ['controls:playback','pause'],['controls:playback','playing'],['controls:playback','reset'],['controls:playback','reset']
   ]);
+});
+
+test('surfing countdown sits at the video corner, follows fullscreen, and disappears when off',() => {
+  const h=setup();h.send({enabled:true,color:'white',text:'Previous channel'});h.cooldown(5);
+  const badge=h.elements.find(e=>e.id==='spelunkr-desktop-subtitle-cooldown');
+  const overlay=h.elements.find(e=>e.id==='spelunkr-desktop-caption-overlay');
+  const label=badge.shadow.children.find(e=>e.tag==='span');
+  h.tuning(true);assert.equal(label.textContent,'Subtitles after tuning');h.tuning(false);
+  assert.equal(label.textContent,'Subtitles in 5s');assert.equal(badge.style.display,'block');
+  assert.equal(badge.style.right,'832px');assert.equal(badge.style.bottom,'398px');assert.equal(overlay.style.display,'none');
+  assert.match(badge.style.cssText,/pointer-events:none/);
+  h.document.fullscreenElement=h.stage;h.cooldown(1);
+  assert.equal(label.textContent,'Subtitles in 1s');assert.equal(badge.parentNode,h.stage);
+  assert.equal(badge.style.right,'20px');assert.equal(badge.style.bottom,'80px');
+  h.send({enabled:false,text:''});assert.equal(badge.style.display,'none');
+  h.cooldown(0);assert.equal(label.textContent,'');
 });
