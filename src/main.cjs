@@ -6,6 +6,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { HOME, isSite, isTrustedNavigation, isExternalUrl, safeWindowState } = require('./policy.cjs');
 const { CaptionBridge } = require('./caption-bridge.cjs');
+const { CaptionCues } = require('./caption-cues.cjs');
 
 app.setName('Spelunkr Desktop');
 app.enableSandbox();
@@ -68,16 +69,23 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       : path.join(__dirname, '../native/bin/CaptionReader.exe'));
     const captionPreferences = path.join(app.getPath('userData'), 'captions.json');
     let captionColor = 'white';
-    try { if (JSON.parse(fs.readFileSync(captionPreferences, 'utf8')).color === 'yellow') captionColor = 'yellow'; } catch {}
+    let captionSize = 1;
+    const captionSizes = [0.8, 1, 1.25, 1.5, 2];
+    try {
+      const savedCaptions = JSON.parse(fs.readFileSync(captionPreferences, 'utf8'));
+      if (savedCaptions.color === 'yellow') captionColor = 'yellow';
+      if (captionSizes.includes(savedCaptions.size)) captionSize = savedCaptions.size;
+    } catch {}
     let overlayEnabled = false;
     let captionText = '';
     let captionStatus = 'Off';
     const sendCaptions = () => {
       if (win && !win.isDestroyed()) contents.send('desktop:captions', {
-        enabled: overlayEnabled && isSite(contents.getURL()), color: captionColor,
+        enabled: overlayEnabled && isSite(contents.getURL()), color: captionColor, size: captionSize,
         text: isSite(contents.getURL()) ? captionText : ''
       });
     };
+    const cues = new CaptionCues({ onText: text => { captionText = text; sendCaptions(); } });
     const updateCaptionMenu = () => {
       const menu = Menu.getApplicationMenu();
       if (!menu) return;
@@ -88,7 +96,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     };
     const setOverlayEnabled = async enabled => {
       overlayEnabled = enabled;
-      captionText = '';
+      cues.clear({ keepSnapshot: false });
       captionStatus = enabled ? 'Connecting to Windows captions…' : 'Off';
       updateCaptionMenu();
       sendCaptions();
@@ -97,18 +105,23 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     };
     const setCaptionColor = color => {
       captionColor = color;
-      try { fs.writeFileSync(captionPreferences, JSON.stringify({ color })); } catch {}
+      try { fs.writeFileSync(captionPreferences, JSON.stringify({ color, size: captionSize })); } catch {}
       sendCaptions();
     };
-    captions.on('caption', text => { captionText = text; sendCaptions(); });
+    const setCaptionSize = size => {
+      captionSize = size;
+      try { fs.writeFileSync(captionPreferences, JSON.stringify({ color: captionColor, size })); } catch {}
+      sendCaptions();
+    };
+    captions.on('caption', text => { if (overlayEnabled) cues.update(text); });
     captions.on('status', status => { captionStatus = status; updateCaptionMenu(); });
     captions.on('failure', async message => {
       await setOverlayEnabled(false);
       if (win && !win.isDestroyed()) dialog.showMessageBox(win, { type: 'info', title: 'In-app captions', message, detail: 'The Windows captions window is still available from Captions → Open Windows caption window.' });
     });
     contents.on('did-finish-load', sendCaptions);
-    contents.on('did-navigate-in-page', () => { captionText = ''; sendCaptions(); });
-    win.on('closed', () => { captions.stop(); });
+    contents.on('did-navigate-in-page', () => { cues.clear(); sendCaptions(); });
+    win.on('closed', () => { cues.clear({ keepSnapshot: false }); captions.stop(); });
     const sendFullscreenState = () => contents.send('desktop:fullscreen', win.isFullScreen());
     win.on('enter-full-screen', sendFullscreenState);
     win.on('leave-full-screen', sendFullscreenState);
@@ -186,12 +199,19 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
           { label: '&White', type: 'radio', checked: captionColor === 'white', click: () => setCaptionColor('white') },
           { label: '&Yellow', type: 'radio', checked: captionColor === 'yellow', click: () => setCaptionColor('yellow') }
         ] },
+        { label: 'Text &size', submenu: [
+          { label: 'Small (80%)', type: 'radio', checked: captionSize === 0.8, click: () => setCaptionSize(0.8) },
+          { label: 'Medium (100%)', type: 'radio', checked: captionSize === 1, click: () => setCaptionSize(1) },
+          { label: 'Large (125%)', type: 'radio', checked: captionSize === 1.25, click: () => setCaptionSize(1.25) },
+          { label: 'Extra large (150%)', type: 'radio', checked: captionSize === 1.5, click: () => setCaptionSize(1.5) },
+          { label: 'Largest (200%)', type: 'radio', checked: captionSize === 2, click: () => setCaptionSize(2) }
+        ] },
         { id: 'caption-status', label: 'Off', enabled: false },
         { type: 'separator' },
         { label: '&Open Windows caption window', click: startLiveCaptions },
         { label: 'About Windows captions', click: () => dialog.showMessageBox(win, {
           title: 'Windows Live Captions', message: 'Captions for whatever is playing.',
-          detail: 'Press Ctrl+Shift+L to toggle transparent, text-only captions inside the video. Choose white or yellow under Captions → Text color.\n\nWindows Live Captions generates the text locally. Its window is minimized while in-app captions run. Complete Windows’ first-time setup if prompted. Requires Windows 11 22H2 or newer.\n\nThis captions all PC audio. Caption text is read through Windows accessibility and is not saved. Windows updates may affect this integration; Open Windows caption window is the fallback. Original subtitle tracks remain available through the website’s CC control.'
+          detail: 'Press Ctrl+Shift+L to toggle transparent, text-only captions inside the video. Choose white/yellow and a text size under Captions. Fullscreen captions adapt to the screen width and height.\n\nCaptions clear after roughly 1.5 seconds without new words, with up to 4 seconds of initial reading time for a batch of text. Windows supplies no exact speech-end timings, so pauses are inferred from recognition updates. Old words stay cleared when the next phrase begins.\n\nWindows Live Captions generates the text locally. Its window is minimized while in-app captions run. Requires Windows 11 22H2 or newer. This captions all PC audio; no audio or transcript is saved. Open Windows caption window remains available as a fallback.'
         }) }
       ] },
       { label: '&Help', submenu: [

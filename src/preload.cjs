@@ -6,8 +6,7 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
   if (document.addEventListener) {
     let overlay;
     let line;
-    let state = { enabled: false, color: 'white', text: '' };
-    let expiry;
+    let state = { enabled: false, color: 'white', size: 1, text: '' };
     const place = () => {
       if (!overlay) return;
       const root = document.fullscreenElement || document.documentElement;
@@ -22,8 +21,8 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
       overlay.style.bottom = fullscreen ? '8%' : `${Math.max(0, innerHeight - (rectangle?.bottom || 0)) + Math.max(18, (rectangle?.height || 0) * .06)}px`;
       if (line) {
         const width = fullscreen ? innerWidth : rectangle?.width || 900;
-        const fontSize = Math.max(20, Math.min(42, width * .026));
-        const limit = Math.max(48, Math.min(180, Math.floor(Math.min(width * .86, 1200) / (fontSize * .56) * 1.8)));
+        const fontSize = (fullscreen ? Math.max(24, Math.min(80, innerHeight * .04)) : Math.max(20, Math.min(42, width * .026))) * state.size;
+        const limit = Math.max(24, Math.min(340, Math.floor(width * (fullscreen ? .9 : .86) / (fontSize * .56) * 1.8)));
         let visibleText = state.text;
         if (visibleText.length > limit) {
           visibleText = visibleText.slice(-limit);
@@ -31,6 +30,7 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
           if (word >= 0 && word < 25) visibleText = visibleText.slice(word + 1);
         }
         line.style.fontSize = `${fontSize}px`;
+        line.style.maxWidth = fullscreen ? '90%' : '86%';
         line.textContent = visibleText;
       }
     };
@@ -49,16 +49,15 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
     ipcRenderer.on('desktop:captions', (_event, incoming) => {
       if (!incoming || typeof incoming.text !== 'string') return;
       let text = incoming.text.replace(/\s+/g, ' ').trim();
-      if (text.length > 220) {
-        text = text.slice(-220);
+      if (text.length > 360) {
+        text = text.slice(-360);
         const word = text.indexOf(' ');
         if (word >= 0 && word < 30) text = text.slice(word + 1);
       }
-      state = { enabled: incoming.enabled === true, color: incoming.color === 'yellow' ? 'yellow' : 'white', text };
+      state = { enabled: incoming.enabled === true, color: incoming.color === 'yellow' ? 'yellow' : 'white',
+        size: [0.8, 1, 1.25, 1.5, 2].includes(incoming.size) ? incoming.size : 1, text };
       ensureOverlay();
       if (line) { line.textContent = state.text; line.style.color = state.color === 'yellow' ? '#ffeb3b' : '#ffffff'; }
-      clearTimeout(expiry);
-      if (state.text) expiry = setTimeout(() => { state.text = ''; if (line) line.textContent = ''; place(); }, 12000);
       place();
     });
     document.addEventListener('DOMContentLoaded', ensureOverlay);
