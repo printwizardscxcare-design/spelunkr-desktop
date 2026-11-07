@@ -1,12 +1,17 @@
 name: Linux installers
 on:
   workflow_dispatch:
+    inputs:
+      artifact-run:
+        description: Existing installer run to diagnose without rebuilding (leave empty for a release build)
+        required: false
   push:
     tags: ['v*']
 permissions:
   contents: read
 jobs:
   build:
+    if: ${{ !inputs.artifact-run }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
@@ -37,6 +42,7 @@ jobs:
             dist/test.wav
   check:
     needs: build
+    if: ${{ always() && !cancelled() && (needs.build.result == 'success' || inputs.artifact-run != '') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -54,5 +60,7 @@ jobs:
         with:
           name: Spelunkr-Desktop-Linux-x64
           path: artifacts
+          run-id: ${{ inputs.artifact-run || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Install package and check captions and startup
         run: docker run --rm -v "$PWD:/source:ro" -v "$PWD/artifacts:/artifacts:ro" "${{ matrix.image }}" bash /source/scripts/smoke-linux-container.sh "${{ matrix.distro }}"
