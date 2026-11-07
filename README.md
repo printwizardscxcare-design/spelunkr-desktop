@@ -112,6 +112,6 @@ Want to check installer download counts? There's a [short guide](docs/DOWNLOADS.
 
 Spelunkr Desktop isn't affiliated with or endorsed by Spelunkr or the Internet Archive. Their website, names, artwork, and videos belong to their respective owners.
 
-The app doesn't host videos or save audio or caption transcripts. [Optional usage statistics](docs/USAGE-STATS.md) report an anonymous installation ID, app version, operating system, and periodic activity to PostHog only after you opt in. The configured analytics project estimates country, discards IP addresses, and removes finer location data before storage. Reporting does not include channel names, viewing history, audio, captions, or screen recordings. Change your choice in **Settings → Usage statistics**. Preferences and website storage stay on your computer; the live website makes its own network requests.
+The app doesn't host videos, save audio or caption transcripts, or add analytics. Preferences and website storage stay on your computer. The live website makes its own network requests.
 
 The app's code and original icon use the [MIT license](LICENSE). Speech and capture components have their own [licenses and credits](native/WHISPER-NOTICES.md).
