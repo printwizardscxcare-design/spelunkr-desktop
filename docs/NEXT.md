@@ -2,6 +2,13 @@
 
 The beta is being developed on the `next-version` branch. The current beta is **0.8.0-beta.1**. [0.7.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) remains the current regular download; the beta will stay separate until a regular release is requested.
 
+## Fix list
+
+Reported November 7, 2026, on the audio update to 0.8.0-beta.1. These are open reports; causes have not been confirmed.
+
+- [ ] **Audio popping during loading and pauses.** Audible pops occur during loading or pauses. Check loading/buffering, channel changes, pause, and resume; transitions should be quiet without clicks or pops.
+- [ ] **Normalization makes normal volume too quiet.** With normalization enabled, ordinary program audio becomes too quiet. Revisit the level target and gain behavior so normal listening stays comfortably audible while loud commercials and channel differences are controlled.
+
 ## Audio
 
 **Audio → Audio settings** adds normalization, a spectral denoiser slider, paired or independent compression/makeup gain, **Pre EQ / Post EQ** placement, and a ten-band EQ. A memory bank includes six classic presets and up to 32 user presets. All current settings and presets persist atomically. A master bypass restores the direct sound.
