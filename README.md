@@ -6,7 +6,7 @@ An independent, installable Windows app for **[spelunkr.tv](https://spelunkr.tv/
 
 ## Install
 
-Download `Spelunkr-Desktop-0.1.0-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
+Download `Spelunkr-Desktop-0.1.1-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
 
 Requires Windows 10/11 x64 and an internet connection. This first build is unsigned, so Windows may show an unknown-publisher or SmartScreen warning. No automatic updater is included; use this private repository's Releases for new builds. Never install a copy from an unknown source.
 

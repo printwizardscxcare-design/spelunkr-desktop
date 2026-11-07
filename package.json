@@ -1,6 +1,6 @@
 {
   "name": "spelunkr-desktop-unofficial",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An independent Windows desktop app for watching spelunkr.tv.",
   "main": "src/main.cjs",
   "author": "Spelunkr Desktop contributors",
