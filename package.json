@@ -1,21 +1,25 @@
 {
   "name": "spelunkr-desktop-unofficial",
-  "version": "0.4.0",
-  "description": "An independent Windows desktop app for watching spelunkr.tv.",
+  "version": "0.5.0",
+  "description": "An independent desktop app for watching spelunkr.tv on Windows and Linux.",
   "main": "src/main.cjs",
-  "author": "Spelunkr Desktop contributors",
+  "author": {
+    "name": "Spelunkr Desktop contributors",
+    "email": "printwizardscxcare-design@users.noreply.github.com"
+  },
   "license": "MIT",
   "private": true,
   "scripts": {
     "start": "electron .",
     "prestart": "npm run build:preload",
     "build:preload": "node scripts/build-preload.cjs",
-    "build:captions": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-caption-reader.ps1",
+    "build:captions": "node scripts/build-captions.cjs",
     "predist": "npm run build:captions && npm run build:preload",
     "prepack": "npm run build:captions && npm run build:preload",
     "test": "node --test test/*.test.cjs",
     "dist": "electron-builder --win nsis --x64",
-    "pack": "electron-builder --win --x64 --dir"
+    "pack": "electron-builder --win --x64 --dir",
+    "dist:linux": "npm run build:captions && npm run build:preload && electron-builder --linux deb rpm pacman --x64"
   },
   "devDependencies": {
     "electron": "45.2.3",
@@ -25,13 +29,32 @@
     "appId": "io.github.printwizardscxcare-design.spelunkrdesktop",
     "productName": "Spelunkr Desktop",
     "asar": true,
-    "directories": { "output": "dist" },
-    "files": ["src/**/*", "assets/icon.png", "LICENSE", "package.json"],
-    "extraResources": [{ "from": "native/bin/CaptionReader.exe", "to": "native/CaptionReader.exe" }],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/icon.png",
+      "LICENSE",
+      "package.json"
+    ],
     "win": {
       "icon": "assets/icon.ico",
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "artifactName": "Spelunkr-Desktop-${version}-Windows-${arch}-Setup.${ext}"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Spelunkr-Desktop-${version}-Windows-${arch}-Setup.${ext}",
+      "extraResources": [
+        {
+          "from": "native/bin/CaptionReader.exe",
+          "to": "native/CaptionReader.exe"
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -45,6 +68,88 @@
       "deleteAppDataOnUninstall": false,
       "runAfterFinish": false,
       "license": "LICENSE"
+    },
+    "linux": {
+      "executableName": "spelunkr-desktop",
+      "icon": "assets/icon.png",
+      "category": "AudioVideo",
+      "synopsis": "An unofficial desktop viewer for spelunkr.tv",
+      "target": [
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "pacman",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Spelunkr-Desktop-${version}-Linux-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "native/bin/linux",
+          "to": "native/linux"
+        }
+      ]
+    },
+    "deb": {
+      "depends": [
+        "libgtk-3-0",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "libatspi2.0-0",
+        "libdrm2",
+        "libgbm1",
+        "libasound2",
+        "libsecret-1-0",
+        "xdg-utils",
+        "pulseaudio-utils"
+      ],
+      "artifactName": "Spelunkr-Desktop-${version}-Debian-${arch}.${ext}"
+    },
+    "rpm": {
+      "depends": [
+        "gtk3",
+        "nss",
+        "libXScrnSaver",
+        "libXtst",
+        "at-spi2-atk",
+        "libdrm",
+        "mesa-libgbm",
+        "alsa-lib",
+        "libsecret",
+        "xdg-utils",
+        "pulseaudio-utils"
+      ],
+      "artifactName": "Spelunkr-Desktop-${version}-Fedora-${arch}.${ext}"
+    },
+    "pacman": {
+      "depends": [
+        "gtk3",
+        "nss",
+        "libxss",
+        "libxtst",
+        "at-spi2-core",
+        "libdrm",
+        "mesa",
+        "alsa-lib",
+        "libsecret",
+        "xdg-utils",
+        "libpulse"
+      ],
+      "artifactName": "Spelunkr-Desktop-${version}-Arch-${arch}.${ext}"
     }
-  }
+  },
+  "homepage": "https://github.com/printwizardscxcare-design/spelunkr-desktop"
 }

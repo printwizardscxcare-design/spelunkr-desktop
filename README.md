@@ -1,6 +1,6 @@
 # Spelunkr Desktop
 
-An unofficial Windows app for [spelunkr.tv](https://spelunkr.tv/). Watch in its own window, change channels with the arrow keys, and put captions right over the picture.
+An unofficial Windows and Linux app for [spelunkr.tv](https://spelunkr.tv/). Watch in its own window, change channels with the arrow keys, and put captions right over the picture.
 
 ## Download and install
 
@@ -18,6 +18,12 @@ The installer isn't digitally signed yet, so Windows may show an unknown-publish
 
 This repository is private for now. You'll need to sign in to a GitHub account with access to download the installer.
 
+## Linux downloads
+
+There are packages for **Debian, Arch Linux, and Fedora**. Download the matching file from the [Linux release](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.5.0), then follow the [Linux installation instructions](docs/LINUX.md).
+
+Linux includes local English captions with the same transparent text, color and size settings, subtitle blocks, and fullscreen controls. It uses Vosk instead of Windows Live Captions. Always on top depends on the desktop; it is unavailable in native Wayland sessions.
+
 ## What it does
 
 Spelunkr runs as the live website, so its channels and schedules stay up to date. This app adds a few things for watching on a PC:
@@ -31,7 +37,7 @@ There's no account needed to watch. An optional Discord sign-in comes from the w
 
 ## Captions
 
-Press **Ctrl+Shift+L**, or choose **Captions → In-app live captions**. On first use, Windows may ask you to download speech files. Finish that setup and then turn captions on in the app.
+On Windows, press **Ctrl+Shift+L**, or choose **Captions → In-app live captions**. On first use, Windows may ask you to download speech files. Finish that setup and then turn captions on in the app.
 
 Under **Captions**, you can change the text color and size. Those choices are saved. Fullscreen captions adjust to the screen, and larger text fits fewer words in each block.
 
@@ -65,7 +71,7 @@ This is a fan-made app. It isn't affiliated with Spelunkr or the Internet Archiv
 
 The app doesn't host videos, save caption transcripts, or add analytics. The live website still makes its own network requests; see [Spelunkr's privacy information](https://spelunkr.tv/about). For casting, use **Open in browser** and cast from Chrome.
 
-Found something broken? [Open an issue](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues) and include your Windows version and what happened.
+Found something broken? [Open an issue](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues) and include your operating system and version and what happened.
 
 For source builds, see [the development notes](docs/DEVELOPMENT.md). Maintainers can [check installer download counts](docs/DOWNLOADS.md).
 

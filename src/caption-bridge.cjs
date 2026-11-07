@@ -23,12 +23,12 @@ class CaptionBridge extends EventEmitter {
     child.stdin.on('error', () => {});
     child.on('error', () => {
       reportedError = true;
-      this.emit('failure', 'The Windows captions helper could not start. Use the native caption window instead.');
+      this.emit('failure', 'The captions helper could not start. Check your installation and caption setup.');
     });
     child.once('close', code => {
       lines.close();
       if (this.child === child) this.child = null;
-      if (code && !reportedError) this.emit('failure', 'The Windows captions connection stopped. Try enabling in-app captions again.');
+      if (code && !reportedError) this.emit('failure', 'The captions connection stopped. Try enabling in-app captions again.');
       this.emit('stopped');
     });
   }

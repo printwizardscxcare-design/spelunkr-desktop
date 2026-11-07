@@ -64,9 +64,8 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     });
 
     const contents = win.webContents;
-    const captions = new CaptionBridge(app.isPackaged
-      ? path.join(process.resourcesPath, 'native/CaptionReader.exe')
-      : path.join(__dirname, '../native/bin/CaptionReader.exe'));
+    const nativeRoot = app.isPackaged ? path.join(process.resourcesPath, 'native') : path.join(__dirname, '../native/bin');
+    const captions = new CaptionBridge(path.join(nativeRoot, process.platform === 'linux' ? 'linux/caption-reader' : 'CaptionReader.exe'));
     const captionPreferences = path.join(app.getPath('userData'), 'captions.json');
     let captionColor = 'white';
     let captionSize = 1;
@@ -86,7 +85,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         text: isSite(contents.getURL()) ? captionText : '', ...captionMetadata
       });
     };
-    const cues = new CaptionCues({ ignoreInitialSnapshot: true,
+    const cues = new CaptionCues({ ignoreInitialSnapshot: process.platform === 'win32',
       onText: (text, metadata) => { captionText = text; captionMetadata = metadata; sendCaptions(); } });
     const updateCaptionMenu = () => {
       const menu = Menu.getApplicationMenu();
@@ -99,7 +98,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     const setOverlayEnabled = async enabled => {
       overlayEnabled = enabled;
       cues.clear({ keepSnapshot: false });
-      captionStatus = enabled ? 'Connecting to Windows captions…' : 'Off';
+      captionStatus = enabled ? (process.platform === 'linux' ? 'Starting local captions…' : 'Connecting to Windows captions…') : 'Off';
       updateCaptionMenu();
       sendCaptions();
       if (enabled) captions.start();
@@ -119,7 +118,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     captions.on('status', status => { captionStatus = status; updateCaptionMenu(); });
     captions.on('failure', async message => {
       await setOverlayEnabled(false);
-      if (win && !win.isDestroyed()) dialog.showMessageBox(win, { type: 'info', title: 'In-app captions', message, detail: 'The Windows captions window is still available from Captions → Open Windows caption window.' });
+      if (win && !win.isDestroyed()) dialog.showMessageBox(win, { type: 'info', title: 'In-app captions', message, detail: process.platform === 'linux' ? 'Captions need a running PulseAudio server or PipeWire with PulseAudio compatibility. See Help → Linux setup and troubleshooting.' : 'The Windows captions window is still available from Captions → Open Windows caption window.' });
     });
     contents.on('did-finish-load', sendCaptions);
     contents.on('did-navigate-in-page', () => { cues.clear(); sendCaptions(); });
@@ -173,7 +172,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     const about = () => dialog.showMessageBox(win, {
       type: 'info', title: 'About Spelunkr Desktop',
       message: `Spelunkr Desktop ${app.getVersion()} — Unofficial`,
-      detail: 'An independent Windows app for spelunkr.tv. Not affiliated with or endorsed by Spelunkr or the Internet Archive.\n\nThis app opens the live website. Internet access is required. The site controls channels, playback, and sign-in.\n\nSpelunkr’s name, website, artwork, and programming belong to their respective owners. The app adds no tracking and does not download or host videos.',
+      detail: 'An independent desktop app for spelunkr.tv. Not affiliated with or endorsed by Spelunkr or the Internet Archive.\n\nThis app opens the live website. Internet access is required. The site controls channels, playback, and sign-in.\n\nSpelunkr’s name, website, artwork, and programming belong to their respective owners. The app adds no tracking and does not download or host videos.',
       buttons: ['OK']
     });
     Menu.setApplicationMenu(Menu.buildFromTemplate([
@@ -191,7 +190,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       ] },
       { label: '&View', submenu: [
         { label: '&Fullscreen', accelerator: 'F11', click: () => win.setFullScreen(!win.isFullScreen()) },
-        { label: '&Always on top', accelerator: 'CmdOrCtrl+Shift+T', type: 'checkbox', click: item => win.setAlwaysOnTop(item.checked) },
+        { label: '&Always on top', enabled: !(process.platform === 'linux' && Boolean(process.env.WAYLAND_DISPLAY)), accelerator: 'CmdOrCtrl+Shift+T', type: 'checkbox', click: item => win.setAlwaysOnTop(item.checked) },
         { type: 'separator' },
         { role: 'zoomIn' }, { role: 'zoomOut' }, { role: 'resetZoom' }
       ] },
@@ -210,13 +209,15 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         ] },
         { id: 'caption-status', label: 'Off', enabled: false },
         { type: 'separator' },
-        { label: '&Open Windows caption window', click: startLiveCaptions },
-        { label: 'About Windows captions', click: () => dialog.showMessageBox(win, {
+        { label: '&Open Windows caption window', visible: process.platform === 'win32', click: startLiveCaptions },
+        { label: 'About Windows captions', visible: process.platform === 'win32', click: () => dialog.showMessageBox(win, {
           title: 'Windows Live Captions', message: 'Captions for whatever is playing.',
           detail: 'Press Ctrl+Shift+L to toggle transparent, text-only captions inside the video. Choose white/yellow and a text size under Captions. Fullscreen captions adapt to the screen width and height.\n\nCaptions clear after roughly 1.5 seconds without new words, with up to 4 seconds of initial reading time for a batch of text. Windows supplies no exact speech-end timings, so pauses are inferred from recognition updates. Old words stay cleared when the next phrase begins.\n\nWindows Live Captions generates the text locally. Its window is minimized while in-app captions run. Requires Windows 11 22H2 or newer. This captions all PC audio; no audio or transcript is saved. Open Windows caption window remains available as a fallback.'
         }) }
       ] },
       { label: '&Help', submenu: [
+        { label: 'Linux setup and troubleshooting', visible: process.platform === 'linux', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop/blob/main/docs/LINUX.md') },
+        { label: 'About Linux captions', visible: process.platform === 'linux', click: () => dialog.showMessageBox(win, { title: 'Linux captions', message: 'Local English captions over the video.', detail: 'Press Ctrl+Shift+L to toggle captions. Text color, size, two-line blocks, pause clearing, and fullscreen sizing use the same controls as Windows. Speech is recognized locally using the bundled Vosk English model. No audio or transcript is saved. Captures your default speaker output, including other apps. After switching audio devices, toggle captions off and on. Requires PulseAudio or PipeWire with PulseAudio compatibility. Recognition quality differs from Windows Live Captions.' }) },
         { label: '&Keyboard shortcuts', click: () => dialog.showMessageBox(win, { title: 'Keyboard shortcuts', message: 'Your TV, on your desktop.', detail: 'F11 — Toggle fullscreen\nUp / Down in fullscreen — Next / Previous channel\nCtrl+Shift+L — Toggle in-app live captions\nCtrl+Shift+T — Always on top\nCtrl+Home — Channel guide\nCtrl+R or F5 — Reload / Retry\nAlt+Left / Right — Back / Forward\nCtrl+Plus / Minus / 0 — Zoom\nCtrl+Shift+O — Open in browser\n\nThe website’s own player shortcuts also work. Press Alt to access the app menu.' }) },
         { label: 'Spelunkr &website', click: () => openExternal(HOME) },
         { label: '&Project and updates', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop') },
