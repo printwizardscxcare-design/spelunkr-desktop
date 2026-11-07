@@ -42,15 +42,27 @@ Not sure which Mac download to choose? Open **Apple menu → About This Mac**. �
 
 **Linux:** Download your distribution's package and install it from the download folder:
 
+**Debian**
+
 ```sh
-# Debian
 sudo apt install ./Spelunkr-Desktop-0.7.0-Debian-amd64.deb
+```
 
-# Arch — update your system first
+**Arch — update your system first:**
+
+```sh
 sudo pacman -Syu
-sudo pacman -U ./Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz
+```
 
-# Fedora
+Then install the package:
+
+```sh
+sudo pacman -U ./Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz
+```
+
+**Fedora**
+
+```sh
 sudo dnf install ./Spelunkr-Desktop-0.7.0-Fedora-x86_64.rpm
 ```
 

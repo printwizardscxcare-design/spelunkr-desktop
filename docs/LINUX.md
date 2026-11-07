@@ -16,6 +16,11 @@ sudo apt install ./Spelunkr-Desktop-0.7.0-Debian-amd64.deb
 
 ```sh
 sudo pacman -Syu
+```
+
+Then install the package from the download folder:
+
+```sh
 sudo pacman -U ./Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz
 ```
 
