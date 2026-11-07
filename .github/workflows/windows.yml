@@ -16,7 +16,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run dist -- --publish never
+      - run: npm run build:captions
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Spelunkr-Caption-Runtime-Windows-x64
+          path: |
+            native/bin/whisper/*.exe
+            native/bin/whisper/*.dll
+      - run: npm run build:preload
+      - run: npx electron-builder --win nsis --x64 --publish never
       - name: Write installer checksum
         shell: pwsh
         run: |
@@ -27,9 +35,3 @@ jobs:
           path: |
             dist/*-Setup.exe
             dist/SHA256SUMS.txt
-      - uses: actions/upload-artifact@v7
-        with:
-          name: Spelunkr-Caption-Runtime-Windows-x64
-          path: |
-            native/bin/whisper/*.exe
-            native/bin/whisper/*.dll
