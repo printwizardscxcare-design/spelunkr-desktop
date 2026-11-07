@@ -8,3 +8,5 @@ src/preload.generated.cjs
 
 .caption-venv/
 __pycache__/
+src/usage-config.json
+.env.stats.local
