@@ -1,56 +1,43 @@
 # Installing on a Mac
 
-You'll need **macOS Sonoma 14.2 or newer** and an internet connection.
+You'll need **macOS 14.2 or newer** and an internet connection to watch. Downloads require a GitHub account with access while the repository is private.
 
-## Choose the right download
+## Choose your installer
 
-Open the Apple menu and choose **About This Mac**.
+Open **Apple menu → About This Mac** and look for the chip or processor:
 
-- If you see **Chip: Apple M1, M2, M3, M4**, or another M-series chip, download
-  [Apple Silicon (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-arm64.dmg).
-- If you see **Processor: Intel**, download
-  [Intel (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-x64.dmg).
+| About This Mac says | Download |
+| --- | --- |
+| Apple M1, M2, M3, M4, or another Apple M-series chip | [Apple Silicon installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-arm64.dmg) |
+| Intel processor | [Intel installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-x64.dmg) |
 
-Both builds run natively. Apple Silicon users don't need Rosetta. The repository is
-private, so downloads require a GitHub account with access.
+Both builds run natively. The Apple Silicon version doesn't need Rosetta. The [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0) also has ZIP copies of the apps and checksums for each architecture.
 
-## Install
+## Install and open
 
-1. Open the downloaded `.dmg` file.
+1. Open the downloaded `.dmg`.
 2. Drag **Spelunkr Desktop** into **Applications**.
-3. Eject the disk image and open the app from Applications.
+3. Eject the disk image, then open the app from Applications.
 
-This preview is signed locally but **isn't notarized by Apple**. If macOS blocks the
-first launch, try opening the app once, then open **System Settings → Privacy &
-Security** and choose **Open Anyway** for Spelunkr Desktop. Follow Apple's
-confirmation prompt. A managed Mac may prevent this until a notarized build is
-available. No system-wide security changes are needed.
+This preview is signed locally but isn't notarized by Apple. If macOS blocks it, try opening the app once, then go to **System Settings → Privacy & Security** and choose **Open Anyway** for Spelunkr Desktop. Follow the confirmation prompt. [Apple explains these first-launch controls](https://support.apple.com/en-us/102445).
 
-## Captions and audio permission
+If your Mac is managed by a school or workplace, its policy may prevent opening an unnotarized app.
 
-Press **Command+Shift+L**, or choose **Captions → In-app live captions**. Allow
-system audio recording when macOS asks. If you previously denied it, open
-**System Settings → Privacy & Security → Screen & System Audio Recording**
-(or **System Audio Recording Only**, depending on your macOS version), enable
-Spelunkr Desktop, then quit and reopen the app.
+## Allow captions to use system audio
 
-Captions use the included Whisper English models. Speech recognition runs locally;
-there's no speech account, Python setup, model download, or cloud subscription.
-The app selects speaker output, including other applications, and doesn't select
-a microphone. It doesn't save audio or transcripts.
+Press **Command+Shift+L** and allow system audio recording when macOS asks.
 
-Faster recognition is the default. If your Mac can keep up with the larger model, choose **Captions → Recognition speed → Balanced**. Balanced
-uses the base English model; Faster uses the smaller tiny English model. Recognition
-arrives in short batches, so it has a delay and can make mistakes. Color, size,
-transparent text, two-line blocks, and pause clearing work like the other versions.
+If access was denied, open **System Settings → Privacy & Security → Screen & System Audio Recording**. Depending on the macOS version, you may see a separate **System Audio Recording Only** section. Enable access for Spelunkr Desktop, then quit and reopen the app. [Apple's audio-recording permission guide](https://support.apple.com/guide/mac-help/control-access-screen-system-audio-recording-mchld6aa7d23/mac) shows where these controls live.
 
-After switching speakers or headphones, toggle captions off and on.
+Whisper uses speaker output, which can include other apps. It doesn't select a microphone or save audio or transcripts. The included models recognize English. See the [caption guide](CAPTIONS.md) for appearance, speed, and troubleshooting.
 
-## Keys
+The installers, speech models, and app startup passed automated checks on Intel and Apple Silicon Macs. **Live speaker capture and the permission flow still need a physical-Mac test.** The [testing notes](TESTING.md) explain that limit.
+
+## Useful keys
 
 | Key | Action |
 | --- | --- |
-| Control+Command+F | Enter or leave fullscreen |
+| Control+Command+F | Fullscreen on / off |
 | Up / Down in fullscreen | Next / previous channel |
 | Command+Shift+L | Captions on / off |
 | Command+Shift+T | Always on top |
@@ -58,17 +45,10 @@ After switching speakers or headphones, toggle captions off and on.
 | Command+Shift+O | Open the channel in your browser |
 | Command+Q | Quit |
 
-To update, quit the app and replace the copy in Applications with the new download.
-To uninstall, quit it and move it from Applications to the Trash. Preferences stay
-in `~/Library/Application Support/Spelunkr Desktop/`.
+## Update or uninstall
 
-## What has been checked
+To update, quit the app and replace the copy in Applications with the new download. There's no automatic updater.
 
-The Mac workflow builds separately on Intel and Apple Silicon runners. It checks
-the app signature, bundled models, speech recognition, streaming speech detection,
-silence handling, and app startup. The system-audio helper is compiled from pinned
-AudioTee source using Apple's Core Audio taps API.
+To uninstall, quit the app and move it from Applications to the Trash. Preferences and website storage stay in `~/Library/Application Support/Spelunkr Desktop/`.
 
-Hosted runners don't reproduce a user's audio-permission prompts and speaker
-devices. **Mac live speaker capture and its permission flow still need a physical
-Mac test.** This is a preview release; keep that limitation in mind when trying it.
+[Back to downloads](../README.md#download)
