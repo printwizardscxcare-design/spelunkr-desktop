@@ -65,10 +65,19 @@ def main():
 
     if not shutil.which("parec"):
         raise RuntimeError("Speaker capture is unavailable. Install pulseaudio-utils (Debian/Fedora) or libpulse (Arch), then try again.")
+    capture_environment = os.environ.copy()
+    if getattr(sys, "frozen", False):
+        # PyInstaller's private libraries belong to this helper, not system tools.
+        # In particular, don't load an older bundled libstdc++ into Fedora's parec.
+        original = capture_environment.get("LD_LIBRARY_PATH_ORIG")
+        if original is None:
+            capture_environment.pop("LD_LIBRARY_PATH", None)
+        else:
+            capture_environment["LD_LIBRARY_PATH"] = original
     # @DEFAULT_MONITOR@ is PulseAudio's speaker monitor; never fall back to the default microphone.
     capture = subprocess.Popen(["parec", "--device=@DEFAULT_MONITOR@", "--format=s16le", "--rate=16000",
                                 "--channels=1", "--latency-msec=100", "--client-name=Spelunkr captions"],
-                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=capture_environment)
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
     threading.Thread(target=watch_parent, daemon=True).start()
