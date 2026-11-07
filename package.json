@@ -1,6 +1,6 @@
 {
   "name": "spelunkr-desktop-unofficial",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "An independent Windows desktop app for watching spelunkr.tv.",
   "main": "src/main.cjs",
   "author": "Spelunkr Desktop contributors",
@@ -8,9 +8,11 @@
   "private": true,
   "scripts": {
     "start": "electron .",
+    "prestart": "npm run build:preload",
+    "build:preload": "node scripts/build-preload.cjs",
     "build:captions": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-caption-reader.ps1",
-    "predist": "npm run build:captions",
-    "prepack": "npm run build:captions",
+    "predist": "npm run build:captions && npm run build:preload",
+    "prepack": "npm run build:captions && npm run build:preload",
     "test": "node --test test/*.test.cjs",
     "dist": "electron-builder --win nsis --x64",
     "pack": "electron-builder --win --x64 --dir"

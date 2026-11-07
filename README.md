@@ -6,7 +6,7 @@ An independent, installable Windows app for **[spelunkr.tv](https://spelunkr.tv/
 
 ## Install
 
-Download `Spelunkr-Desktop-0.3.0-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
+Download `Spelunkr-Desktop-0.4.0-Windows-x64-Setup.exe` from this repository's Releases and run it. The installer is for the current user, does not require administrator access, and offers an installation folder plus Start menu and desktop shortcuts. Remove it through Windows Settings → Apps → Installed apps. Viewing preferences are retained on uninstall.
 
 Requires Windows 10/11 x64 and an internet connection. This first build is unsigned, so Windows may show an unknown-publisher or SmartScreen warning. No automatic updater is included; use this private repository's Releases for new builds. Never install a copy from an unknown source.
 
@@ -34,7 +34,11 @@ Ctrl+Shift+L toggles the in-app overlay while the app has focus. Captions start 
 
 ### Subtitle timing and pauses
 
-The display clears after **1.5 seconds without new recognized words**. A batch of text gets initial reading time of about 20 characters per second, bounded between 0.833 and 4 seconds. Continuous speech keeps the cue current. Case/punctuation-only corrections do not restart its pause timer. After clearing, the next cue contains only newly recognized words, even if Windows keeps earlier text in its rolling transcript. Changing color, size, or fullscreen layout does not revive a cleared caption or restart the timer.
+Captions use **separate cards of up to two lines**. Text fills the current card, and overflow starts a fresh card that replaces the entire previous one. It does not scroll away the first words or show only the tail of a rolling transcript. Line capacity is measured using the actual font and available video/screen width, so larger text fills a card sooner and wider fullscreen views fit more words.
+
+A full card gets a short reading hold (about 20 characters per second, bounded between 0.833 and 4 seconds from first display) before replacement. Recognition bursts queue forward in order instead of skipping their opening cards. Size and window changes reflow the unconsumed text. Completed cards stay consumed when Windows revises or drops earlier transcript history. When captions are first enabled, existing Windows transcript history is used as a baseline; the overlay begins with new recognized speech.
+
+A pause is inferred after **1.5 seconds without new recognized words**. Once any pending cards have been displayed, the subtitle field clears and remains empty until new speech. Case/punctuation-only corrections do not restart its pause timer. The next phrase contains only newly recognized words, even if Windows keeps earlier text in its rolling transcript. Changing color, size, or fullscreen layout does not revive a completed card or restart its reading hold. Switching channel or turning captions off clears pending cards immediately.
 
 Windows Live Captions supplies text rather than word timestamps or an audio-silence signal. The pause detector therefore follows recognition activity; quiet speech, processing delays, or background audio can affect timing. Audio is not captured by the wrapper. Native Windows captions remain available as a fallback.
 
@@ -63,7 +67,7 @@ npm test
 npm run dist -- --publish never
 ```
 
-The installer is written to `dist/`. Packaging automatically compiles the native captions helper with Windows' .NET Framework C# compiler. Run `npm run build:captions` before `npm start` when developing. `npm run pack` creates an unpacked app for testing. Original icons are checked in; regenerate with `powershell -File scripts/make-icon.ps1` if needed. Dependencies and runtime versions are pinned in `package-lock.json`.
+The installer is written to `dist/`. Packaging automatically compiles the native captions helper and bundles the local subtitle layout code into a self-contained sandboxed preload. Run `npm run build:captions` before `npm start` when developing; the preload is generated automatically. `npm run pack` creates an unpacked app for testing. Original icons are checked in; regenerate with `powershell -File scripts/make-icon.ps1` if needed. Dependencies and runtime versions are pinned in `package-lock.json`.
 
 The Windows GitHub Actions workflow builds an installer and checksum on manual dispatch or version-tag pushes. It does not publish anything publicly.
 
