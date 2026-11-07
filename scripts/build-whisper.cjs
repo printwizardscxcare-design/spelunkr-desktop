@@ -45,7 +45,15 @@ async function build() {
   run('cmake', configure);
   run('cmake', ['--build', buildDir, '--config', 'Release', '--parallel', '4', '--target', 'caption-reader']);
   const filename = process.platform === 'win32' ? 'caption-reader.exe' : 'caption-reader';
-  fs.copyFileSync(path.join(buildDir, process.platform === 'win32' ? 'Release' : '', filename), path.join(output, filename));
+  fs.copyFileSync(path.join(buildDir, 'bin', process.platform === 'win32' ? 'Release' : '', filename), path.join(output, filename));
+  function copyLibraries(directory) {
+    for (const entry of fs.readdirSync(directory, {withFileTypes:true})) {
+      const file=path.join(directory,entry.name);
+      if(entry.isDirectory()) copyLibraries(file);
+      else if(/\.(dll|dylib)$|\.so(\.\d+)*$/.test(entry.name)) fs.copyFileSync(file,path.join(output,entry.name));
+    }
+  }
+  copyLibraries(buildDir);
   if (process.platform !== 'win32') fs.chmodSync(path.join(output, filename), 0o755);
   for (const [file, sha] of [
     ['ggml-base.en-q5_1.bin', '4baf70dd0d7c4247ba2b81fafd9c01005ac77c2f9ef064e00dcf195d0e2fdd2f'],
