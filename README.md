@@ -1,5 +1,7 @@
 # Spelunkr Desktop
 
+I really just wanted ok subtitles, and something separate from my browser. Here you go:
+
 Watch [spelunkr.tv](https://spelunkr.tv/) in its own app on Windows, Mac, or Linux. Go fullscreen, change channels with the arrow keys, and put captions over the video.
 
 This is an unofficial app. It opens the live website, so the channels, schedules, and optional sign-in still come from Spelunkr.
