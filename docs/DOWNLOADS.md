@@ -1,6 +1,6 @@
 # Checking installer downloads
 
-GitHub keeps a download count for each file attached to a release. We can total the Windows and Linux installers without putting tracking in the app.
+GitHub keeps a download count for each file attached to a release. We can total the Windows, Mac, and Linux installers without putting tracking in the app.
 
 ## From the GitHub website
 
@@ -21,11 +21,11 @@ node scripts/download-counts.cjs
 To inspect all files in the current release:
 
 ```powershell
-gh release view v0.5.0 --repo printwizardscxcare-design/spelunkr-desktop --json assets --jq '.assets[] | {name, downloadCount}'
+gh release view v0.6.0 --repo printwizardscxcare-design/spelunkr-desktop --json assets --jq '.assets[] | {name, downloadCount}'
 ```
 
 ## What the count means
 
-These are **file downloads**, not unique people, successful installations, or active users. One person can download more than once. The report counts installer `.exe`, `.deb`, `.rpm`, and Arch `.pkg.tar.xz` / `.pkg.tar.zst` files; it excludes checksums, source ZIPs, and workflow artifacts. It doesn't identify who downloaded a file.
+These are **file downloads**, not unique people, successful installations, or active users. One person can download more than once. The report counts installer `.exe`, Mac `.dmg`, `.deb`, `.rpm`, and Arch `.pkg.tar.xz` / `.pkg.tar.zst` files; it excludes checksums, ZIP alternatives, source archives, and workflow artifacts. It doesn't identify who downloaded a file.
 
 The counts come from GitHub's [`download_count` release-asset field](https://docs.github.com/en/rest/releases/assets#get-a-release-asset). No app telemetry or third-party counter is involved.

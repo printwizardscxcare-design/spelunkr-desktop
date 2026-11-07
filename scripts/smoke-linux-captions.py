@@ -40,7 +40,7 @@ try:
     while time.monotonic() < deadline:
         event = lines.get(timeout=max(.1, deadline - time.monotonic()))
         assert event["type"] != "error", event
-        if event["type"] == "caption" and "one" in event["text"]:
+        if event["type"] == "caption" and ("one" in event["text"].lower() or "1" in event["text"]):
             spoken = True
             break
     assert spoken, "No recognized speaker audio"

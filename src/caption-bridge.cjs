@@ -39,7 +39,16 @@ class CaptionBridge extends EventEmitter {
       const capture = this.capture;
       const source = spawn(capture.executable, capture.args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
       this.source = source;
+      let lastAudio = Date.now();
+      source.stdout.on('data', () => { lastAudio = Date.now(); });
       source.stderr.resume(); source.stdout.pipe(child.stdin);
+      // Some output devices stop delivering callbacks during complete silence.
+      // Supply silence only after an actual gap, so VAD can finish the last phrase.
+      this.idleTimer = setInterval(() => {
+        if (!this.stopping && Date.now()-lastAudio >= 300 && !child.stdin.writableNeedDrain && !child.stdin.destroyed)
+          child.stdin.write(Buffer.alloc(2048));
+      },64);
+      this.idleTimer.unref();
       source.on('error', () => fail(capture.failure));
       source.once('close', () => {
         if (this.source === source) this.source = null;
@@ -47,6 +56,7 @@ class CaptionBridge extends EventEmitter {
       });
     }
     child.once('close', () => {
+      clearInterval(this.idleTimer);
       lines.close();
       if (this.child === child) this.child = null;
       if (this.source) this.source.kill();
@@ -57,6 +67,7 @@ class CaptionBridge extends EventEmitter {
   }
   stop() {
     this.stopping = true;
+    clearInterval(this.idleTimer);
     const source = this.source;
     let sourceStopped = Promise.resolve();
     if (source) {

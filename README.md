@@ -1,14 +1,14 @@
 # Spelunkr Desktop
 
-An unofficial Windows and Linux app for [spelunkr.tv](https://spelunkr.tv/). Watch in its own window, change channels with the arrow keys, and put captions right over the picture.
+An unofficial Windows, Mac, and Linux app for [spelunkr.tv](https://spelunkr.tv/). Watch in its own window, change channels with the arrow keys, and put captions right over the picture.
 
 ## Windows download and install
 
-**[Download the Windows installer — v0.5.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.5.0/Spelunkr-Desktop-0.5.0-Windows-x64-Setup.exe)**
+**[Download the Windows installer — v0.6.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe)**
 
-[Release notes and checksum](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.5.0) · [All releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases)
+[Release notes and checksum](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0) · [All releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases)
 
-You'll need **64-bit Windows 10 or Windows 11** and an internet connection. The live-caption feature needs **Windows 11 22H2 or newer**.
+You'll need **64-bit Windows 10 or Windows 11** and an internet connection. Built-in captions work on both. The optional Windows Live Captions engine needs Windows 11 22H2 or newer.
 
 1. Download the installer using the link above. Choose the `.exe` file, rather than GitHub's source-code ZIP.
 2. Open the downloaded file and follow the installer. You can choose where to install it and add Start menu and desktop shortcuts. It installs for your Windows account without administrator access.
@@ -18,19 +18,28 @@ The installer isn't digitally signed yet, so Windows may show an unknown-publish
 
 This repository is private for now. You'll need to sign in to a GitHub account with access to download the installer.
 
+## Mac downloads
+
+| Your Mac | Download |
+| --- | --- |
+| Intel processor | [Intel Mac (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-x64.dmg) |
+| Apple Silicon / M-series chip | [Apple Silicon Mac (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-arm64.dmg) |
+
+You'll need **macOS 14.2 or newer**. Open the DMG, drag the app into Applications, and launch it there. The preview isn't notarized by Apple yet, and captions need system-audio recording permission. See the [Mac installation instructions](docs/MAC.md) for the first launch and permission steps. Mac speaker capture still needs testing on a physical Mac.
+
 ## Linux downloads
 
 Choose the package for your distribution. These builds are for 64-bit Intel and AMD PCs.
 
 | Distribution | Download |
 | --- | --- |
-| Debian 12 or newer | [Debian installer (.deb)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.5.0/Spelunkr-Desktop-0.5.0-Debian-amd64.deb) |
-| Arch Linux | [Arch package (.pkg.tar.xz)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.5.0/Spelunkr-Desktop-0.5.0-Arch-x64.pkg.tar.xz) |
-| Fedora Workstation 43 or newer | [Fedora installer (.rpm)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.5.0/Spelunkr-Desktop-0.5.0-Fedora-x86_64.rpm) |
+| Debian 12 or newer | [Debian installer (.deb)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Debian-amd64.deb) |
+| Arch Linux | [Arch package (.pkg.tar.xz)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz) |
+| Fedora Workstation 43 or newer | [Fedora installer (.rpm)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm) |
 
-Follow the [Linux installation instructions](docs/LINUX.md). [Release notes and checksums](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.5.0) are included with the downloads.
+Follow the [Linux installation instructions](docs/LINUX.md). [Release notes and checksums](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0) are included with the downloads.
 
-Linux includes local English captions with the same transparent text, color and size settings, subtitle blocks, and fullscreen controls. It uses Vosk instead of Windows Live Captions. Always on top depends on the desktop; it is unavailable in native Wayland sessions.
+Linux includes local English captions with the same transparent text, color and size settings, subtitle blocks, and fullscreen controls. It uses the same Whisper engine as Windows and Mac. Always on top depends on the desktop; it is unavailable in native Wayland sessions.
 
 ## What it does
 
@@ -45,13 +54,15 @@ There's no account needed to watch. An optional Discord sign-in comes from the w
 
 ## Captions
 
-On Windows, press **Ctrl+Shift+L**, or choose **Captions → In-app live captions**. On first use, Windows may ask you to download speech files. Finish that setup and then turn captions on in the app.
+Press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac, or choose **Captions → In-app live captions**.
 
-Under **Captions**, you can change the text color and size. Those choices are saved. Fullscreen captions adjust to the screen, and larger text fits fewer words in each block.
+Whisper generates English captions on your computer using models included in the download. There's no speech account or subscription to set up. Captions listen to speaker output, which can include other apps; they don't select a microphone or save audio or transcripts.
 
-The text comes from Windows Live Captions. Its window runs minimized while the app displays the subtitles. Windows captions all PC audio, so you may also see speech from another app if it's playing sound. Recognition can make mistakes, and pauses are estimated from text updates rather than exact speech timings.
+Under **Captions**, choose the text color and size. Choose **Recognition speed → Faster** on an older computer, or leave it on Balanced for the larger model. These choices are saved. Fullscreen captions adjust to the screen, and larger text fits fewer words in each block.
 
-If captions stop working, try turning them off and on again. **Captions → Open Windows caption window** opens the original Windows controls for setup or troubleshooting. The video's own CC tracks, when available, are separate.
+Speech detection helps filter silence, and text appears in short subtitle blocks. Recognition has a delay and can make mistakes. If you change your audio output, turn captions off and on to reconnect.
+
+On Windows 11, **Captions → Caption engine → Windows Live Captions** keeps the original Windows option available. Its window is minimized while the app displays its text. First-use speech downloads and Windows' setup apply only to that optional engine. The video's own CC tracks, when available, are separate.
 
 ## Handy keys
 
@@ -65,7 +76,7 @@ If captions stop working, try turning them off and on again. **Captions → Open
 | Ctrl+R or F5 | Refresh the page |
 | Ctrl+Shift+O | Open the current channel in your browser |
 
-Press **Alt** to reach the app menu. The website's usual player shortcuts also work.
+On Mac, use Command instead of Ctrl, and **Control+Command+F** for fullscreen. On Windows/Linux, press **Alt** to reach the app menu. The website's usual player shortcuts also work.
 
 ## Updates and uninstalling
 

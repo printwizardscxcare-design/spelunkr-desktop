@@ -150,8 +150,13 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     });
     contents.on('did-finish-load', sendCaptions);
     contents.on('did-navigate-in-page', () => { cues.clear(); sendCaptions(); });
-    win.on('closed', () => { overlayEnabled=false; revision++; cues.clear({ keepSnapshot: false }); captions.stop(); win=null; });
-    const sendFullscreenState = () => contents.send('desktop:fullscreen', win.isFullScreen());
+    win.on('closed', () => {
+      overlayEnabled=false; revision++; cues.clear({ keepSnapshot: false }); captions.stop(); win=null;
+      if (process.platform === 'darwin') Menu.setApplicationMenu(Menu.buildFromTemplate([
+        {role:'appMenu'}, {label:'File', submenu:[{label:'New Window', accelerator:'Command+N', click:createWindow}]}
+      ]));
+    });
+    const sendFullscreenState = () => { if (win && !win.isDestroyed() && !contents.isDestroyed()) contents.send('desktop:fullscreen', win.isFullScreen()); };
     win.on('enter-full-screen', sendFullscreenState);
     win.on('leave-full-screen', sendFullscreenState);
     contents.on('did-finish-load', sendFullscreenState);
