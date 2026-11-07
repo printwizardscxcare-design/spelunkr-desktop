@@ -12,12 +12,12 @@ The channels and shows come from the live website. The app gives them their own 
 
 The current download is **[0.7.0, a preview](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0)**. You don't need a GitHub account to download it. Watching needs an internet connection.
 
-There's also **[0.8.0 Beta 1](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.1)** if you'd like to try the new subtitle cooldown. It waits until a channel finishes tuning, then gives you five seconds to keep surfing before subtitles load. You can change that wait to anything up to 30 seconds, or turn it off.
+There's also **[0.8.0 Beta 2](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.2)** with [audio settings](docs/AUDIO.md): normalization, a denoiser slider, compression and makeup gain, Pre EQ / Post EQ, a ten-band EQ, and saved classic or personal presets. Optional subtitle-only cleanup has its own unheard feed. The five-second subtitle cooldown after tuning is included too.
 
 | Version | Windows | All platforms |
 | --- | --- | --- |
 | Current · 0.7.0 | [Download installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Windows-x64-Setup.exe) | [Current downloads](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) |
-| Beta · 0.8.0-beta.1 | [Download beta installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.8.0-beta.1/Spelunkr-Desktop-0.8.0-beta.1-Windows-x64-Setup.exe) | [Beta downloads](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.1) |
+| Beta · 0.8.0-beta.2 | [Download beta installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.8.0-beta.2/Spelunkr-Desktop-0.8.0-beta.2-Windows-x64-Setup.exe) | [Beta downloads](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.2) |
 
 Both versions are available for the computers listed below. The beta installs over an existing copy; you can switch back by quitting and reinstalling 0.7.0. There is no automatic updater. New 0.8 changes will stay in the beta until a regular release is ready.
 

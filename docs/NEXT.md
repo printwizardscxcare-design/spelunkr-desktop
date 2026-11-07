@@ -1,6 +1,12 @@
 # 0.8 beta
 
-The beta is being developed on the `next-version` branch. The first beta is **0.8.0-beta.1**. [0.7.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) remains the current regular download; the beta will stay separate until a regular release is requested.
+The beta is being developed on the `next-version` branch. The current beta is **0.8.0-beta.2**. [0.7.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) remains the current regular download; the beta will stay separate until a regular release is requested.
+
+## Audio
+
+**Audio → Audio settings** adds normalization, a spectral denoiser slider, paired or independent compression/makeup gain, **Pre EQ / Post EQ** placement, and a ten-band EQ. A memory bank includes six classic presets and up to 32 user presets. All current settings and presets persist atomically. A master bypass restores the direct sound.
+
+Optional **Subtitle audio cleanup** is saved independently and processes only Whisper's unheard recognition feed. It preserves the sample clock. It is off by default; the first noisy speech comparison showed retained speech but no wording improvement. See [Audio help](AUDIO.md) for algorithms, reference guidance, and limitations.
 
 ## Subtitle cooldown
 
