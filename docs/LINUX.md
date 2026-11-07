@@ -1,13 +1,10 @@
 # Installing on Linux
 
-The Linux build is for **64-bit Intel and AMD PCs**. Download the package for your
-distribution from [Releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).
-The repository is private, so you need a GitHub account with access.
+The Linux packages are for **64-bit Intel and AMD PCs**. Choose your distribution below. You'll need an internet connection to watch and a GitHub account with access to download while the repository is private.
 
 ## Debian
 
-For Debian 12 or newer, download `Spelunkr-Desktop-0.6.0-Debian-amd64.deb`, open a
-terminal in your Downloads folder, and run:
+For **Debian 12 or newer**, [download the .deb](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Debian-amd64.deb). Open a terminal in the folder where you saved it and run:
 
 ```sh
 sudo apt install ./Spelunkr-Desktop-0.6.0-Debian-amd64.deb
@@ -15,70 +12,55 @@ sudo apt install ./Spelunkr-Desktop-0.6.0-Debian-amd64.deb
 
 ## Arch Linux
 
-Update Arch first, then install the downloaded package:
+[Download the Arch package](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz), update Arch, and install the file:
 
 ```sh
 sudo pacman -Syu
 sudo pacman -U ./Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz
 ```
 
-This is a release download, not an AUR package. The package manager installs the
-app's dependencies from Arch's repositories.
+Run the install command from the download folder. This package is distributed through GitHub Releases; it isn't an AUR package.
 
 ## Fedora
 
-For Fedora Workstation 43 or newer, download `Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm`
-and run:
+For **Fedora Workstation 43 or newer**, [download the .rpm](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm). From the download folder, run:
 
 ```sh
 sudo dnf install ./Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm
 ```
 
-On all three, open **Spelunkr Desktop** from your applications menu. These commands
-also work for updates with the new version's filename. Packages aren't signed yet;
-SHA-256 checksums are provided with each release.
+All three package managers install the declared dependencies. Open **Spelunkr Desktop** from your applications menu when installation finishes. The packages aren't signed; SHA-256 checksums are on the [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).
 
 ## Watching and captions
 
-Press **F11** for fullscreen, then **Up / Down** to change channels. Press
-**Ctrl+Shift+L** to turn captions on. Under **Captions**, choose white or yellow text
-and a size. Text has a transparent background, uses blocks of up to two lines,
-clears during pauses, and adjusts to the fullscreen picture.
+Use **F11** for fullscreen, then **Up / Down** to change channels. **Ctrl+Shift+L** toggles captions while the app has focus.
 
-Linux uses **Whisper**, with base and tiny English speech models included in the download.
-Recognition runs on your computer. No separate Python installation, speech account,
-model download, or cloud subscription is needed. Its accuracy and language support
-differ from Windows Live Captions; the bundled models support English. Use Captions → Recognition speed → Faster if captions fall behind.
+Whisper and its English models are included. Faster recognition is the default; Balanced is available for the larger model. You don't need Python or a speech-service account to use the installed app. The [caption guide](CAPTIONS.md) covers color, size, pause clearing, and recognition settings.
 
-Captions listen to your **default speaker output**, including other applications.
-They do not select a microphone or save audio or transcripts. After changing
-speakers or headphones, turn captions off and on to reconnect to the new output.
+## Sound setup
 
-Your desktop must have **PulseAudio** or **PipeWire with PulseAudio compatibility**
-running. The installer includes the dependency that supplies the `parec` capture
-utility (`pulseaudio-utils` on Debian/Fedora, `libpulse` on Arch). Installing that
-utility does not replace your sound server. On an Arch setup without a sound
-server, configure PipeWire and `pipewire-pulse` using Arch's audio setup guide.
+Captions need a running **PulseAudio** server or **PipeWire with PulseAudio compatibility**. Most desktop installations already have one configured.
 
-If captions fail, check sound playback, toggle captions, and check the error under
-the Captions menu. To check the speaker monitor independently, run:
+The app records the default speaker monitor through `parec`. Its package dependency is `pulseaudio-utils` on Debian/Fedora or `libpulse` on Arch. Installing that client utility doesn't replace your sound server. If you're setting up Arch without an existing audio server, follow the [Arch PipeWire guide](https://wiki.archlinux.org/title/PipeWire) for your desktop.
+
+If captions won't start, first check that ordinary sound playback works. These read-only commands show the default output and available recording sources:
 
 ```sh
 pactl get-default-sink
 pactl list short sources
 ```
 
-The second command should include a monitor for your output. Recognition quality
-depends on the speech and background sound. Speech detection keeps text visible during ongoing dialogue; captions clear after a detected pause and a short reading hold.
+Look for a monitor source for your speaker output. After changing an output device, toggle captions off and on. Speech from other apps can appear in the captions too.
 
-## Window-manager differences
+## Always on top
 
-Fullscreen, channel arrows, and the caption overlay work through the app. **Always
-on top is unavailable in native Wayland sessions** and its menu entry is disabled
-when a Wayland session is detected. Some desktops offer their own “Keep Above”
-window action. On X11, use **Ctrl+Shift+T**.
+The app disables **View → Always on top** when a Wayland session is detected. Some desktops offer their own **Keep Above** window action. On X11, the app's shortcut is **Ctrl+Shift+T**.
 
-## Removing the app
+## Update or uninstall
+
+To update, quit the app and install the newer package using the same command with its new filename. There's no automatic updater.
+
+To remove it, use the command for your distribution:
 
 ```sh
 # Debian
@@ -89,13 +71,8 @@ sudo pacman -R spelunkr-desktop-unofficial
 sudo dnf remove spelunkr-desktop-unofficial
 ```
 
-Preferences remain in `~/.config/Spelunkr Desktop/`.
+Preferences and website storage stay in `~/.config/Spelunkr Desktop/`.
 
-## Validation
+Package installation, speaker-monitor captions, process cleanup, and X11 startup were checked in Debian 13, Fedora 43, and current Arch containers. Debian 12 is a compatibility target, not a separately tested installation. See [testing notes](TESTING.md) for details.
 
-The Linux workflow installs the real packages in Debian 13, Fedora 43, and current
-Arch containers. It checks local speech recognition, speaker-monitor capture,
-caption-process cleanup, and application startup with a virtual X11 display.
-These checks do not replace watching video on a physical desktop or testing every
-Wayland compositor and sound-device combination. Debian 12 is a compatibility
-target; the package installation check uses Debian 13.
+[Back to downloads](../README.md#download)

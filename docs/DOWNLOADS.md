@@ -1,31 +1,35 @@
-# Checking installer downloads
+# Checking download counts
 
-GitHub keeps a download count for each file attached to a release. We can total the Windows, Mac, and Linux installers without putting tracking in the app.
+GitHub counts downloads for each file attached to a release. The report adds up the Windows, Mac, and Linux installers without tracking anything inside the app.
 
-## From the GitHub website
+## Run the report on GitHub
 
 1. Open [Installer download counts](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/workflows/download-counts.yml).
-2. Choose **Run workflow**, leave the branch on **main**, and run it.
-3. Open the finished run. Its **Summary** shows each installer and the total across releases.
+2. Choose **Run workflow**, leave the branch on **main**, and start it.
+3. Open the finished run. Its **Summary** lists each installer and the total.
 
-The report is a snapshot when you run it. Run it again for fresh counts. It needs repository access while this project is private.
+The report shows the counts at the time it runs. Run it again for updated numbers. You'll need repository access while the project is private.
 
-## From your computer
+## Run it locally
 
-If you have Node.js and the [GitHub CLI](https://cli.github.com/) installed, sign in with `gh auth login`, open this repository's folder, and run:
+With Node.js and the [GitHub CLI](https://cli.github.com/) installed, sign in with `gh auth login`, open the repository folder, and run:
 
-```powershell
+```sh
 node scripts/download-counts.cjs
 ```
 
-To inspect all files in the current release:
+To inspect every asset in the current release, including ZIP alternatives and checksum files:
 
-```powershell
-gh release view v0.6.0 --repo printwizardscxcare-design/spelunkr-desktop --json assets --jq '.assets[] | {name, downloadCount}'
+```sh
+gh release view v0.6.0 --repo printwizardscxcare-design/spelunkr-desktop --json assets
 ```
 
-## What the count means
+## Reading the numbers
 
-These are **file downloads**, not unique people, successful installations, or active users. One person can download more than once. The report counts installer `.exe`, Mac `.dmg`, `.deb`, `.rpm`, and Arch `.pkg.tar.xz` / `.pkg.tar.zst` files; it excludes checksums, ZIP alternatives, source archives, and workflow artifacts. It doesn't identify who downloaded a file.
+These are **file downloads**, not unique people, completed installations, or active users. One person can download several files or download the same installer more than once.
 
-The counts come from GitHub's [`download_count` release-asset field](https://docs.github.com/en/rest/releases/assets#get-a-release-asset). No app telemetry or third-party counter is involved.
+The total includes `.exe`, `.dmg`, `.deb`, `.rpm`, and Arch `.pkg.tar.xz` or `.pkg.tar.zst` installers from published releases, including previews. It excludes drafts, Mac ZIP alternatives, checksums, source archives, and workflow artifacts.
+
+The report uses GitHub's [`download_count` field](https://docs.github.com/en/rest/releases/assets#get-a-release-asset). It doesn't identify downloaders, and the app doesn't send usage data back to the repository.
+
+[Back to the project](../README.md)
