@@ -91,6 +91,12 @@ The display borrows the separate-cue approach used by [WebVTT](https://www.w3.or
 
 ## Tests and releases
 
+### Current version and beta
+
+Keep the current release and beta available as separate downloads. Beta work lives on `next-version` and uses numbered versions such as `0.8.0-beta.1`, `0.8.0-beta.2`, and so on. Publish each tested beta as a GitHub pre-release without making it the latest regular release. Keep earlier installers and their checksums intact.
+
+Continue making beta updates until the maintainer explicitly requests a regular release. Don't promote a beta or replace the current download as part of routine feature work. The README should link to both versions.
+
 `npm test` covers URL policy, window state, channel arrows, caption timing and layout, and process cleanup. Packaging also checks the copied speech models and streaming recognition before compressing the installers. [Testing notes](TESTING.md) describe platform checks and their limits.
 
 To publish a new preview:
