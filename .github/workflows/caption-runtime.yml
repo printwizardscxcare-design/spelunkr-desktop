@@ -1,0 +1,24 @@
+name: Buffered caption runtime
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build:captions
+      - run: node scripts/check-buffered-whisper.cjs native/bin/whisper/caption-reader.exe native/bin/jfk.wav
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Spelunkr-Buffered-Caption-Runtime-Windows-x64
+          path: |
+            native/bin/whisper/*.exe
+            native/bin/whisper/*.dll
+            native/bin/whisper/*FFMPEG.txt

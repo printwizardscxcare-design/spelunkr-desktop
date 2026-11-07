@@ -29,6 +29,7 @@ function setup({ width = 1920, height = 1080 } = {}) {
     require: () => ({ ipcRenderer: { on: (name, fn) => ipc.set(name, fn), send: (...args) => sent.push(args) } }),
     CaptionPages,
     ControlsModel: {}, installControls() {},
+    CaptionCache: class {}, installCaptionBuffer() {return null;},
     location: { origin: 'https://spelunkr.tv' }, process: { isMainFrame: true }, document,
     window: { addEventListener() {} }, performance, innerHeight: height, innerWidth: width, setInterval() {}, setTimeout() {}, clearTimeout() {}
   });
