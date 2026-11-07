@@ -93,7 +93,7 @@ The display borrows the separate-cue approach used by [WebVTT](https://www.w3.or
 
 ### Current version and beta
 
-Keep the current release and beta available as separate downloads. Beta work lives on `next-version` and uses numbered versions such as `0.8.0-beta.1`, `0.8.0-beta.2`, and so on. Publish each tested beta as a GitHub pre-release without making it the latest regular release. Keep earlier installers and their checksums intact.
+Keep the current release and beta available as separate downloads. Beta work lives on `next-version`. The maintainer has requested a rolling **0.8.0-beta.1**: replace that beta's installers and checksums after all platforms pass, keeping its download URLs. Use the release workflow's explicit `replace-beta` input. Regular releases remain protected. Keep 0.7.0 available and do not promote the beta without a separate request.
 
 Continue making beta updates until the maintainer explicitly requests a regular release. Don't promote a beta or replace the current download as part of routine feature work. The README should link to both versions.
 

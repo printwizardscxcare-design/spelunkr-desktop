@@ -12,13 +12,13 @@ The default engine is Whisper. It recognizes English speech on your computer, us
 
 ## Subtitle cooldown (0.8 beta)
 
-In the [0.8 beta](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.2), **Captions → Subtitle cooldown** gives you time to browse channels before loading subtitles. It waits for tuning to finish, then counts down near the bottom-right of the video. Each channel change cancels the old wait and starts a fresh one after the new channel tunes in.
+In the [0.8 beta](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.1), **Captions → Subtitle cooldown** gives you time to browse channels before loading subtitles. It waits for tuning to finish, then counts down near the bottom-right of the video. Each channel change cancels the old wait and starts a fresh one after the new channel tunes in.
 
 The default is **5 seconds**. Choose a preset or use the one-second adjustments for any value up to **30 seconds**, or choose **Off**. Your choice is saved. Once the countdown ends, Whisper prepares its separate 15-second subtitle buffer. Turning captions on initially still prepares them right away; pausing or seeking within the same channel doesn't start the cooldown.
 
 This setting isn't in 0.7.0. Both the current version and beta are available on the [download page](../README.md#download).
 
-## Separate subtitle audio (Beta 2)
+## Separate subtitle audio (audio update)
 
 Listening effects never change Whisper's input: it reads the channel file separately. **Audio → Audio settings → Subtitle audio cleanup** optionally adds gentle denoising and speech-focused filtering to that unheard feed. The setting is off by default and is independent of listening presets. It preserves audio duration; changing it rebuilds the subtitle buffer. A noisy test sample retained speech but showed no wording improvement, so compare on your channel. It does not affect Windows Live Captions. See [Audio help](AUDIO.md).
 

@@ -1,6 +1,6 @@
 # 0.8 beta
 
-The beta is being developed on the `next-version` branch. The current beta is **0.8.0-beta.2**. [0.7.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) remains the current regular download; the beta will stay separate until a regular release is requested.
+The beta is being developed on the `next-version` branch. The current beta is **0.8.0-beta.1**. [0.7.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) remains the current regular download; the beta will stay separate until a regular release is requested.
 
 ## Audio
 
