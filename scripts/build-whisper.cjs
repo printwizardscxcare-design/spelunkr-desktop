@@ -54,8 +54,10 @@ async function build() {
   await download('https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v6.2.0.bin', path.join(output, 'ggml-silero-v6.2.0.bin'), '2aa269b785eeb53a82983a20501ddf7c1d9c48e33ab63a41391ac6c9f7fb6987');
   await download('https://raw.githubusercontent.com/alphacep/vosk-api/v0.3.45/python/example/test.wav', path.join(bin, 'test.wav'));
   fs.copyFileSync(path.join(source, 'LICENSE'), path.join(output, 'LICENSE-WHISPER.txt'));
-  fs.copyFileSync(path.join(source, 'ggml/LICENSE'), path.join(output, 'LICENSE-GGML.txt'));
-  await download('https://raw.githubusercontent.com/snakers4/silero-vad/v6.2.0/LICENSE', path.join(output, 'LICENSE-SILERO.txt'));
+  // Whisper's vendored GGML is covered by the source tree's root MIT license.
+  fs.copyFileSync(path.join(source, 'LICENSE'), path.join(output, 'LICENSE-GGML.txt'));
+  await download('https://raw.githubusercontent.com/snakers4/silero-vad/066409f3d9db45a30d21dfcbf9147826ffdd7052/LICENSE', path.join(output, 'LICENSE-SILERO.txt'));
+  await download('https://raw.githubusercontent.com/openai/whisper/main/LICENSE', path.join(output, 'LICENSE-WHISPER-MODELS.txt'));
   fs.copyFileSync(path.join(root, 'native/WHISPER-NOTICES.md'), path.join(output, 'WHISPER-NOTICES.md'));
   if (process.platform === 'darwin') {
     const iconset = path.join(bin, 'icon.iconset'); fs.mkdirSync(iconset, {recursive:true});

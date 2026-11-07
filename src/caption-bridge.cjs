@@ -18,8 +18,9 @@ class CaptionBridge extends EventEmitter {
     const child = spawn(this.executable, this.args, { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     this.child = child;
     let reportedError = false;
+    let active = true;
     const fail = message => {
-      if (this.stopping || reportedError) return;
+      if (this.stopping || reportedError || !active) return;
       reportedError = true; this.emit('failure', message);
     };
     const lines = readline.createInterface({ input: child.stdout });
@@ -35,13 +36,14 @@ class CaptionBridge extends EventEmitter {
     child.stdin.on('error', () => {});
     child.on('error', () => fail('The captions helper could not start. Check your installation.'));
     if (this.capture) {
-      const source = spawn(this.capture.executable, this.capture.args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      const capture = this.capture;
+      const source = spawn(capture.executable, capture.args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
       this.source = source;
       source.stderr.resume(); source.stdout.pipe(child.stdin);
-      source.on('error', () => fail(this.capture.failure));
+      source.on('error', () => fail(capture.failure));
       source.once('close', () => {
         if (this.source === source) this.source = null;
-        fail(this.capture.failure);
+        fail(capture.failure);
       });
     }
     child.once('close', () => {
@@ -49,24 +51,28 @@ class CaptionBridge extends EventEmitter {
       if (this.child === child) this.child = null;
       if (this.source) this.source.kill();
       fail('The captions connection stopped. Try enabling in-app captions again.');
+      active = false;
       this.emit('stopped');
     });
   }
   stop() {
     this.stopping = true;
     const source = this.source;
+    let sourceStopped = Promise.resolve();
     if (source) {
+      sourceStopped = new Promise(resolve => source.once('close', resolve));
       source.stdout.unpipe(); source.kill();
       const force = setTimeout(() => { if (source.exitCode === null && source.signalCode === null) source.kill('SIGKILL'); }, 1000);
       force.unref();
     }
     const child = this.child;
-    if (!child) return Promise.resolve();
-    return new Promise(resolve => {
-      const timeout = setTimeout(() => { child.kill(); resolve(); }, 4000);
+    if (!child) return sourceStopped;
+    const childStopped = new Promise(resolve => {
+      const timeout = setTimeout(() => child.kill('SIGKILL'), 4000);
       child.once('close', () => { clearTimeout(timeout); resolve(); });
       child.stdin.end(this.capture ? undefined : 'stop\n');
     });
+    return Promise.all([childStopped, sourceStopped]);
   }
 }
 module.exports = { CaptionBridge };
