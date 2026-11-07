@@ -87,7 +87,7 @@ jobs:
           (cd release/windows && sed -i 's/\r$//' SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
           (cd release/mac-x64 && sha256sum -c SHA256SUMS-Mac-x64.txt)
           (cd release/mac-arm64 && sha256sum -c SHA256SUMS-Mac-arm64.txt)
-      - name: Create private-repository prerelease with installers
+      - name: Publish preview with installers
         run: |
           TAG_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq .object.sha)
           test "$TAG_SHA" = "$SOURCE_SHA" || { echo 'Release tag does not match the tested source'; exit 1; }

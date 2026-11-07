@@ -2,6 +2,8 @@
 
 Click the app, then press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac. You can also use **Captions → In-app live captions**.
 
+Under **Captions → Caption engine**, choose **Built-in captions (Whisper)** to turn captions on, or **None** to turn them off. None clears the text and stops audio capture and recognition. The shortcut toggles your last-used engine, and the menu selection follows it. Captions start off when you open the app.
+
 The default engine is Whisper. It recognizes English speech on your computer, using models included in the installer. It doesn't need a speech account or send audio to a speech service. Watching channels still needs an internet connection.
 
 ## Appearance
