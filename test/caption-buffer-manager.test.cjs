@@ -1,0 +1,25 @@
+'use strict';
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const {EventEmitter} = require('node:events');
+const {createCaptionBufferManager} = require('../src/caption-buffer-manager.cjs');
+test('buffer source and clock IPC require the player main frame and stop when captions turn off',() => {
+  let reader;const messages=[],starts=[],clocks=[],statuses=[];let stopped=0;
+  class Reader extends EventEmitter {constructor(){super();reader=this;}start(...args){starts.push(args);}clock(...args){clocks.push(args);}stop(){stopped++;}}
+  const contents=Object.assign(new EventEmitter(),{mainFrame:{url:'https://spelunkr.tv/'},getURL:()=> 'https://spelunkr.tv/',send:(...args)=>messages.push(args)});
+  const win=Object.assign(new EventEmitter(),{webContents:contents,isDestroyed:()=>false});
+  const ipcMain=new EventEmitter();
+  const manager=createCaptionBufferManager({win,ipcMain,nativeRoot:'/native',platform:'linux',Reader,onStatus:s=>statuses.push(s)});
+  const event={sender:contents,senderFrame:contents.mainFrame},request={session:1,startMs:85000,url:'https://archive.org/download/test/test.mp4'};
+  manager.set({enabled:true,speed:'fast',rewind:true});
+  assert.equal(messages.at(-1)[1].rewind,true);
+  contents.emit('did-finish-load');assert.equal(messages.at(-1)[1].rewind,false,'Reload must not repeat the activation rewind');
+  ipcMain.emit('buffer:source',{...event,senderFrame:{url:'https://spelunkr.tv/'}},request);assert.equal(starts.length,0);
+  ipcMain.emit('buffer:source',event,request);assert.equal(starts.length,1);assert.equal(starts[0][0].startMs,85000);
+  ipcMain.emit('buffer:clock',event,{session:1,timeMs:86000});assert.deepEqual(clocks,[[1,86000]]);
+  reader.emit('cue',{session:1,text:'Cached',startMs:86000,endMs:88000});assert.equal(messages.at(-1)[0],'desktop:buffer-cue');
+  reader.emit('ready',{session:1,untilMs:100000});assert.match(statuses.at(-1),/15 seconds/);
+  manager.set({enabled:false});const count=messages.length;reader.emit('cue',{session:1,text:'Late',startMs:0,endMs:1});assert.equal(messages.length,count);
+  ipcMain.emit('buffer:source',event,request);assert.equal(starts.length,1);assert.ok(stopped);
+  manager.destroy();ipcMain.emit('buffer:source',event,request);assert.equal(starts.length,1);
+});

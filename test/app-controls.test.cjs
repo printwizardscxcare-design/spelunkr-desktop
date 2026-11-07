@@ -13,6 +13,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 async function appHarness(platform, savedCaptions) {
   let window, bridge, menu;
   const messages = [], radioWrites = [], preferences = [];
+  let bufferConfig = {enabled:false};
   const app = Object.assign(new EventEmitter(), {
     isPackaged: false, setName() {}, enableSandbox() {}, requestSingleInstanceLock: () => true,
     whenReady: () => Promise.resolve(), getPath: () => '/profile', setAppUserModelId() {}, quit() {}
@@ -71,13 +72,16 @@ async function appHarness(platform, savedCaptions) {
         writeFileSync(file, value) {if (file.endsWith('captions.json')) preferences.push(JSON.parse(value));}
       };
       if (name === './caption-bridge.cjs') return {CaptionBridge: Bridge};
+      if (name === './caption-buffer-manager.cjs') return {createCaptionBufferManager: () => ({
+        set(value){bufferConfig={...bufferConfig,...value};messages.push({channel:'desktop:caption-buffer',value:{...bufferConfig}});},destroy(){}
+      })};
       return realRequire(name);
     }
   });
   await flush();
-  return {window, bridge, menu, messages, preferences, radioWrites, playback: state => ipcMain.emit('controls:playback',
+  return {window, bridge, menu, messages, preferences, radioWrites, bufferedEnabled:()=>bufferConfig.enabled, playback: state => ipcMain.emit('controls:playback',
     {sender: window.webContents, senderFrame: window.webContents.mainFrame}, state),
-    rewindCount: () => messages.filter(m => m.channel === 'desktop:caption-rewind').length};
+    rewindCount: () => messages.filter(m => m.channel === 'desktop:caption-rewind' || m.channel === 'desktop:caption-buffer' && m.value.enabled && m.value.rewind).length};
 }
 
 for (const platform of ['win32', 'darwin', 'linux']) test(`${platform}: captions start off, None stops them, and only an off-to-on transition rewinds`, async () => {
@@ -88,7 +92,7 @@ for (const platform of ['win32', 'darwin', 'linux']) test(`${platform}: captions
   assert.equal(h.rewindCount(), 0);
 
   item('caption-engine-whisper').click(); await flush();
-  assert.equal(h.bridge.active, true);
+  assert.equal(h.bufferedEnabled(), true);
   assert.equal(item('caption-engine-whisper').checked, true);
   assert.equal(item('caption-engine-none').checked, false);
   assert.equal(h.rewindCount(), 1);
@@ -99,13 +103,13 @@ for (const platform of ['win32', 'darwin', 'linux']) test(`${platform}: captions
   assert.equal(h.rewindCount(), 1, 'Speed, channel, and engine restarts must not rewind again');
 
   item('caption-engine-none').click(); await flush();
-  assert.equal(h.bridge.active, false);
+  assert.equal(h.bufferedEnabled(), false);
   assert.equal(item('caption-overlay').checked, false);
   assert.equal(item('caption-engine-none').checked, true);
   assert.equal(item('caption-speed').enabled, false);
 
   item('caption-overlay').click({checked: true}); await flush();
-  assert.equal(h.bridge.active, true);
+  assert.equal(h.bufferedEnabled(), true);
   assert.equal(item('caption-engine-whisper').checked, true);
   assert.equal(h.rewindCount(), 2);
   assert.ok(h.radioWrites.every(write => write.value === true), 'Radio selection must not assign false to sibling items');
@@ -121,19 +125,21 @@ for (const platform of ['win32','darwin','linux']) test(`${platform}: the menu e
   h.window.emit('closed');await flush();
 });
 
-test('pausing or seeking immediately clears subtitles and resume does not rewind a second time', async () => {
+test('Windows native captions clear when paused or seeking and resume does not rewind a second time', async () => {
   const h = await appHarness('win32'), item = id => h.menu.getMenuItemById(id);
-  item('caption-engine-whisper').click();await flush();
+  const text = () => h.messages.filter(message => message.channel === 'desktop:captions').at(-1).value.text;
+  item('caption-engine-windows').click();await flush();
+  h.bridge.emit('caption','');
   h.bridge.emit('caption','Original dialogue');
-  assert.equal(h.messages.at(-1).value.text,'Original dialogue');
+  assert.equal(text(),'Original dialogue');
   h.playback('pause');await flush();
-  assert.equal(h.bridge.active,false);assert.equal(h.messages.at(-1).value.text,'');
-  h.bridge.emit('caption','A stale result');assert.equal(h.messages.at(-1).value.text,'');
+  assert.equal(h.bridge.active,false);assert.equal(text(),'');
+  h.bridge.emit('caption','A stale result');assert.equal(text(),'');
   assert.equal(item('caption-status').label,'Paused');
   h.playback('playing');await flush();assert.equal(h.bridge.active,true);assert.equal(h.rewindCount(),1);
   item('caption-delay-2000').click();h.bridge.emit('caption','Delayed dialogue');
-  assert.equal(h.messages.at(-1).value.text,'');
-  h.playback('reset');await flush();assert.equal(h.messages.at(-1).value.text,'');
+  assert.equal(text(),'');
+  h.playback('reset');await flush();assert.equal(text(),'');
   assert.equal(h.rewindCount(),1);h.window.emit('closed');await flush();
 });
 

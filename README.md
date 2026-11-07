@@ -6,22 +6,22 @@ An unofficial desktop app for [spelunkr.tv](https://spelunkr.tv/). Pick a channe
 
 The channels and shows come from the live website. The app gives them their own window and adds English captions that run on your computer.
 
-**[Download the Windows installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe)** · **[All downloads](#download)** · **[Help with captions](docs/CAPTIONS.md)** · **[Report a problem](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues)**
+**[Download the Windows installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Windows-x64-Setup.exe)** · **[All downloads](#download)** · **[Help with captions](docs/CAPTIONS.md)** · **[Report a problem](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues)**
 
 ## Download
 
-**0.7.0 is not released yet. Caption read-ahead buffering is being corrected before publication.**
+**0.7.0 is being packaged and checked. Its downloads will be available after validation.**
 
-The current download is **[0.6.0, a preview](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0)**. You don't need a GitHub account to download it. Watching needs an internet connection.
+The current download is **[0.7.0, a preview](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0)**. You don't need a GitHub account to download it. Watching needs an internet connection.
 
 | Your computer | Download | Setup guide |
 | --- | --- | --- |
-| Windows 10 or 11 · Intel/AMD 64-bit | [Windows installer (.exe)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Windows-x64-Setup.exe) | [Windows](docs/WINDOWS.md) |
-| Mac · Apple M-series chip · macOS 14.2+ | [Apple Silicon (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-arm64.dmg) | [Mac](docs/MAC.md) |
-| Mac · Intel processor · macOS 14.2+ | [Intel Mac (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Mac-x64.dmg) | [Mac](docs/MAC.md) |
-| Debian 12+ · Intel/AMD 64-bit | [Debian (.deb)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Debian-amd64.deb) | [Debian](docs/LINUX.md#debian) |
-| Arch Linux · Intel/AMD 64-bit | [Arch (.pkg.tar.xz)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz) | [Arch](docs/LINUX.md#arch-linux) |
-| Fedora Workstation 43+ · Intel/AMD 64-bit | [Fedora (.rpm)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.6.0/Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm) | [Fedora](docs/LINUX.md#fedora) |
+| Windows 10 or 11 · Intel/AMD 64-bit | [Windows installer (.exe)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Windows-x64-Setup.exe) | [Windows](docs/WINDOWS.md) |
+| Mac · Apple M-series chip · macOS 14.2+ | [Apple Silicon (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Mac-arm64.dmg) | [Mac](docs/MAC.md) |
+| Mac · Intel processor · macOS 14.2+ | [Intel Mac (.dmg)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Mac-x64.dmg) | [Mac](docs/MAC.md) |
+| Debian 12+ · Intel/AMD 64-bit | [Debian (.deb)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Debian-amd64.deb) | [Debian](docs/LINUX.md#debian) |
+| Arch Linux · Intel/AMD 64-bit | [Arch (.pkg.tar.xz)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz) | [Arch](docs/LINUX.md#arch-linux) |
+| Fedora Workstation 43+ · Intel/AMD 64-bit | [Fedora (.rpm)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Fedora-x86_64.rpm) | [Fedora](docs/LINUX.md#fedora) |
 
 Not sure which Mac download to choose? Open **Apple menu → About This Mac**. “Chip” followed by an Apple M-series name means Apple Silicon; “Processor” followed by Intel means Intel.
 
@@ -35,25 +35,25 @@ Not sure which Mac download to choose? Open **Apple menu → About This Mac**. �
 
 ```sh
 # Debian
-sudo apt install ./Spelunkr-Desktop-0.6.0-Debian-amd64.deb
+sudo apt install ./Spelunkr-Desktop-0.7.0-Debian-amd64.deb
 
 # Arch — update your system first
 sudo pacman -Syu
-sudo pacman -U ./Spelunkr-Desktop-0.6.0-Arch-x64.pkg.tar.xz
+sudo pacman -U ./Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz
 
 # Fedora
-sudo dnf install ./Spelunkr-Desktop-0.6.0-Fedora-x86_64.rpm
+sudo dnf install ./Spelunkr-Desktop-0.7.0-Fedora-x86_64.rpm
 ```
 
-Then open **Spelunkr Desktop** from your applications menu. Linux captions need PulseAudio or PipeWire with PulseAudio compatibility; the [Linux guide](docs/LINUX.md#sound-setup) covers sound setup.
+Then open **Spelunkr Desktop** from your applications menu. The [Linux guide](docs/LINUX.md) covers setup and updates.
 
-Use the installer for your computer, rather than GitHub's **Source code** ZIP. Windows installers are unsigned, and Mac builds aren't notarized by Apple, so first-launch prompts are possible. See the setup guide for your platform. File checksums are on the [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.6.0).
+Use the installer for your computer, rather than GitHub's **Source code** ZIP. Windows installers are unsigned, and Mac builds aren't notarized by Apple, so first-launch prompts are possible. See the setup guide for your platform. File checksums are on the [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0).
 
 ## Turn on captions
 
-Click the app, then press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac. You can also use **Captions → In-app live captions**. Captions start off; the same shortcut turns them off again.
+Click the app, then press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac. You can also use **Captions → In-app live captions**. Captions start off; the same shortcut turns them off again. Turning them on rewinds 15 seconds once and pauses while subtitles are prepared ahead of playback. A slow connection can make initial preparation take longer than 15 seconds.
 
-Whisper and both English speech models come with the installer. There's no speech account, subscription, or separate model download. Recognition runs locally and uses speaker output, so speech from another app can show up too.
+Whisper and both English speech models come with the installer. There's no speech account, subscription, or separate model download. Recognition runs locally and reads the channel file directly. Other apps and your microphone are not used, and captions still work with the player muted.
 
 The **Captions** menu lets you choose:
 
@@ -62,20 +62,20 @@ The **Captions** menu lets you choose:
 - **Faster or Balanced recognition.** Faster is the default; Balanced uses the larger model.
 - **Windows Live Captions** as an optional alternative on Windows 11 22H2 or newer. Whisper also works on Windows 10.
 
-Generated captions can lag behind speech or get words wrong. **Mac live speaker capture and its permission prompts still need a physical-Mac test.** The [testing notes](docs/TESTING.md) explain what's been checked.
+Generated words and their estimated timings can be imperfect. Full viewing on physical Macs and physical-controller hardware have not been tested. The [testing notes](docs/TESTING.md) explain what's been checked.
 
 The [caption guide](docs/CAPTIONS.md) covers settings and troubleshooting, including subtitle delay and pause handling.
 
-## Coming in 0.7.0
+## New in 0.7.0
 
-These changes are being tested before release:
+This release adds:
 
 - **Up/Down for channels, Left/Right for volume**, in both windowed and fullscreen views.
 - **Custom keyboard and controller controls.** Open Settings → Controls, click Assign beside an action, press your key or controller input, then Save when you're done. The menu uses the site's fonts, colors, and buttons.
 - **One video fullscreen mode** for the menu, keyboard shortcut, and video button, with a visible Exit fullscreen button and Escape to leave it.
 - **A None caption option** and a single 15-second rewind when captions go from off to on.
 - **Subtitle delay from 0–10 seconds**, adjustable in 0.1-second steps and saved between launches.
-- **Revised Whisper caption handling**, including fresh blocks after pauses and immediate clearing when you pause, seek, or change channels.
+- **A real 15-second caption cache.** The app reads the channel audio ahead of the picture, prepares timestamped subtitles, and then resumes playback. Pauses and seeks follow the video clock. Old tape audio is cleaned up before recognition.
 
 The same changes are shared by Windows, both Mac builds, Debian, Arch, and Fedora. See the [controls guide](docs/CONTROLS.md) for the new defaults and assignments.
 
