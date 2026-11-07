@@ -9,6 +9,7 @@ on:
     tags: ['v*']
 permissions:
   contents: read
+  actions: read
 jobs:
   build:
     if: ${{ !inputs.artifact-run }}
