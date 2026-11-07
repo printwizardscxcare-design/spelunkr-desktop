@@ -89,6 +89,14 @@ jobs:
           (cd release/mac-arm64 && sha256sum -c SHA256SUMS-Mac-arm64.txt)
       - name: Create private-repository prerelease with installers
         run: |
-          gh release create "$RELEASE_TAG" --target "$SOURCE_SHA" --prerelease --draft --title "Spelunkr Desktop ${RELEASE_TAG#v}" --notes-file "docs/releases/${RELEASE_TAG#v}.md"
+          TAG_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq .object.sha)
+          test "$TAG_SHA" = "$SOURCE_SHA" || { echo 'Release tag does not match the tested source'; exit 1; }
+          DRAFT=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null || true)
+          if [ "$DRAFT" = false ]; then
+            echo 'Release is already published; refusing to replace it'
+            exit 1
+          elif [ "$DRAFT" != true ]; then
+            gh release create "$RELEASE_TAG" --verify-tag --prerelease --draft --title "Spelunkr Desktop ${RELEASE_TAG#v}" --notes-file "docs/releases/${RELEASE_TAG#v}.md"
+          fi
           gh release upload "$RELEASE_TAG" release/linux/*.deb release/linux/*.rpm release/linux/*.pkg.tar.* release/linux/SHA256SUMS-Linux.txt release/windows/*-Setup.exe release/windows/SHA256SUMS.txt release/mac-*/*.dmg release/mac-*/*.zip release/mac-*/SHA256SUMS-Mac-*.txt
           gh release edit "$RELEASE_TAG" --draft=false
