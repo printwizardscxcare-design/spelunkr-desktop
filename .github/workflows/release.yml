@@ -1,0 +1,60 @@
+name: Publish tested installers
+on:
+  workflow_dispatch:
+    inputs:
+      linux-run:
+        description: Successful Linux installers run ID
+        required: true
+      windows-run:
+        description: Successful Windows installer run ID (same source commit)
+        required: true
+permissions:
+  actions: read
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LINUX_RUN: ${{ inputs.linux-run }}
+      WINDOWS_RUN: ${{ inputs.windows-run }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify both builds passed and use the same source
+        run: |
+          node <<'JS'
+          const {execFileSync}=require('node:child_process');
+          const fs=require('node:fs');
+          const repo=process.env.GITHUB_REPOSITORY;
+          const runs=[['LINUX_RUN','Linux installers'],['WINDOWS_RUN','Windows installer']].map(([key,name])=>{
+            const id=process.env[key];
+            if(!/^\d+$/.test(id)) throw Error('Invalid run ID');
+            const run=JSON.parse(execFileSync('gh',['api',`repos/${repo}/actions/runs/${id}`],{encoding:'utf8'}));
+            if(run.conclusion!=='success'||run.name!==name||run.head_repository.full_name!==repo) throw Error('Build has not passed: '+name);
+            return run;
+          });
+          if(runs[0].head_sha!==runs[1].head_sha) throw Error('Installers must use the same source commit');
+          const version=require('./package.json').version;
+          fs.appendFileSync(process.env.GITHUB_ENV,`SOURCE_SHA=${runs[0].head_sha}\nRELEASE_TAG=v${version}\n`);
+          JS
+      - uses: actions/download-artifact@v8
+        with:
+          name: Spelunkr-Desktop-Linux-x64
+          path: release/linux
+          run-id: ${{ inputs.linux-run }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v8
+        with:
+          name: Spelunkr-Desktop-Windows-x64
+          path: release/windows
+          run-id: ${{ inputs.windows-run }}
+          github-token: ${{ github.token }}
+      - name: Verify packaged checksums
+        run: |
+          (cd release/linux && sha256sum -c SHA256SUMS-Linux.txt)
+          (cd release/windows && sed -i 's/\r$//' SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+      - name: Create private-repository prerelease with installers
+        run: |
+          gh release create "$RELEASE_TAG" --target "$SOURCE_SHA" --prerelease --draft --title "Spelunkr Desktop ${RELEASE_TAG#v}" --notes-file "docs/releases/${RELEASE_TAG#v}.md"
+          gh release upload "$RELEASE_TAG" release/linux/*.deb release/linux/*.rpm release/linux/*.pkg.tar.* release/linux/SHA256SUMS-Linux.txt release/windows/*-Setup.exe release/windows/SHA256SUMS.txt
+          gh release edit "$RELEASE_TAG" --draft=false
