@@ -48,7 +48,7 @@ Before compression, `scripts/after-pack.cjs` checks the actual copied native res
 
 Linux CI installs the packages in Debian 13, Fedora 43, and current Arch containers, then checks speaker-monitor recognition and X11 startup. Mac CI builds separately on Intel and Apple Silicon, verifies the ad-hoc app signature and audio permission description, checks the capture CLI, and launches the app. These tests do not grant privacy permissions or validate physical Mac audio capture. Windows CI compiles for Windows 10 APIs and checks recognition; it is not a separate Windows 10 hardware test.
 
-The Publish tested installers workflow accepts successful Windows, Linux, and Mac run IDs. It requires the same source commit and version, checks installer hashes, then creates a prerelease with all files. Mac DMGs and ZIP alternatives are signed ad hoc but aren't Apple-notarized. Windows installers are unsigned. Trusted Mac distribution will need an Apple Developer ID signing/notarization setup.
+The Publish tested installers workflow accepts successful Windows, Linux, and Mac run IDs. It requires the same source commit and version, checks installer hashes, then creates a prerelease with all files. A successful Linux recheck can validate existing installer artifacts after test-harness changes; its run title must identify exactly the selected build. Rechecking uses the production capture bridge, including capture latency and idle audio handling. Mac DMGs and ZIP alternatives are signed ad hoc but aren't Apple-notarized. Windows installers are unsigned. Trusted Mac distribution will need an Apple Developer ID signing/notarization setup.
 
 ## Desktop boundaries
 
