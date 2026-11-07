@@ -14,8 +14,9 @@ class CaptionPages {
     if (!enabled) { this.reset(); return; }
     if (!text) {
       if (clearReason !== 'pause') { this.reset(); return; }
-      const segment = this.segments.find(item => item.id === cueId);
-      if (segment) segment.ended = true;
+      // Cue timing has already allowed reading time. A real pause must clear
+      // the overlay instead of draining old queued cards over silent video.
+      while (this.segments.length) this.finish(this.segments[0]);
       return;
     }
     if (this.finished.has(cueId)) return;

@@ -2,18 +2,19 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { CaptionCues } = require('../src/caption-cues.cjs');
+const { CaptionPages } = require('../src/caption-pages.cjs');
 
-function harness() {
+function harness(onText) {
   let time = 0;
   let nextId = 0;
   const tasks = new Map();
   const emitted = [];
   const cues = new CaptionCues({
-    now: () => time, onText: text => emitted.push(text),
+    now: () => time, onText: (text, metadata) => { emitted.push(text); onText?.(text, metadata); },
     schedule: (fn, delay) => { const id = ++nextId; tasks.set(id, { fn, at: time + delay }); return id; },
     cancel: id => tasks.delete(id)
   });
-  return { cues, emitted, advance(ms) {
+  return { cues, emitted, now: () => time, advance(ms) {
     const end = time + ms;
     for (;;) {
       const due = [...tasks.entries()].filter(([, task]) => task.at <= end).sort((a, b) => a[1].at - b[1].at)[0];
@@ -37,19 +38,54 @@ test('a short caption clears after a 1.5-second pause and stays blank', () => {
   assert.equal(h.cues.text, '');
 });
 
-test('Whisper batching does not clear subtitles while speech is still active', () => {
+test('Whisper keeps subtitles across batches while fresh speech results arrive', () => {
   const h=harness();
   h.cues.setSpeechActive(true);h.cues.update('Speech continues.');
-  h.advance(6000);assert.equal(h.cues.text,'Speech continues.');
-  h.cues.setSpeechActive(false);h.advance(1499);assert.equal(h.cues.text,'Speech continues.');
+  h.advance(3000);assert.equal(h.cues.text,'Speech continues.');
+  h.cues.update('Speech continues. More words arrive.');
+  h.advance(3000);assert.notEqual(h.cues.text,'');
+  h.cues.setSpeechActive(false);h.advance(1499);assert.notEqual(h.cues.text,'');
   h.advance(1);assert.equal(h.cues.text,'');
 });
 
 test('new speech cancels a pending pause clear while the next batch is recognized', () => {
   const h=harness();h.cues.update('First caption.');h.advance(1000);
-  h.cues.setSpeechActive(true);h.advance(4000);assert.equal(h.cues.text,'First caption.');
+  h.cues.setSpeechActive(true);h.advance(2500);assert.equal(h.cues.text,'First caption.');
   h.cues.update('First caption. Next words.');
   h.cues.setSpeechActive(false);h.advance(1500);assert.equal(h.cues.text,'');
+});
+
+test('a stuck or flickering Whisper speech detector cannot keep stale subtitles forever', () => {
+  for (const flicker of [false, true]) {
+    const h = harness();
+    h.cues.setSpeechActive(true); h.cues.update('Old words.');
+    for (let i = 0; i < 4; i++) {
+      h.advance(1000);
+      if (flicker) { h.cues.setSpeechActive(false); h.cues.setSpeechActive(true); }
+    }
+    assert.equal(h.cues.text, 'Old words.');
+    h.advance(500);
+    assert.equal(h.cues.text, '');
+    h.cues.update('Old words.');
+    assert.equal(h.cues.text, '');
+    h.cues.update('Old words. New dialogue.');
+    assert.equal(h.cues.text, 'New dialogue.');
+  }
+});
+
+test('a Whisper pause clears unread cards and the next phrase starts cleanly', () => {
+  let pages;
+  const h = harness((text, metadata) => pages.receive({enabled: true, text, ...metadata}));
+  pages = new CaptionPages({now: h.now});
+  h.cues.setSpeechActive(true);
+  h.cues.update('one two three four five six seven eight nine ten');
+  assert.equal(pages.render(10, text => text.length).text, 'one two\nthree four');
+  h.cues.setSpeechActive(false);
+  h.advance(4500);
+  assert.equal(pages.render(10, text => text.length).text, '');
+  h.cues.setSpeechActive(true);
+  h.cues.update('one two three four five six seven eight nine ten new speech');
+  assert.equal(pages.render(20, text => text.length).text, 'new speech');
 });
 test('case and punctuation corrections do not extend the pause timer or resurrect captions', () => {
   const h = harness();

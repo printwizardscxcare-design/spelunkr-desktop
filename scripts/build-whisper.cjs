@@ -61,6 +61,7 @@ async function build() {
   ]) await download(`https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${file}`, path.join(output, file), sha);
   await download('https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v6.2.0.bin', path.join(output, 'ggml-silero-v6.2.0.bin'), '2aa269b785eeb53a82983a20501ddf7c1d9c48e33ab63a41391ac6c9f7fb6987');
   await download('https://raw.githubusercontent.com/alphacep/vosk-api/v0.3.45/python/example/test.wav', path.join(bin, 'test.wav'));
+  fs.copyFileSync(path.join(source, 'samples/jfk.wav'), path.join(bin, 'jfk.wav'));
   fs.copyFileSync(path.join(source, 'LICENSE'), path.join(output, 'LICENSE-WHISPER.txt'));
   // Whisper's vendored GGML is covered by the source tree's root MIT license.
   fs.copyFileSync(path.join(source, 'LICENSE'), path.join(output, 'LICENSE-GGML.txt'));

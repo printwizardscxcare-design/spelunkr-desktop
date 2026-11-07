@@ -33,7 +33,7 @@ All three package managers install the declared dependencies. Open **Spelunkr De
 
 ## Watching and captions
 
-Use **F11** for fullscreen, then **Up / Down** to change channels. **Ctrl+Shift+L** toggles captions while the app has focus.
+Use **Up / Down** to change channels in windowed or fullscreen views. **F11** toggles fullscreen. **Ctrl+Shift+L** toggles captions while the app has focus; turning them on rewinds 15 seconds once. Captions start off.
 
 Whisper and its English models are included. Faster recognition is the default; Balanced is available for the larger model. You don't need Python or a speech-service account to use the installed app. The [caption guide](CAPTIONS.md) covers color, size, pause clearing, and recognition settings.
 

@@ -78,11 +78,13 @@ class CaptionCues {
   armTimer() {
     if (this.timer !== null) this.cancel(this.timer);
     this.timer = null;
-    // Whisper delivers batches. Keep a card during ongoing speech instead of
-    // mistaking the recognition interval for silence. Windows uses inferred pauses.
-    if (this.speechActive === true) return;
     const readingMs = Math.max(833, Math.min(4000, Math.min(this.text.length, 120) / 20 * 1000));
-    const deadline = Math.max(this.lastWordAt + this.pauseMs, this.startedAt + readingMs);
+    const pauseDeadline = Math.max(this.lastWordAt + this.pauseMs, this.startedAt + readingMs);
+    // TV music/noise can keep VAD active. A speech flag alone must not preserve
+    // stale text forever, even if speech/silence events keep alternating.
+    const staleDeadline = Math.max(this.lastRecognitionAt + 4500, this.startedAt + readingMs);
+    const deadline = this.speechActive === true ? staleDeadline :
+      this.speechActive === false ? Math.min(pauseDeadline, staleDeadline) : pauseDeadline;
     this.timer = this.schedule(() => this.clear({ reason:'pause' }), Math.max(0, deadline-this.now()));
   }
 
@@ -109,7 +111,7 @@ class CaptionCues {
       this.boundary = Math.max(0, this.boundary - change.dropped);
       if (change.replaced) { this.boundary = 0; this.startedAt = time; this.cueId++; this.wordOffset = 0; }
     }
-    if (change.fresh) this.lastWordAt = time;
+    if (change.fresh) this.lastRecognitionAt = this.lastWordAt = time;
     const start = next.words[Math.min(this.boundary, next.words.length - 1)].start;
     const text = next.text.slice(start);
     this.publish(text);

@@ -4,6 +4,8 @@ Click the app, then press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L
 
 Under **Captions → Caption engine**, choose **Built-in captions (Whisper)** to turn captions on, or **None** to turn them off. None clears the text and stops audio capture and recognition. The shortcut toggles your last-used engine, and the menu selection follows it. Captions start off when you open the app.
 
+Turning captions on rewinds the video **15 seconds** so you get the lead-in. It happens once when going from off to on; changing speed or channels while captions are running doesn't rewind again. The compact guide player rewinds within the available video when the full player's rewind control isn't present.
+
 The default engine is Whisper. It recognizes English speech on your computer, using models included in the installer. It doesn't need a speech account or send audio to a speech service. Watching channels still needs an internet connection.
 
 ## Appearance
@@ -12,7 +14,7 @@ Use **Captions → Text color** for white or yellow text. **Text size** has five
 
 Captions have a transparent background and a dark text shadow for readability. They fill up to two lines and then start a new block. In fullscreen, text can use more of the picture's width. Changing size or resizing the window adjusts how many words fit.
 
-Speech detection keeps captions visible while dialogue continues, even between recognition results. After a pause, the app leaves a short reading hold and clears the text. Changing channels clears the old captions and restarts Whisper for the new audio.
+Speech detection keeps captions visible between recognition results. After a pause and a short reading hold, the screen clears, including any older blocks still waiting to appear. Music or noise can't keep a stale subtitle alive indefinitely: without new recognized words, it clears within 4.5 seconds. New dialogue starts a fresh block. Changing channels clears the old captions and restarts Whisper for the new audio.
 
 ## Recognition speed
 
@@ -23,7 +25,7 @@ Speech detection keeps captions visible while dialogue continues, even between r
 | Faster, the default | Whisper tiny English | Start here for shorter delays, especially on older computers. |
 | Balanced | Whisper base English | Try the larger model if you want to compare recognition and your computer can keep up. |
 
-Speech arrives in short batches, so captions lag behind the audio. The larger model takes more processing time; it isn't a guarantee of better results for every recording. If captions fall behind in Balanced mode, switch back to Faster.
+Speech arrives in short batches, so captions lag behind the audio. Faster mode checks smaller batches and uses a shorter processing window. The larger Balanced model takes more processing time; it isn't a guarantee of better results for every recording. If captions fall behind in Balanced mode, switch back to Faster.
 
 The app remembers your choice. Recognition speed and text size are separate settings.
 

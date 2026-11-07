@@ -3,6 +3,15 @@
 // Runs in an isolated world. No Node or IPC functions are exposed to the site.
 const { ipcRenderer } = require('electron');
 if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
+  ipcRenderer.on('desktop:caption-rewind', () => {
+    const rewind = document.querySelector('#stage-key-rw');
+    if (rewind && !rewind.disabled) { rewind.click(); return; }
+    // The compact guide player may not expose the full player's rewind button.
+    const video = document.querySelector('.stage-video-col video, video');
+    if (!video || !Number.isFinite(video.currentTime)) return;
+    const start = video.seekable?.length ? video.seekable.start(0) : 0;
+    video.currentTime = Math.max(start, video.currentTime - 15);
+  });
   if (document.addEventListener) {
     let overlay;
     let line;
@@ -63,12 +72,8 @@ if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
     // Track the live site's video layout without reading or changing its app state.
     setInterval(place, 100);
   }
-  let desktopFullscreen = false;
-  ipcRenderer.on('desktop:fullscreen', (_event, value) => { desktopFullscreen = value === true; });
-
   window.addEventListener('keydown', event => {
     if (!['ArrowUp', 'ArrowDown'].includes(event.key) || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
-    if (!desktopFullscreen && !document.fullscreenElement) return;
     const target = event.target;
     if (target?.isContentEditable || target?.closest?.('input, textarea, select, [contenteditable="true"], [role="textbox"], [role="slider"], [role="dialog"], .cc-panel')) return;
     if ([...document.querySelectorAll('[role="dialog"]')].some(element => element.getClientRects().length)) return;
