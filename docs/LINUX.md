@@ -68,6 +68,6 @@ sudo dnf remove spelunkr-desktop-unofficial
 
 Preferences and website storage stay in `~/.config/Spelunkr Desktop/`.
 
-Package installation, speaker-monitor captions, process cleanup, and X11 startup were checked in Debian 13, Fedora 43, and current Arch containers. Debian 12 is a compatibility target, not a separately tested installation. See [testing notes](TESTING.md) for details.
+Package installation, buffered caption recognition, silence handling, process cleanup, and X11 startup were checked in Debian 13, Fedora 43, and current Arch containers. Debian 12 is a compatibility target, not a separately tested installation. See [testing notes](TESTING.md) for details.
 
 [Back to downloads](../README.md#download)

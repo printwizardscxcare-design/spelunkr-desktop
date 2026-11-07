@@ -106,7 +106,7 @@ If a Linux check needs updating without changing the app, run **Linux installers
 Published release descriptions are kept in `docs/releases/`. After editing one, update its GitHub release body too:
 
 ```sh
-gh release edit v0.6.0 --notes-file docs/releases/0.6.0.md
+gh release edit v0.7.0 --notes-file docs/releases/0.7.0.md
 ```
 
 ## Desktop security and storage

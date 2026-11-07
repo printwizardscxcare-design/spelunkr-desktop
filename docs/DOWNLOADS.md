@@ -21,7 +21,7 @@ node scripts/download-counts.cjs
 To inspect every asset in the current release, including ZIP alternatives and checksum files:
 
 ```sh
-gh release view v0.6.0 --repo printwizardscxcare-design/spelunkr-desktop --json assets
+gh release view v0.7.0 --repo printwizardscxcare-design/spelunkr-desktop --json assets
 ```
 
 ## Reading the numbers

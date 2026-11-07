@@ -10,7 +10,13 @@ The Windows source build was checked on screen with live Spelunkr playback: menu
 
 The new native runtime passed its C++ regression checks and a timestamped recorded-speech test in [this build](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42382051436). It prepared 17 seconds of speech and silence in about 2.4 seconds on the local Windows PC. This is one fixture, not a speed guarantee. A separate regression check reproduces DC-biased tape audio and verifies cleanup preserves speech energy and sample duration.
 
-Final platform installer and clean-Mac checks are run before publication. Run links and final results are added here when those checks finish.
+The published Windows installer was downloaded, its SHA-256 checksum verified, and installed over 0.6.0 on the local Windows PC. The installed app reports 0.7.0. Its bundled FFmpeg and Whisper also passed the caption-buffer test using recorded speech through the production reader.
+
+All six platform packages were built from the same application source. The [Windows build](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42384601206) and [both Mac builds](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42384605852) passed. The [Linux packages](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42384603528) passed a [separate installer recheck](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42386122933) on Debian 13, Arch, and Fedora 43. The original Linux run failed a test of the retired speaker-capture path; the recheck tests the caption-buffer path used by 0.7.0 against those same packages.
+
+The [clean Mac installer checks](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42386125479) passed on Intel and Apple Silicon runners. These mounted the downloaded DMGs, checked signatures and both speech models, tested timestamped speech and silence through the bundled reader, and launched the app. These are automated checks, not full viewing tests on physical Macs.
+
+The [release job](https://github.com/printwizardscxcare-design/spelunkr-desktop/actions/runs/42386464281) verified the common source commit and all package checksums before publishing the downloads together.
 
 ## Checks for 0.6.0
 
@@ -36,6 +42,6 @@ Run records: [Windows build](https://github.com/printwizardscxcare-design/spelun
 
 ## Reporting a problem
 
-[Open an issue](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues) with the app version, operating system, what you expected, and what happened. For captions, include the engine and speed setting, whether other apps were playing sound, and whether you recently changed your output device.
+[Open an issue](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues) with the app version, operating system, what you expected, and what happened. For captions, include the engine, recognition speed, delay setting, and whether you had just paused, sought, or changed channels. For Windows Live Captions, mention any recent output-device change too.
 
 For the controls and common fixes, see the [caption guide](CAPTIONS.md) or your platform's setup page: [Windows](WINDOWS.md), [Mac](MAC.md), or [Linux](LINUX.md).

@@ -10,8 +10,6 @@ The channels and shows come from the live website. The app gives them their own 
 
 ## Download
 
-**0.7.0 is being packaged and checked. Its downloads will be available after validation.**
-
 The current download is **[0.7.0, a preview](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0)**. You don't need a GitHub account to download it. Watching needs an internet connection.
 
 | Your computer | Download | Setup guide |
