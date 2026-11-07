@@ -1,7 +1,7 @@
 {
   "name": "spelunkr-desktop-unofficial",
-  "version": "0.5.0",
-  "description": "An independent desktop app for watching spelunkr.tv on Windows and Linux.",
+  "version": "0.6.0",
+  "description": "An independent desktop app for watching spelunkr.tv on Windows, Mac, and Linux.",
   "main": "src/main.cjs",
   "author": {
     "name": "Spelunkr Desktop contributors",
@@ -19,7 +19,8 @@
     "test": "node --test test/*.test.cjs",
     "dist": "electron-builder --win nsis --x64",
     "pack": "electron-builder --win --x64 --dir",
-    "dist:linux": "npm run build:captions && npm run build:preload && electron-builder --linux deb rpm pacman --x64"
+    "dist:linux": "npm run build:captions && npm run build:preload && electron-builder --linux deb rpm pacman --x64",
+    "dist:mac": "npm run build:captions && npm run build:preload && electron-builder --mac dmg zip"
   },
   "devDependencies": {
     "electron": "45.2.3",
@@ -53,6 +54,10 @@
         {
           "from": "native/bin/CaptionReader.exe",
           "to": "native/CaptionReader.exe"
+        },
+        {
+          "from": "native/bin/whisper",
+          "to": "native/whisper"
         }
       ]
     },
@@ -97,8 +102,8 @@
       "artifactName": "Spelunkr-Desktop-${version}-Linux-${arch}.${ext}",
       "extraResources": [
         {
-          "from": "native/bin/linux",
-          "to": "native/linux"
+          "from": "native/bin/whisper",
+          "to": "native/whisper"
         }
       ],
       "syncDesktopName": true
@@ -151,7 +156,30 @@
       ],
       "artifactName": "Spelunkr-Desktop-${version}-Arch-${arch}.pkg.tar.xz"
     },
-    "afterPack": "scripts/after-pack.cjs"
+    "afterPack": "scripts/after-pack.cjs",
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.entertainment",
+      "minimumSystemVersion": "14.2",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "notarize": false,
+      "artifactName": "Spelunkr-Desktop-${version}-Mac-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "native/bin/whisper",
+          "to": "native/whisper"
+        }
+      ],
+      "extendInfo": {
+        "NSAudioCaptureUsageDescription": "Spelunkr Desktop uses speaker audio to generate captions locally. Audio is not saved or sent to a speech service."
+      },
+      "icon": "native/bin/icon.icns"
+    }
   },
   "homepage": "https://github.com/printwizardscxcare-design/spelunkr-desktop",
   "desktopName": "spelunkr-desktop.desktop"

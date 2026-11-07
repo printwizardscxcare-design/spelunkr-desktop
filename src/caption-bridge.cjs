@@ -4,41 +4,68 @@ const { spawn } = require('node:child_process');
 const readline = require('node:readline');
 
 class CaptionBridge extends EventEmitter {
-  constructor(executable) { super(); this.executable = executable; this.child = null; }
+  constructor(executable, options = {}) {
+    super(); this.executable = executable; this.args = options.args || [];
+    this.capture = options.capture || null; this.child = null; this.source = null; this.stopping = false;
+  }
+  configure({ executable, args = [], capture = null }) {
+    if (this.child) throw new Error('Stop captions before changing engines');
+    this.executable = executable; this.args = args; this.capture = capture;
+  }
   start() {
     if (this.child) return;
-    const child = spawn(this.executable, [], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+    this.stopping = false;
+    const child = spawn(this.executable, this.args, { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     this.child = child;
     let reportedError = false;
+    const fail = message => {
+      if (this.stopping || reportedError) return;
+      reportedError = true; this.emit('failure', message);
+    };
     const lines = readline.createInterface({ input: child.stdout });
     lines.on('line', line => {
       try {
         const item = JSON.parse(line);
         if (!['caption', 'status', 'error'].includes(item.type) || typeof item.text !== 'string') return;
-        if (item.type === 'error') reportedError = true;
-        this.emit(item.type === 'error' ? 'failure' : item.type, item.text.slice(-8192));
+        if (item.type === 'error') fail(item.text.slice(-8192));
+        else if (!this.stopping) this.emit(item.type, item.text.slice(-8192));
       } catch {}
     });
     child.stderr.resume();
     child.stdin.on('error', () => {});
-    child.on('error', () => {
-      reportedError = true;
-      this.emit('failure', 'The captions helper could not start. Check your installation and caption setup.');
-    });
-    child.once('close', code => {
+    child.on('error', () => fail('The captions helper could not start. Check your installation.'));
+    if (this.capture) {
+      const source = spawn(this.capture.executable, this.capture.args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      this.source = source;
+      source.stderr.resume(); source.stdout.pipe(child.stdin);
+      source.on('error', () => fail(this.capture.failure));
+      source.once('close', () => {
+        if (this.source === source) this.source = null;
+        fail(this.capture.failure);
+      });
+    }
+    child.once('close', () => {
       lines.close();
       if (this.child === child) this.child = null;
-      if (code && !reportedError) this.emit('failure', 'The captions connection stopped. Try enabling in-app captions again.');
+      if (this.source) this.source.kill();
+      fail('The captions connection stopped. Try enabling in-app captions again.');
       this.emit('stopped');
     });
   }
   stop() {
+    this.stopping = true;
+    const source = this.source;
+    if (source) {
+      source.stdout.unpipe(); source.kill();
+      const force = setTimeout(() => { if (source.exitCode === null && source.signalCode === null) source.kill('SIGKILL'); }, 1000);
+      force.unref();
+    }
     const child = this.child;
     if (!child) return Promise.resolve();
     return new Promise(resolve => {
       const timeout = setTimeout(() => { child.kill(); resolve(); }, 4000);
       child.once('close', () => { clearTimeout(timeout); resolve(); });
-      child.stdin.end('stop\n');
+      child.stdin.end(this.capture ? undefined : 'stop\n');
     });
   }
 }
