@@ -12,6 +12,8 @@ const { captionOptions } = require('./caption-options.cjs');
 const { createControlManager } = require('./control-manager.cjs');
 const { toggleVideoFullscreen } = require('./video-fullscreen.cjs');
 const {createCaptionBufferManager} = require('./caption-buffer-manager.cjs');
+const {createAudioManager} = require('./audio-manager.cjs');
+const {configureAudioCors}=require('./audio-cors.cjs');
 
 app.setName('Spelunkr Desktop');
 app.enableSandbox();
@@ -335,6 +337,8 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
           else cues.clear({keepSnapshot: false});
         }
       }});
+    const audio = createAudioManager({win,BrowserWindow,ipcMain,profileDir:app.getPath('userData'),platform:process.platform,io:fs,
+      onCleanup:cleanup=>buffered.set({cleanup,restart:true,rewind:false})});
     Menu.setApplicationMenu(Menu.buildFromTemplate([
       ...(process.platform === 'darwin' ? [{role: 'appMenu'}] : []),
       { label: '&Spelunkr', submenu: [
@@ -401,7 +405,9 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
           detail: 'Press Ctrl+Shift+L to toggle transparent, text-only captions inside the video. Choose white/yellow and a text size under Captions. Fullscreen captions adapt to the screen width and height.\n\nCaptions clear after roughly 1.5 seconds without new words, with up to 4 seconds of initial reading time for a batch of text. Windows supplies no exact speech-end timings, so pauses are inferred from recognition updates. Old words stay cleared when the next phrase begins.\n\nWindows Live Captions generates the text locally. Its window is minimized while in-app captions run. This optional engine requires Windows 11 22H2 or newer. Choose it under Caption engine. Built-in Whisper captions work on Windows 10 and 11. This captions all PC audio; no audio or transcript is saved. Open Windows caption window remains available as a fallback.'
         }) }
       ] },
-      { label: '&Settings', submenu: [{id: 'controls-settings', label: '&Controls…', accelerator: 'CmdOrCtrl+,', click: controls.open}] },
+      { label: '&Audio', submenu: [{id:'audio-settings',label:'&Audio settings…',click:audio.open}] },
+      { label: '&Settings', submenu: [{id: 'controls-settings', label: '&Controls…', accelerator: 'CmdOrCtrl+,', click: controls.open},
+        {label:'&Audio…',click:audio.open}] },
       { label: '&Help', submenu: [
         { label: 'Linux setup and troubleshooting', visible: process.platform === 'linux', click: () => openExternal('https://github.com/printwizardscxcare-design/spelunkr-desktop/blob/main/docs/LINUX.md') },
         { label: 'About Linux captions', visible: process.platform === 'linux', click: () => dialog.showMessageBox(win, { title: 'Linux captions', message: 'Local English captions prepared ahead of playback.', detail: 'Press Ctrl+Shift+L to toggle captions. Whisper reads the channel file directly and prepares timestamped subtitles at least 15 seconds ahead of the picture. Playback pauses while the cache fills. Captions work with the player muted and do not use other apps or a microphone. No audio or transcript is saved. Color, size, subtitle delay, two-line blocks, and fullscreen sizing use the same controls on every platform.' }) },
@@ -422,6 +428,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
   app.whenReady().then(() => {
     app.setAppUserModelId('io.github.printwizardscxcare-design.spelunkrdesktop');
     const siteSession = session.fromPartition('persist:spelunkr');
+    if (siteSession.webRequest) configureAudioCors(siteSession,details=>Boolean(win && !win.isDestroyed() && details.webContentsId===win.webContents.id && isSite(win.webContents.getURL())));
     siteSession.setPermissionRequestHandler((contents, permission, callback, details) => {
       callback(permission === 'fullscreen' && isSite(details.requestingUrl || contents.getURL()));
     });

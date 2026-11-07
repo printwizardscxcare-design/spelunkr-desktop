@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src https://spelunkr.tv/fonts/star4000/; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Audio — Spelunkr Desktop</title><link rel="stylesheet" href="controls.css"><link rel="stylesheet" href="audio.css">
+<script src="audio-model.js" defer></script><script src="audio-ui.js" defer></script></head><body>
+<header><div class="title-row"><div><p class="eyebrow">SPELUNKR DESKTOP · SOUND DEPARTMENT</p><h1>Audio</h1></div><label class="switch"><input id="enabled" type="checkbox"> Audio effects</label></div>
+<p class="hint">Tune the sound of old TV. Changes are heard live and remembered when you quit.</p></header>
+<main>
+<section aria-labelledby="presets-title"><div class="section-head"><h2 id="presets-title">Memory bank</h2><span id="modified" class="tag">Original sound</span></div>
+<div class="preset-row"><label for="preset">Preset</label><select id="preset" aria-describedby="preset-description"></select><button id="load-preset">Load</button></div>
+<p id="preset-description" class="hint"></p>
+<div class="preset-row custom-row"><label for="preset-name">Your preset</label><input id="preset-name" maxlength="48" placeholder="e.g. Saturday Morning"><button id="save-preset">Save new</button><button id="update-preset" disabled>Update</button><button id="delete-preset" disabled>Delete</button></div>
+<p class="hint">Save new keeps a copy. Update and Delete apply only to your own presets.</p></section>
+<div class="processors">
+<section aria-labelledby="denoise-title"><div class="section-head"><h2 id="denoise-title">Tape denoiser</h2></div>
+<div class="slider-row"><label for="denoise">Reduction</label><input id="denoise" type="range" min="0" max="100" step="1"><output id="denoise-value" for="denoise"></output></div>
+<p class="hint">Zero is Off. Start gently for steady tape hiss. Strong settings can soften voices, music, and ambience. Learns the noise floor as you listen.</p></section>
+<section aria-labelledby="normalize-title"><div class="section-head"><h2 id="normalize-title">Steady volume</h2><label><input id="normalize" type="checkbox"> Normalization</label></div>
+<p>Even out quiet channels and loud commercials without riding the volume control.</p><p class="hint">Fast reduction, gradual lift. Pauses and near-silence are left alone.</p>
+<div class="readout" id="level-meter">Level adjustment: 0.0 dB</div></section>
+<section aria-labelledby="compression-title"><div class="section-head"><h2 id="compression-title">Compression</h2><label><input id="compression" type="checkbox"> On</label></div>
+<div class="position"><span>Placement</span><label><input name="position" type="radio" value="pre" id="pre"> Pre EQ</label><label><input name="position" type="radio" value="post" id="post"> Post EQ</label></div>
+<div class="slider-row"><label for="amount">Compression</label><input id="amount" type="range" min="0" max="100" step="1"><output id="amount-value" for="amount"></output></div>
+<div class="slider-row"><label for="makeup">Makeup gain</label><input id="makeup" type="range" min="-12" max="18" step="0.1"><output id="makeup-value" for="makeup"></output></div>
+<label class="hint link"><input id="linked" type="checkbox"> Pair sliders — compression adjusts makeup gain</label><p class="hint" id="link-help">Unpair to adjust makeup gain independently.</p><div class="readout" id="compression-meter">Gain reduction: 0.0 dB</div></section>
+</div>
+<section aria-labelledby="eq-title"><div class="section-head"><h2 id="eq-title">Graphic equalizer</h2><div><label><input id="eq" type="checkbox"> On</label><button id="flat">Flat EQ</button></div></div>
+<div id="bands" class="equalizer" aria-label="Ten band graphic equalizer"></div><div class="eq-legend"><span>BASS</span><span>MIDRANGE</span><span>TREBLE</span></div>
+<p class="hint">±12 dB per band. Headroom and an output limiter help keep boosted settings from clipping. Gentler treble can soften tape hiss; EQ does not repair a damaged recording.</p></section>
+<p class="hint signal" id="signal"></p>
+<section aria-labelledby="subtitle-audio-title"><div class="section-head"><h2 id="subtitle-audio-title">Subtitles only</h2><label><input id="cleanup" type="checkbox"> Subtitle audio cleanup</label></div>
+<p class="hint">A separate, unheard voice feed for built-in Whisper captions: gentle denoising, less rumble, and a speech-focused bandwidth. Does not change what you hear or follow listening presets. Changing this setting rebuilds the subtitle buffer.</p>
+<p class="hint">Optional: cleanup can help noisy tapes, but may hurt some recordings. Compare on your channel. Windows Live Captions uses its own audio feed.</p></section>
+</main>
+<footer><p id="status" role="status" aria-live="polite">Loading audio settings…</p><button id="done" class="primary">Done</button></footer>
+</body></html>

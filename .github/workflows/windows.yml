@@ -16,6 +16,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Check Chromium audio and saved settings
+        shell: pwsh
+        run: |
+          $audioCheck = Start-Process -FilePath node_modules/electron/dist/electron.exe -ArgumentList scripts/check-audio-app.cjs -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput audio-check.out.log -RedirectStandardError audio-check.err.log
+          Get-Content audio-check.out.log
+          Get-Content audio-check.err.log
+          if ($audioCheck.ExitCode -ne 0) { exit $audioCheck.ExitCode }
       - run: npm run build:captions
       - uses: actions/upload-artifact@v7
         with:

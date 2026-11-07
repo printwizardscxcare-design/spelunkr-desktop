@@ -19,7 +19,7 @@ function createCaptionBufferManager({win,ipcMain,nativeRoot,platform,onStatus = 
   });
   const source = (event,value) => {
     if (!valid(event) || !config.enabled) return;
-    try {reader.start(value,config.speed);onStatus('Preparing subtitle buffer…');}
+    try {reader.start(value,config.speed,config.cleanup === true);onStatus('Preparing subtitle buffer…');}
     catch (error) {failure(error.message);}
   };
   const clock = (event,value) => {if (valid(event) && config.enabled) reader.clock(value?.session,value?.timeMs);};

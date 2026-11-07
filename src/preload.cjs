@@ -3,6 +3,7 @@
 // Runs in an isolated world. No Node or IPC functions are exposed to the site.
 const { ipcRenderer } = require('electron');
 if (location.origin === 'https://spelunkr.tv' && process.isMainFrame) {
+  if (typeof installAudio === 'function') installAudio({ipcRenderer,document,window,model:AudioModel,createGraph:createAudioGraph,workletSource:DENOISE_WORKLET});
   let bufferedCaptions;
   ipcRenderer.on('desktop:caption-rewind', () => {
     const rewind = document.querySelector('#stage-key-rw');

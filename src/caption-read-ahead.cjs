@@ -2,6 +2,7 @@
 const {EventEmitter} = require('node:events');
 const {spawn} = require('node:child_process');
 const readline = require('node:readline');
+const {captionAudioFilter}=require('./caption-audio.cjs');
 
 function sourceRequest(value) {
   if (!value || !Number.isFinite(value.startMs) || value.startMs < 0 || value.startMs > 864000000 ||
@@ -18,7 +19,7 @@ class CaptionReadAhead extends EventEmitter {
   constructor({ffmpeg, helper, spawnProcess = spawn, aheadMs = 24000, readyMs = 15000}) {
     super();Object.assign(this,{ffmpeg,helper,spawnProcess,aheadMs,readyMs});this.run = null;
   }
-  start(request, speed = 'fast') {
+  start(request, speed = 'fast', cleanup = false) {
     const source = sourceRequest(request);this.stop();
     const run = {source, clock: source.startMs, sentBytes: 0, processed: source.startMs, ready: false, stopped: false, wake: null, eof: false};
     this.run = run;
@@ -26,7 +27,7 @@ class CaptionReadAhead extends EventEmitter {
       {windowsHide:true,stdio:['pipe','pipe','pipe']});
     const audio = run.audio = this.spawnProcess(this.ffmpeg,['-nostdin','-hide_banner','-loglevel','error','-protocol_whitelist','https,http,tls,tcp,crypto',
       '-rw_timeout','30000000','-reconnect','1','-reconnect_streamed','1','-reconnect_on_network_error','1','-reconnect_delay_max','3',
-      '-ss',String(source.startMs / 1000),'-i',source.url,'-vn','-sn','-dn','-ac','1','-af','highpass=f=60','-ar','16000','-f','s16le','pipe:1'],
+      '-ss',String(source.startMs / 1000),'-i',source.url,'-vn','-sn','-dn','-ac','1','-af',captionAudioFilter(cleanup),'-ar','16000','-f','s16le','pipe:1'],
       {windowsHide:true,stdio:['ignore','pipe','pipe']});
     const fail = message => {if (this.run !== run || run.stopped) return;this.stop();this.emit('failure',message);};
     run.timer = setTimeout(() => fail('The subtitle buffer could not fill. Check the connection and try again.'),90000);run.timer.unref?.();
