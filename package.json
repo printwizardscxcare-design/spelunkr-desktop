@@ -25,8 +25,7 @@
     "win": {
       "icon": "assets/icon.ico",
       "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "artifactName": "Spelunkr-Desktop-${version}-Windows-${arch}-Setup.${ext}",
-      "signAndEditExecutable": false
+      "artifactName": "Spelunkr-Desktop-${version}-Windows-${arch}-Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
