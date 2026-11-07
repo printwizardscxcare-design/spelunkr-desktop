@@ -47,6 +47,7 @@ class CaptionCues {
     this.cueId = 0;
     this.wordOffset = 0;
     this.lastMetadata = '';
+    this.speechActive = null;
   }
 
   publish(text, clearReason = '') {
@@ -64,6 +65,25 @@ class CaptionCues {
     this.visible = false;
     if (!keepSnapshot) this.previous = null;
     this.publish('', reason);
+  }
+
+  setSpeechActive(active) {
+    const previous = this.speechActive;
+    this.speechActive = active;
+    if (!this.visible) return;
+    if (active === false && previous === true) this.lastWordAt = this.now();
+    this.armTimer();
+  }
+
+  armTimer() {
+    if (this.timer !== null) this.cancel(this.timer);
+    this.timer = null;
+    // Whisper delivers batches. Keep a card during ongoing speech instead of
+    // mistaking the recognition interval for silence. Windows uses inferred pauses.
+    if (this.speechActive === true) return;
+    const readingMs = Math.max(833, Math.min(4000, Math.min(this.text.length, 120) / 20 * 1000));
+    const deadline = Math.max(this.lastWordAt + this.pauseMs, this.startedAt + readingMs);
+    this.timer = this.schedule(() => this.clear({ reason:'pause' }), Math.max(0, deadline-this.now()));
   }
 
   update(raw) {
@@ -93,13 +113,7 @@ class CaptionCues {
     const start = next.words[Math.min(this.boundary, next.words.length - 1)].start;
     const text = next.text.slice(start);
     this.publish(text);
-    if (this.timer !== null) this.cancel(this.timer);
-    // Prepared subtitles often linger briefly after speech. Live Windows text has no
-    // speech-end timestamps: infer a pause from new-word activity, then allow a short
-    // reading window for text arriving in a batch. Corrections do not restart the clock.
-    const readingMs = Math.max(833, Math.min(4000, Math.min(text.length, 120) / 20 * 1000));
-    const deadline = Math.max(this.lastWordAt + this.pauseMs, this.startedAt + readingMs);
-    this.timer = this.schedule(() => this.clear({ reason: 'pause' }), Math.max(0, deadline - time));
+    this.armTimer();
   }
 }
 

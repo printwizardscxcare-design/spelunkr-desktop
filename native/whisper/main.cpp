@@ -91,6 +91,7 @@ class Recognizer {
     std::thread worker;
     std::vector<float> phrase, pending, preroll;
     int quiet = 0, voiced = 0;
+    bool speech_active = false;
     static std::string key(std::string word) {
         std::string result;
         for (unsigned char c : word) if (std::isalnum(c)) result += char(std::tolower(c));
@@ -174,11 +175,15 @@ public:
             if (!whisper_vad_detect_speech_no_reset(vad, frame, 512)) throw std::runtime_error("Speech detection failed");
             float probability = whisper_vad_n_probs(vad) ? whisper_vad_probs(vad)[0] : 0;
             bool speech = probability >= .5f;
+            if (speech && !speech_active) { speech_active=true; emit("activity","speech"); }
             if (speech && phrase.empty()) { phrase = preroll; quiet = voiced = 0; }
             if (!phrase.empty() || speech) {
                 phrase.insert(phrase.end(), frame, frame + 512);
                 if (speech) { voiced++; quiet=0; } else quiet++;
-                if (quiet >= 16) { submit(); phrase.clear(); quiet=voiced=0; }
+                if (quiet >= 16) {
+                    submit(); phrase.clear(); quiet=voiced=0;
+                    if (speech_active) { speech_active=false; emit("activity","silence"); }
+                }
                 else if (phrase.size() >= 40960) {
                     submit(); phrase.erase(phrase.begin(), phrase.end() - 4096); voiced=1;
                 }

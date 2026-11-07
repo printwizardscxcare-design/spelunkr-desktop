@@ -36,7 +36,7 @@ The optional Windows engine still reads the accessible Windows Live Captions tex
 
 ## Subtitle display
 
-The main process follows new words and clears captions after a pause, with bounded reading time. Punctuation and case corrections don't restart the pause clock. Existing Windows native-caption history is a baseline; Whisper starts a new session with no earlier transcript.
+The main process follows new words and clears captions after a pause, with bounded reading time. Whisper sends speech/silence activity so recognition batching is not mistaken for a pause. Ongoing speech cancels the clear timer. Channel changes restart Whisper to discard audio and inference from the earlier channel. Punctuation and case corrections don't restart the pause clock. Existing Windows native-caption history is a baseline; Whisper starts a new session with no earlier transcript.
 
 The renderer measures text with the selected font and available width. Cards hold up to two lines, carry unread overflow forward, and replace the whole block. Reading holds use about 20 characters per second, between 0.833 and 4 seconds per card. Color and size changes reflow pending text. Channel changes and turning captions off clear the queue. Fullscreen uses the available picture width and height.
 

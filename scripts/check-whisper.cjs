@@ -27,13 +27,14 @@ async function streamCheck() {
   }
   assert.ok(pcm,'Missing PCM fixture');
   const child=spawn(helper,['--pcm','--model','tiny.en'],{stdio:['pipe','pipe','pipe']});
-  let buffer='',failure='',listening=false;const captions=[];
+  let buffer='',failure='',listening=false;const captions=[],activity=[];
   child.stdout.setEncoding('utf8');child.stdout.on('data',data=>{
     buffer+=data;let newline;
     while((newline=buffer.indexOf('\n'))>=0){
       const event=JSON.parse(buffer.slice(0,newline));buffer=buffer.slice(newline+1);
       if(event.type==='error')failure=event.text;
       if(event.type==='caption')captions.push(event.text);
+      if(event.type==='activity')activity.push(event.text);
       if(event.type==='status'&&event.text.includes('Listening'))listening=true;
     }
   });
@@ -56,6 +57,7 @@ async function streamCheck() {
     await feed(Buffer.alloc(192000)); // Allow the last phrase and short inference queue to finish.
     assert.equal(failure,'');
     assert.ok(captions.some(text=>/\b(one|1)\b/i.test(text)),JSON.stringify(captions));
+    assert.ok(activity.includes('speech')&&activity.includes('silence'),JSON.stringify(activity));
     child.stdin.end();
     const result=await Promise.race([closed,delay(5000).then(()=>{throw Error('PCM EOF did not stop capture recognition');})]);
     assert.equal(result[0],0);

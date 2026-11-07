@@ -112,6 +112,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       const request = ++revision;
       overlayEnabled = enabled;
       cues.clear({ keepSnapshot: false });
+      cues.setSpeechActive(captionEngine === 'whisper' ? false : null);
       captionStatus = enabled ? 'Starting captions…' : 'Off';
       updateCaptionMenu(); sendCaptions();
       transition = transition.then(async () => {
@@ -142,6 +143,9 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       sendCaptions();
     };
     captions.on('caption', text => { if (overlayEnabled) cues.update(text); });
+    captions.on('activity', activity => {
+      if (overlayEnabled && captionEngine === 'whisper' && ['speech','silence'].includes(activity)) cues.setSpeechActive(activity === 'speech');
+    });
     captions.on('status', status => { if (overlayEnabled) { captionStatus = status; updateCaptionMenu(); } });
     captions.on('failure', async message => {
       if (!overlayEnabled) return;
@@ -149,7 +153,10 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       if (win && !win.isDestroyed()) dialog.showMessageBox(win, { type: 'info', title: 'In-app captions', message, detail: 'Whisper captions run locally. Try the Faster recognition setting on an older computer. Windows Live Captions remains an optional Windows 11 engine. See Help for platform setup instructions.' });
     });
     contents.on('did-finish-load', sendCaptions);
-    contents.on('did-navigate-in-page', () => { cues.clear(); sendCaptions(); });
+    contents.on('did-navigate-in-page', () => {
+      if (overlayEnabled && captionEngine === 'whisper') setOverlayEnabled(true);
+      else { cues.clear(); sendCaptions(); }
+    });
     win.on('closed', () => {
       overlayEnabled=false; revision++; cues.clear({ keepSnapshot: false }); captions.stop(); win=null;
       if (process.platform === 'darwin') Menu.setApplicationMenu(Menu.buildFromTemplate([
