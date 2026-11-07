@@ -10,6 +10,14 @@ The rewind happens once when captions go from off to on. Speed changes and chann
 
 The default engine is Whisper. It recognizes English speech on your computer, using models included in the installer. It doesn't need a speech account or send audio to a speech service. Watching channels still needs an internet connection.
 
+## Subtitle cooldown (0.8 beta)
+
+In the [0.8 beta](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.1), **Captions → Subtitle cooldown** gives you time to browse channels before loading subtitles. It waits for tuning to finish, then counts down near the bottom-right of the video. Each channel change cancels the old wait and starts a fresh one after the new channel tunes in.
+
+The default is **5 seconds**. Choose a preset or use the one-second adjustments for any value up to **30 seconds**, or choose **Off**. Your choice is saved. Once the countdown ends, Whisper prepares its separate 15-second subtitle buffer. Turning captions on initially still prepares them right away; pausing or seeking within the same channel doesn't start the cooldown.
+
+This setting isn't in 0.7.0. Both the current version and beta are available on the [download page](../README.md#download).
+
 ## Appearance
 
 Use **Captions → Text color** for white or yellow text. **Text size** has five choices: 80%, 100%, 125%, 150%, and 200%. The app remembers these settings.
