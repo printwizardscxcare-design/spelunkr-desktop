@@ -7,8 +7,10 @@ const { pathToFileURL } = require('node:url');
 const { HOME, isSite, isTrustedNavigation, isExternalUrl, safeWindowState } = require('./policy.cjs');
 const { CaptionBridge } = require('./caption-bridge.cjs');
 const { CaptionCues } = require('./caption-cues.cjs');
+const { CaptionTiming } = require('./caption-timing.cjs');
 const { captionOptions } = require('./caption-options.cjs');
 const { createControlManager } = require('./control-manager.cjs');
+const { toggleVideoFullscreen } = require('./video-fullscreen.cjs');
 
 app.setName('Spelunkr Desktop');
 app.enableSandbox();
@@ -66,6 +68,16 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     });
 
     const contents = win.webContents;
+    let videoFullscreen = false;
+    const updateFullscreenMenu = () => {
+      const item = Menu.getApplicationMenu()?.getMenuItemById('video-fullscreen');
+      if (item) item.label = videoFullscreen ? 'Exit video fullscreen (Esc)' : 'Enter video fullscreen';
+    };
+    contents.on('enter-html-full-screen', () => {videoFullscreen = true;updateFullscreenMenu();});
+    contents.on('leave-html-full-screen', () => {videoFullscreen = false;updateFullscreenMenu();});
+    contents.on('before-input-event', (_event, input) => {
+      if (input.type === 'keyDown' && input.key === 'Escape' && !videoFullscreen && win.isFullScreen()) win.setFullScreen(false);
+    });
     const nativeRoot = app.isPackaged ? path.join(process.resourcesPath, 'native') : path.join(__dirname, '../native/bin');
     const initialOptions = captionOptions(nativeRoot, process.platform);
     const captions = new CaptionBridge(initialOptions.executable, initialOptions);
@@ -74,8 +86,9 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     let captionSize = 1;
     let captionEngine = 'whisper';
     let captionSpeed = 'fast';
+    let captionDelayMs = 0;
     const saveCaptionPreferences = () => {
-      try { fs.writeFileSync(captionPreferences, JSON.stringify({color: captionColor, size: captionSize, engine: captionEngine, speed: captionSpeed})); } catch {}
+      try { fs.writeFileSync(captionPreferences, JSON.stringify({color: captionColor, size: captionSize, engine: captionEngine, speed: captionSpeed, delayMs: captionDelayMs})); } catch {}
     };
     const captionSizes = [0.8, 1, 1.25, 1.5, 2];
     try {
@@ -84,8 +97,11 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       if (savedCaptions.speed === 'balanced') captionSpeed = 'balanced';
       if (savedCaptions.color === 'yellow') captionColor = 'yellow';
       if (captionSizes.includes(savedCaptions.size)) captionSize = savedCaptions.size;
+      if (Number.isInteger(savedCaptions.delayMs) && savedCaptions.delayMs >= 0 && savedCaptions.delayMs <= 10000) captionDelayMs = savedCaptions.delayMs;
     } catch {}
     let overlayEnabled = false;
+    let playbackPaused = false;
+    let captureAccepting = false;
     let captionText = '';
     let captionMetadata = { cueId: 0, wordOffset: 0, clearReason: 'reset' };
     let captionStatus = 'Off';
@@ -95,8 +111,9 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         text: isSite(contents.getURL()) ? captionText : '', ...captionMetadata
       });
     };
-    const cues = new CaptionCues({ ignoreInitialSnapshot: false,
-      onText: (text, metadata) => { captionText = text; captionMetadata = metadata; sendCaptions(); } });
+    const timing = new CaptionTiming({onCue: (text, metadata) => {captionText = text; captionMetadata = metadata; sendCaptions();}});
+    timing.setDelay(captionDelayMs);
+    const cues = new CaptionCues({ ignoreInitialSnapshot: false, onText: (text, metadata) => timing.receive(text, metadata) });
     const updateCaptionMenu = () => {
       const menu = Menu.getApplicationMenu();
       if (!menu) return;
@@ -109,6 +126,15 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       if (status) status.label = captionStatus;
       const speedMenu = menu.getMenuItemById('caption-speed');
       if (speedMenu) speedMenu.enabled = overlayEnabled && captionEngine === 'whisper';
+      const delayMenu = menu.getMenuItemById('caption-delay');
+      if (delayMenu) delayMenu.label = `Subtitle delay: ${(captionDelayMs / 1000).toFixed(1)} s`;
+      const lessDelay = menu.getMenuItemById('caption-delay-less'), moreDelay = menu.getMenuItemById('caption-delay-more');
+      if (lessDelay) lessDelay.enabled = captionDelayMs > 0;
+      if (moreDelay) moreDelay.enabled = captionDelayMs < 10000;
+      for (const delay of [0, 500, 1000, 2000, 3000, 5000, 10000]) {
+        const item = menu.getMenuItemById(`caption-delay-${delay}`);
+        if (item) item.checked = delay === captionDelayMs;
+      }
       for (const id of [`caption-speed-${captionSpeed}`, `caption-color-${captionColor}`, `caption-size-${captionSize}`]) {
         const choice = menu.getMenuItemById(id);
         if (choice) choice.checked = true;
@@ -120,17 +146,20 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       const request = ++revision;
       const rewindOnEnable = enabled && !overlayEnabled;
       overlayEnabled = enabled;
+      captureAccepting = false;
       cues.clear({ keepSnapshot: false });
       cues.setSpeechActive(captionEngine === 'whisper' ? false : null);
-      captionStatus = enabled ? 'Starting captions…' : 'Off';
+      captionStatus = enabled ? playbackPaused ? 'Paused' : 'Starting captions…' : 'Off';
       updateCaptionMenu(); sendCaptions();
       transition = transition.then(async () => {
         await captions.stop();
         if (request !== revision || !overlayEnabled) return;
+        if (rewindOnEnable && isSite(contents.getURL())) contents.send('desktop:caption-rewind');
+        if (playbackPaused) return;
         cues.ignoreInitialSnapshot = captionEngine === 'windows';
         captions.configure(captionOptions(nativeRoot, process.platform, captionEngine, captionSpeed));
+        captureAccepting = true;
         captions.start();
-        if (rewindOnEnable && isSite(contents.getURL())) contents.send('desktop:caption-rewind');
       });
       return transition;
     };
@@ -154,13 +183,19 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       updateCaptionMenu();
       sendCaptions();
     };
-    captions.on('caption', (text, source) => { if (overlayEnabled) cues.update(text, source); });
+    const setCaptionDelay = milliseconds => {
+      captionDelayMs = Math.max(0, Math.min(10000, Math.round(milliseconds / 100) * 100));
+      timing.setDelay(captionDelayMs);
+      saveCaptionPreferences();
+      updateCaptionMenu();
+    };
+    captions.on('caption', (text, source) => { if (overlayEnabled && captureAccepting) cues.update(text, source); });
     captions.on('activity', activity => {
-      if (overlayEnabled && captionEngine === 'whisper' && ['speech','silence'].includes(activity)) cues.setSpeechActive(activity === 'speech');
+      if (overlayEnabled && captureAccepting && captionEngine === 'whisper' && ['speech','silence'].includes(activity)) cues.setSpeechActive(activity === 'speech');
     });
-    captions.on('status', status => { if (overlayEnabled) { captionStatus = status; updateCaptionMenu(); } });
+    captions.on('status', status => { if (overlayEnabled && captureAccepting) { captionStatus = status; updateCaptionMenu(); } });
     captions.on('failure', async message => {
-      if (!overlayEnabled) return;
+      if (!overlayEnabled || !captureAccepting) return;
       await setOverlayEnabled(false);
       if (win && !win.isDestroyed()) dialog.showMessageBox(win, { type: 'info', title: 'In-app captions', message, detail: 'Whisper captions run locally. Try the Faster recognition setting on an older computer. Windows Live Captions remains an optional Windows 11 engine. See Help for platform setup instructions.' });
     });
@@ -170,7 +205,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       else { cues.clear(); sendCaptions(); }
     });
     win.on('closed', () => {
-      overlayEnabled=false; revision++; cues.clear({ keepSnapshot: false }); captions.stop(); win=null;
+      overlayEnabled=false; revision++; cues.clear({ keepSnapshot: false }); timing.reset(); captions.stop(); win=null;
       if (process.platform === 'darwin') Menu.setApplicationMenu(Menu.buildFromTemplate([
         {role:'appMenu'}, {label:'File', submenu:[{label:'New Window', accelerator:'Command+N', click:createWindow}]}
       ]));
@@ -227,7 +262,11 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       guide: loadHome, reload, back,
       forwardPage: () => {if (contents.navigationHistory.canGoForward()) contents.navigationHistory.goForward();},
       openBrowser: () => openExternal(isSite(contents.getURL()) ? contents.getURL() : HOME),
-      fullscreen: () => win.setFullScreen(!win.isFullScreen()),
+      fullscreen: () => {
+        if (!isSite(contents.getURL())) return;
+        if (!videoFullscreen && win.isFullScreen()) win.setFullScreen(false);
+        contents.executeJavaScript(`(${toggleVideoFullscreen.toString()})()`, true).catch(() => {});
+      },
       alwaysOnTop: () => {
         if (process.platform === 'linux' && process.env.WAYLAND_DISPLAY) return;
         const value = !win.isAlwaysOnTop();win.setAlwaysOnTop(value);
@@ -239,11 +278,22 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
       captionSmaller: () => setCaptionSize(captionSizes[Math.max(0, captionSizes.indexOf(captionSize) - 1)]),
       captionWhite: () => setCaptionColor('white'), captionYellow: () => setCaptionColor('yellow'),
       captionFaster: () => setCaptionSpeed('fast'), captionBalanced: () => setCaptionSpeed('balanced'),
+      captionDelayLess: () => setCaptionDelay(captionDelayMs - 100), captionDelayMore: () => setCaptionDelay(captionDelayMs + 100),
+      captionDelayReset: () => setCaptionDelay(0),
       zoomIn: () => contents.setZoomLevel(Math.min(5, contents.getZoomLevel() + .5)),
       zoomOut: () => contents.setZoomLevel(Math.max(-3, contents.getZoomLevel() - .5)), zoomReset: () => contents.setZoomLevel(0)
     };
     const controls = createControlManager({win, BrowserWindow, ipcMain, profileDir: app.getPath('userData'),
-      platform: process.platform, actions: nativeControls, io: fs});
+      platform: process.platform, actions: nativeControls, io: fs, onPlayback: state => {
+        if (state === 'playing') {
+          const wasPaused = playbackPaused;playbackPaused = false;
+          if (wasPaused && overlayEnabled) setOverlayEnabled(true);
+        } else {
+          if (state === 'pause') playbackPaused = true;
+          if (overlayEnabled) setOverlayEnabled(true);
+          else cues.clear({keepSnapshot: false});
+        }
+      }});
     Menu.setApplicationMenu(Menu.buildFromTemplate([
       ...(process.platform === 'darwin' ? [{role: 'appMenu'}] : []),
       { label: '&Spelunkr', submenu: [
@@ -258,7 +308,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         { label: '&Reload / Retry connection', click: reload }
       ] },
       { label: '&View', submenu: [
-        { label: '&Fullscreen', click: nativeControls.fullscreen },
+        { id: 'video-fullscreen', label: 'Enter video &fullscreen', click: nativeControls.fullscreen },
         { id: 'always-on-top', label: '&Always on top', enabled: !(process.platform === 'linux' && Boolean(process.env.WAYLAND_DISPLAY)), type: 'checkbox', click: item => win.setAlwaysOnTop(item.checked) },
         { type: 'separator' },
         { label: 'Zoom in', click: nativeControls.zoomIn }, { label: 'Zoom out', click: nativeControls.zoomOut }, { label: 'Reset zoom', click: nativeControls.zoomReset }
@@ -284,6 +334,15 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
           { id: 'caption-size-1.25', label: 'Large (125%)', type: 'radio', checked: captionSize === 1.25, click: () => setCaptionSize(1.25) },
           { id: 'caption-size-1.5', label: 'Extra large (150%)', type: 'radio', checked: captionSize === 1.5, click: () => setCaptionSize(1.5) },
           { id: 'caption-size-2', label: 'Largest (200%)', type: 'radio', checked: captionSize === 2, click: () => setCaptionSize(2) }
+        ] },
+        { id: 'caption-delay', label: `Subtitle delay: ${(captionDelayMs / 1000).toFixed(1)} s`, submenu: [
+          { label: 'Additional time before subtitles appear', enabled: false },
+          { id: 'caption-delay-less', label: 'Reduce delay (−0.1 s)', enabled: captionDelayMs > 0, click: nativeControls.captionDelayLess },
+          { id: 'caption-delay-more', label: 'Increase delay (+0.1 s)', enabled: captionDelayMs < 10000, click: nativeControls.captionDelayMore },
+          { type: 'separator' },
+          ...[0, 500, 1000, 2000, 3000, 5000, 10000].map(delay => ({id: `caption-delay-${delay}`,
+            label: delay ? `${(delay / 1000).toFixed(1)} seconds` : 'No added delay', type: 'checkbox', checked: captionDelayMs === delay,
+            click: () => setCaptionDelay(delay)}))
         ] },
         { id: 'caption-status', label: 'Off', enabled: false },
         { type: 'separator' },

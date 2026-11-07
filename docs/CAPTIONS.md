@@ -16,6 +16,14 @@ Captions have a transparent background and a dark text shadow for readability. T
 
 Speech detection keeps captions visible between recognition results. After a pause and a short reading hold, the screen clears, including any older blocks still waiting to appear. Music or noise can't keep a stale subtitle alive indefinitely: without new recognized words, it clears within 4.5 seconds. New dialogue starts a fresh block. Changing channels clears the old captions and restarts Whisper for the new audio.
 
+## Subtitle timing
+
+Use **Captions → Subtitle delay** to add time before text appears. Choose a preset or adjust it in **0.1-second** steps, from **0 to 10 seconds**. The setting is saved. You can assign delay adjustments to keys or controller buttons in Settings → Controls.
+
+Text and its pause clearing shift together. Turning captions off, pausing playback, seeking, or changing channels clears the current text and any pending captions immediately. Resuming starts fresh without another automatic rewind.
+
+This adds display delay to captions that arrive early. It can't make Whisper recognize words before it has heard them. Leave it at zero if captions are already late.
+
 ## Recognition speed
 
 **Captions → Recognition speed** has two options:
@@ -25,7 +33,7 @@ Speech detection keeps captions visible between recognition results. After a pau
 | Faster, the default | Whisper tiny English | Start here for shorter delays, especially on older computers. |
 | Balanced | Whisper base English | Try the larger model if you want to compare recognition and your computer can keep up. |
 
-Speech arrives in short batches, so captions lag behind the audio. Faster mode checks smaller batches and uses a shorter processing window. The larger Balanced model takes more processing time; it isn't a guarantee of better results for every recording. If captions fall behind in Balanced mode, switch back to Faster.
+Speech arrives in short batches, so captions lag behind the audio. Faster mode checks a growing phrase and confirms words as results agree, keeping enough context to avoid cutting words into separate fragments. The larger Balanced model takes more processing time; it isn't a guarantee of better results for every recording. If captions fall behind in Balanced mode, switch back to Faster.
 
 The app remembers your choice. Recognition speed and text size are separate settings.
 

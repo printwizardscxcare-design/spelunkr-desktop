@@ -77,9 +77,13 @@ Use `npm.cmd` for these commands in PowerShell if needed. `npm start` rebuilds t
 
 `src/caption-options.cjs` selects the engine and capture method. Whisper uses WASAPI speaker loopback on Windows, the PulseAudio speaker monitor on Linux, and AudioTee's Core Audio tap on Mac. Audio is converted to mono 16 kHz PCM; none of these paths selects a microphone.
 
-`native/whisper/main.cpp` runs Whisper and Silero speech detection. It groups speech into short chunks, keeps a small overlap, and limits the waiting queue. The x64 build selects a compatible CPU-processing library at runtime. Apple Silicon uses a static native CPU build. Users don't need Python, CUDA, or build tools to run the installed app.
+`native/whisper/main.cpp` runs Whisper and Silero speech detection. Faster mode recognizes a growing phrase and publishes words confirmed by consecutive results. It finalizes at pauses, keeps overlap across forced phrase limits, and bounds the waiting queue. `transcript.h` handles revisions and absolute word positions; its C++ regression checks run during native builds. This follows the local-agreement approach described by [Whisper-Streaming](https://github.com/ufal/whisper_streaming). The x64 build selects a compatible CPU-processing library at runtime. Apple Silicon uses a static native CPU build. Users don't need Python, CUDA, or build tools to run the installed app.
 
 The helper sends text and speech-activity events to `src/caption-bridge.cjs`. The bridge handles process startup, idle audio, and shutdown. `src/caption-cues.cjs` handles pauses and recognition history; `src/caption-pages.cjs` measures and replaces whole two-line blocks in the renderer. Channel changes restart Whisper so earlier-channel audio doesn't appear in the new channel's captions.
+
+`caption-timing.cjs` delays text and pause clears by the same saved offset. Reset events cancel the queue immediately. Playback pause stops recognition; resume and seek start fresh without another rewind.
+
+`controls-model.js` defines action IDs, defaults, validation, and controller press tracking. `controls-runtime.cjs` applies saved inputs in the isolated preload. `control-manager.cjs` validates IPC sources and saves drafts atomically from a local settings window. Keyboard input requires trusted events; controller input requires focus. The settings window loads the live site's fonts with a restricted font-only policy. The fullscreen menu invokes the same player button with a user gesture, and the preload supplies a visible exit button.
 
 Faster mode uses quantized `tiny.en`; Balanced uses quantized `base.en`. Both are included. The optional Windows engine uses `native/CaptionReader.cs` to read the Windows caption window, minimize it, and restore or close it when stopped.
 
