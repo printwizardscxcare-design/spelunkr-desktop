@@ -16,10 +16,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Ensure Electron is installed for the audio check
+        run: node node_modules/electron/install.js
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ''
       - name: Check Chromium audio and saved settings
         shell: pwsh
         run: |
-          $audioExecutable = Join-Path $PWD 'node_modules/electron/dist/electron.exe'
+          $audioExecutable = node -p "require('electron')"
           $audioCheck = Start-Process -FilePath $audioExecutable -ArgumentList scripts/check-audio-app.cjs -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput audio-check.out.log -RedirectStandardError audio-check.err.log
           Get-Content audio-check.out.log
           Get-Content audio-check.err.log
