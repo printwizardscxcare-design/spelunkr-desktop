@@ -19,7 +19,10 @@ mkdir -p /tmp/runtime-tester
 chown tester:tester /tmp/runtime-tester
 chmod 700 /tmp/runtime-tester
 su tester -s /bin/bash -c 'node /source/scripts/check-whisper.cjs "/opt/Spelunkr Desktop/resources/native/whisper/caption-reader" /artifacts/test.wav --recorded-only'
-su tester -s /bin/bash -c 'node /source/scripts/check-buffered-whisper.cjs "/opt/Spelunkr Desktop/resources/native/whisper/caption-reader" /artifacts/test.wav'
+# Fresh allocations must not influence the speech detector's recurrent state.
+for pattern in 85 165 255; do
+  su tester -s /bin/bash -c "MALLOC_PERTURB_=$pattern node /source/scripts/check-buffered-whisper.cjs \"/opt/Spelunkr Desktop/resources/native/whisper/caption-reader\" /artifacts/test.wav"
+done
 su tester -s /bin/bash -c 'node /source/scripts/smoke-buffered-capture.cjs "/opt/Spelunkr Desktop/resources/native" /artifacts/test.wav'
 su tester -s /bin/bash -c 'node /source/scripts/check-audio-filter.cjs "/opt/Spelunkr Desktop/resources/native/whisper/ffmpeg" /artifacts/test.wav'
 # The containers run without a desktop login. Disable Chromium sandbox ONLY for

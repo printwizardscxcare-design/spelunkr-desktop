@@ -113,6 +113,9 @@ public:
         auto vp = whisper_vad_default_context_params(); vp.use_gpu = false; vp.n_threads = 1;
         vad = whisper_vad_init_from_file_with_params((root / "ggml-silero-v6.2.0.bin").u8string().c_str(), vp);
         if (!vad) { whisper_free(ctx); ctx = nullptr; throw std::runtime_error("The speech detection model could not load."); }
+        // Streaming calls preserve the detector's recurrent state. Its freshly
+        // allocated buffer must be cleared before the first no-reset call.
+        whisper_vad_reset_state(vad);
     }
     ~Recognizer() {
         running = false; available.notify_all();
