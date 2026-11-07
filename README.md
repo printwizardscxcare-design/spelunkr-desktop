@@ -2,11 +2,11 @@
 
 An unofficial Windows and Linux app for [spelunkr.tv](https://spelunkr.tv/). Watch in its own window, change channels with the arrow keys, and put captions right over the picture.
 
-## Download and install
+## Windows download and install
 
-**[Download the Windows installer — v0.4.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.4.0/Spelunkr-Desktop-0.4.0-Windows-x64-Setup.exe)**
+**[Download the Windows installer — v0.5.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.5.0/Spelunkr-Desktop-0.5.0-Windows-x64-Setup.exe)**
 
-[Release notes and checksum](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.4.0) · [All releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases)
+[Release notes and checksum](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.5.0) · [All releases](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases)
 
 You'll need **64-bit Windows 10 or Windows 11** and an internet connection. The live-caption feature needs **Windows 11 22H2 or newer**.
 
@@ -20,7 +20,15 @@ This repository is private for now. You'll need to sign in to a GitHub account w
 
 ## Linux downloads
 
-There are packages for **Debian, Arch Linux, and Fedora**. Download the matching file from the [Linux release](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.5.0), then follow the [Linux installation instructions](docs/LINUX.md).
+Choose the package for your distribution. These builds are for 64-bit Intel and AMD PCs.
+
+| Distribution | Download |
+| --- | --- |
+| Debian 12 or newer | [Debian installer (.deb)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.5.0/Spelunkr-Desktop-0.5.0-Debian-amd64.deb) |
+| Arch Linux | [Arch package (.pkg.tar.xz)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.5.0/Spelunkr-Desktop-0.5.0-Arch-x64.pkg.tar.xz) |
+| Fedora Workstation 43 or newer | [Fedora installer (.rpm)](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.5.0/Spelunkr-Desktop-0.5.0-Fedora-x86_64.rpm) |
+
+Follow the [Linux installation instructions](docs/LINUX.md). [Release notes and checksums](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.5.0) are included with the downloads.
 
 Linux includes local English captions with the same transparent text, color and size settings, subtitle blocks, and fullscreen controls. It uses Vosk instead of Windows Live Captions. Always on top depends on the desktop; it is unavailable in native Wayland sessions.
 

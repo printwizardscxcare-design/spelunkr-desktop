@@ -18,10 +18,10 @@ If you have Node.js and the [GitHub CLI](https://cli.github.com/) installed, sig
 node scripts/download-counts.cjs
 ```
 
-For just the current release:
+To inspect all files in the current release:
 
 ```powershell
-gh release view v0.4.0 --repo printwizardscxcare-design/spelunkr-desktop --json assets --jq '.assets[] | select(.name | endswith("-Setup.exe")) | {name, downloadCount}'
+gh release view v0.5.0 --repo printwizardscxcare-design/spelunkr-desktop --json assets --jq '.assets[] | {name, downloadCount}'
 ```
 
 ## What the count means
