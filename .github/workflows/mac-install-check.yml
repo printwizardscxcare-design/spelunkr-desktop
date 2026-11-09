@@ -5,6 +5,12 @@ on:
       mac-run:
         description: Successful Mac installers workflow run to check
         required: true
+      arm-runner:
+        description: Apple Silicon check machine (alternate pool if one is busy)
+        type: choice
+        options: [macos-15, macos-26]
+        default: macos-15
+        required: false
 permissions:
   contents: read
   actions: read
@@ -16,7 +22,7 @@ jobs:
         include:
           - runner: macos-15-intel
             arch: x64
-          - runner: macos-15
+          - runner: ${{ inputs.arm-runner || 'macos-15' }}
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
