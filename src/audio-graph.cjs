@@ -2,7 +2,7 @@
 // Also embedded in the sandboxed player preload and exercised with real Web Audio.
 module.exports = function createAudioGraph(context, source, model, denoiser, guard) {
   const dry = context.createGain(), wet = context.createGain(), input = context.createGain();
-  let suspended=false;
+  let suspended=false, suspendTimer=null, connected=true;
   const output=guard || context.createGain();
   output.connect(context.destination);
   const dc=context.createBiquadFilter();dc.type='highpass';dc.frequency.value=12;dc.Q.value=.707;
@@ -54,9 +54,13 @@ module.exports = function createAudioGraph(context, source, model, denoiser, gua
     return {gainDb, reduction:settings.enabled && settings.compression ? compressor.reduction : 0, peak};
   }
   const reset = () => {gainDb=0;set(level.gain,1);denoiser?.port.postMessage('reset');};
-  const suspend = () => {if(suspended)return;suspended=true;set(dry.gain,0);set(wet.gain,0);};
-  const resume = () => {if(!suspended)return;suspended=false;apply(settings);};
-  const destroy = () => {for (const node of [source,dc,output,dry,wet,input,preamp,...eq,compressor,makeup,level,limiter,analyser]) node.disconnect();denoiser?.disconnect();};
+  const suspend = () => {
+    if(suspended)return;suspended=true;set(dry.gain,0);set(wet.gain,0);
+    // Let the fade finish, then release processing for a replaced video element.
+    suspendTimer=setTimeout(()=>{source.disconnect();output.disconnect();connected=false;suspendTimer=null;},180);
+  };
+  const resume = () => {if(!suspended)return;clearTimeout(suspendTimer);suspendTimer=null;if(!connected){source.connect(dc);output.connect(context.destination);connected=true;}suspended=false;apply(settings);};
+  const destroy = () => {clearTimeout(suspendTimer);for (const node of [source,dc,output,dry,wet,input,preamp,...eq,compressor,makeup,level,limiter,analyser]) node.disconnect();denoiser?.disconnect();};
   apply(settings,true);
   return {apply,meter,reset,destroy,suspend,resume};
 };
