@@ -5,13 +5,13 @@ Open **Audio → Audio settings**. Changes take effect as you adjust them and ar
 ## Listening controls
 
 - **Denoiser:** 0 is Off; 1–100 increases adaptive spectral noise reduction. Start around 15–30 for steady VHS hiss. Strong settings can soften speech, music, and ambience. This is not a repair tool for dropouts, clipping, or tape-speed problems. Noise estimates reset when the channel file changes. It runs locally and adds about 21–23 milliseconds of processing delay at common sample rates when enabled.
-- **Normalization:** continuously smooths level differences between channels, programs, and commercials. Loud changes turn down quickly; quieter material lifts gradually. Near-silence freezes the gain so pauses do not keep boosting tape hiss. The leveler uses a −20 dBFS RMS target with bounded gain, not a certified LUFS/broadcast measurement. It respects your volume knob. Short peaks and heavily distorted sources can still sound different.
+- **Normalization:** continuously smooths level differences between channels, programs, and commercials. Loud changes turn down quickly; quieter material lifts gradually. Near-silence freezes the gain so pauses do not keep boosting tape hiss. The leveler uses a −14 dBFS RMS target with bounded gain, not a certified LUFS/broadcast measurement. It respects your volume knob. Short peaks and heavily distorted sources can still sound different.
 - **Compression:** the amount slider makes the dynamic range narrower. **Pre EQ** places compression before the equalizer; **Post EQ** puts it after the equalizer. Pairing adjusts makeup gain as you move compression. Unpair to set makeup independently, from −12 to +18 dB. Turning compression off bypasses its makeup gain too.
 - **Graphic EQ:** ten bands from 31 Hz to 16 kHz, each ±12 dB. **Flat EQ** resets the bands without changing the other effects. Positive EQ gets automatic headroom; an output limiter helps contain peaks while effects are active.
 
-A short transition guard fades hard pause/loading edges, and a 12 Hz filter removes recording DC offsets. Normalization aims for −14 dBFS RMS (not a broadcast LUFS measurement); the output limiter catches short peaks.
+A six-millisecond transition guard fades hard pause/loading edges, and a 12 Hz filter removes recording DC offsets. Normalization aims for −14 dBFS RMS (not a broadcast LUFS measurement); the output limiter catches short peaks.
 
-The signal order is **Denoiser → Normalization → Compression/EQ (your chosen order) → Output limiter**. Turning all effects off restores the direct listening path. Switching a previously unprocessed channel into the audio path may briefly reconnect playback; the app restores its position.
+The signal order is **Denoiser → Normalization → Compression/EQ (your chosen order) → Output limiter**. Turning all effects off bypasses the listening effects; the transition guard and DC filter remain active once a channel has entered the audio path. Switching a previously unprocessed channel into the audio path may briefly reconnect playback; the app restores its position.
 
 ## Memory bank
 

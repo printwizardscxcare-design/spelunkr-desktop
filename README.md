@@ -6,13 +6,11 @@ An unofficial desktop app for [spelunkr.tv](https://spelunkr.tv/). Pick a channe
 
 The channels and shows come from the live website. The app gives them their own window and adds English captions that run on your computer.
 
-**The new beta is undergoing installer checks.** The links below will become active after publication. Until then, the [existing beta is available here](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.1).
-
 **[Download the Windows beta](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.8.0-beta.2/Spelunkr-Desktop-0.8.0-beta.2-Windows-x64-Setup.exe)** · **[All beta downloads](#download)** · **[Caption help](docs/CAPTIONS.md)** · **[Report a problem](https://github.com/printwizardscxcare-design/spelunkr-desktop/issues)**
 
 ## Download
 
-**0.8.0-beta.2 will become the only public release after installer checks finish.** It is a beta while improvements continue. Quit the app before installing an update; there is no automatic updater.
+**0.8.0-beta.2 is the only available release.** It is a beta while improvements continue. Quit the app before installing an update; there is no automatic updater.
 
 **Captions start on, using built-in Whisper.** Choose a channel and the app prepares subtitles automatically. The speech engine and English models are included—no speech account, model download, microphone setup, or engine selection. Watching needs an internet connection.
 
