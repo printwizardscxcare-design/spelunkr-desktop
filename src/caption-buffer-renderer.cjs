@@ -6,6 +6,7 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
   let observedVideo = null, observedSource = '', observedPath = window.location?.pathname || '';
   let resumeAfterBuffer = false, selfSeek = false, pendingSeek = false, pendingRewind = false, untilMs = 0, complete = false, failed = false;
   let expectedSeek = 0;
+  let retryAt = 0, retryCount = 0;
   let lastClockMs = null;
   const currentVideo = () => document.querySelector('.stage-video-col video, video');
   const playerPaused = () => {
@@ -34,6 +35,7 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
     if (!active) return;
     // Let surfing continue even if the previous channel was still buffering.
     if (buffering && resumeAfterBuffer && video === currentVideo()) pausePlayer(false);
+    retryAt = retryCount = 0;
     session++;cache.reset(session);ipcRenderer.send('buffer:stop');
     buffering = failed = complete = pendingSeek = pendingRewind = false;
     selfSeek = false;untilMs = 0;lastClockMs = null;video = null;url = '';
@@ -108,6 +110,7 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
   ipcRenderer.on('desktop:buffer-cue',(_event,cue) => {if (enabled) {cache.add(cue);onChange();}});
   const progress = (_event,value) => {
     if (!enabled || value?.session !== session || !Number.isFinite(value.untilMs)) return;
+    retryAt = retryCount = 0;
     untilMs = Math.max(untilMs,value.untilMs);maybeResume();
   };
   ipcRenderer.on('desktop:buffer-progress',progress);
@@ -117,7 +120,8 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
     complete = true;progress(_event,value);
   });
   ipcRenderer.on('desktop:buffer-failure',() => {
-    failed = true;
+    if (!enabled) return;
+    failed = true;retryAt = now() + Math.min(60000,5000 * 2 ** Math.min(retryCount++,4));
     if (buffering && resumeAfterBuffer && video) pausePlayer(false);
     buffering = false;cache.reset();onChange();
   });
@@ -157,7 +161,8 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
       if (now() < cooldownUntil) {onChange();return;}
       finishCooldown();
     }
-    if (!enabled || failed) return;
+    if (!enabled) return;
+    if (failed) {if (now() >= retryAt) prepare(false);return;}
     const player = currentVideo();
     if (player?.currentSrc && (player !== video || player.currentSrc !== url || pendingSeek)) {prepare(pendingRewind);return;}
     if (!video || !url) return;
@@ -177,6 +182,7 @@ module.exports = function installCaptionBuffer({ipcRenderer,document,window,cach
     render(width,measure) {
       if (active && cooling) return {text:'',scale:1};
       if (!enabled) return null;
+      if (failed) return {text:'Subtitles reconnecting…',scale:1};
       if (buffering || !video || pendingSeek) return {text:'Preparing subtitles…',scale:1};
       if (failed || !video || video.paused) return {text:'',scale:1};
       return cache.render(video.currentTime * 1000 - delayMs,width,measure);

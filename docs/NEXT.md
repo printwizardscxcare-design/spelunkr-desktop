@@ -1,26 +1,12 @@
 # 0.8 beta
 
-The beta is being developed on the `next-version` branch. The current beta is **0.8.0-beta.1**. [0.7.0](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) remains the current regular download; the beta will stay separate until a regular release is requested.
+The current beta is **0.8.0-beta.2**. It is the only published download while beta work continues.
 
-## Fix list
+## November 7 fix list
 
-Reported November 7, 2026, on the audio update to 0.8.0-beta.1. These are open reports; causes have not been confirmed.
+- [x] Audio popping during loading and pauses: short start/stop fades, recording DC filtering, smooth normalization resets, and smooth graph suspension.
+- [x] Normalization too quiet: raised the program target and moved brief peak protection to the output limiter.
 
-- [ ] **Audio popping during loading and pauses.** Audible pops occur during loading or pauses. Check loading/buffering, channel changes, pause, and resume; transitions should be quiet without clicks or pops.
-- [ ] **Normalization makes normal volume too quiet.** With normalization enabled, ordinary program audio becomes too quiet. Revisit the level target and gain behavior so normal listening stays comfortably audible while loud commercials and channel differences are controlled.
+## Captions
 
-## Audio
-
-**Audio → Audio settings** adds normalization, a spectral denoiser slider, paired or independent compression/makeup gain, **Pre EQ / Post EQ** placement, and a ten-band EQ. A memory bank includes six classic presets and up to 32 user presets. All current settings and presets persist atomically. A master bypass restores the direct sound.
-
-Optional **Subtitle audio cleanup** is saved independently and processes only Whisper's unheard recognition feed. It preserves the sample clock. It is off by default; the first noisy speech comparison showed retained speech but no wording improvement. See [Audio help](AUDIO.md) for algorithms, reference guidance, and limitations.
-
-## Subtitle cooldown
-
-Channel surfing no longer needs to stop for subtitles on every channel. With captions enabled, the app waits for the channel to finish tuning, then shows a small **Subtitles in 5s** countdown near the bottom-right of the video, clear of the site's channel-info card. Changing channels cancels that countdown; the next one gets its full cooldown after tuning finishes. The picture keeps playing while you browse, and old captions disappear.
-
-Once the countdown ends, Whisper prepares the usual 15-second subtitle buffer for the current channel. That buffer is separate from the cooldown. Turning captions on for the first time still prepares them immediately.
-
-Use **Captions → Subtitle cooldown** to choose any whole second up to **30 seconds**, or **Off**. The default is **5 seconds**, and the app remembers your choice. The countdown also works in fullscreen and with the optional Windows caption engine.
-
-Pausing or seeking within the same channel doesn't start a cooldown. Turning captions off cancels a running countdown.
+Whisper and captions are on by default for new installs and upgrades. On/Off is separate from engine selection. Speech tools and English models are bundled. Temporary subtitle failures retry automatically without a setup dialog. Appearance, delay, and the five-second cooldown after tuning remain adjustable.

@@ -9,6 +9,8 @@ Open **Audio → Audio settings**. Changes take effect as you adjust them and ar
 - **Compression:** the amount slider makes the dynamic range narrower. **Pre EQ** places compression before the equalizer; **Post EQ** puts it after the equalizer. Pairing adjusts makeup gain as you move compression. Unpair to set makeup independently, from −12 to +18 dB. Turning compression off bypasses its makeup gain too.
 - **Graphic EQ:** ten bands from 31 Hz to 16 kHz, each ±12 dB. **Flat EQ** resets the bands without changing the other effects. Positive EQ gets automatic headroom; an output limiter helps contain peaks while effects are active.
 
+A short transition guard fades hard pause/loading edges, and a 12 Hz filter removes recording DC offsets. Normalization aims for −14 dBFS RMS (not a broadcast LUFS measurement); the output limiter catches short peaks.
+
 The signal order is **Denoiser → Normalization → Compression/EQ (your chosen order) → Output limiter**. Turning all effects off restores the direct listening path. Switching a previously unprocessed channel into the audio path may briefly reconnect playback; the app restores its position.
 
 ## Memory bank

@@ -38,9 +38,11 @@
   // so tape hiss and pauses cannot slowly drive the gain to its maximum.
   function normalization({rms, peak, volume = 1, previous = 0, seconds = .05}) {
     if (volume <= .001 || !Number.isFinite(rms) || !Number.isFinite(peak)) return previous;
-    const raw = rms / volume, rawPeak = peak / volume;
+    const raw = rms / volume;
     if (raw < dbToGain(-48)) return previous;
-    const target = Math.max(-24, Math.min(12, -20 - 20 * Math.log10(raw), -2 - 20 * Math.log10(Math.max(rawPeak, .00001))));
+    // Comfortable program level; isolated peaks are handled by the output limiter,
+    // rather than pulling the whole program down on every short meter window.
+    const target = Math.max(-18, Math.min(12, -14 - 20 * Math.log10(raw)));
     return previous + (target - previous) * (1 - Math.exp(-seconds / (target < previous ? .12 : 2.5)));
   }
   const api = {BANDS, PRESETS, defaults, settings, config, active, dbToGain, compressor, normalization};

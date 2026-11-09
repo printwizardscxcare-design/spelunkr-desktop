@@ -8,10 +8,10 @@ Open **Apple menu → About This Mac** and look for the chip or processor:
 
 | About This Mac says | Download |
 | --- | --- |
-| Apple M1, M2, M3, M4, or another Apple M-series chip | [Apple Silicon installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Mac-arm64.dmg) |
-| Intel processor | [Intel installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Mac-x64.dmg) |
+| Apple M1, M2, M3, M4, or another Apple M-series chip | [Apple Silicon installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.8.0-beta.2/Spelunkr-Desktop-0.8.0-beta.2-Mac-arm64.dmg) |
+| Intel processor | [Intel installer](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.8.0-beta.2/Spelunkr-Desktop-0.8.0-beta.2-Mac-x64.dmg) |
 
-Both builds run natively. The Apple Silicon version doesn't need Rosetta. The [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0) also has ZIP copies of the apps and checksums for each architecture.
+Both builds run natively. The Apple Silicon version doesn't need Rosetta. The [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.2) also has ZIP copies of the apps and checksums for each architecture.
 
 ## Install and open
 
@@ -25,9 +25,9 @@ If your Mac is managed by a school or workplace, its policy may prevent opening 
 
 ## Captions
 
-Press **Command+Shift+L** to turn built-in captions on.
+Built-in captions start automatically. **Command+Shift+L** toggles them on or off.
 
-Captions start off. Turning them on rewinds 15 seconds once and pauses while the app prepares subtitles ahead of the picture. Playback resumes when at least 15 seconds are ready. **Captions → Caption engine → None** turns them off again.
+Captions start on automatically with built-in Whisper. No speech setup or model download is needed. Turning them on rewinds 15 seconds once and pauses while the app prepares subtitles ahead of the picture. Playback resumes when at least 15 seconds are ready. **Captions → Off** turns them off again.
 
 Whisper reads the channel file directly, so built-in captions don't need microphone or system-audio recording permission. The app doesn't pick up other programs' audio or save audio and transcripts. Both English speech models are included.
 

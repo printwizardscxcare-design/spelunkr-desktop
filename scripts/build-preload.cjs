@@ -14,5 +14,5 @@ const bundle = `const { CaptionPages } = (() => {\nconst module = { exports: {} 
 const buffering = `const {CaptionCache} = (() => {const module = {exports:{}};\n${cache}\nreturn module.exports;})();\nconst installCaptionBuffer = (() => {const module = {exports:{}};\n${buffered}\nreturn module.exports;})();\n`;
 const audio = [['AudioModel','audio-model.js'],['createAudioGraph','audio-graph.cjs'],['installAudio','audio-runtime.cjs']].map(([name,file]) =>
   `const ${name} = (() => {const module = {exports:{}};\n${fs.readFileSync(path.join(root,'src',file),'utf8')}\nreturn module.exports;})();\n`).join('');
-const denoiser = `const DENOISE_WORKLET = ${JSON.stringify(fs.readFileSync(path.join(root,'src/denoise-worklet.js'),'utf8'))};\n`;
+const denoiser = `const DENOISE_WORKLET = ${JSON.stringify(['denoise-worklet.js','declick-worklet.js'].map(file=>fs.readFileSync(path.join(root,'src',file),'utf8')).join('\n'))};\n`;
 fs.writeFileSync(path.join(root, 'src/preload.generated.cjs'), denoiser + audio + buffering + bundle);

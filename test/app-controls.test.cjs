@@ -15,7 +15,7 @@ async function appHarness(platform, savedCaptions) {
   const messages = [], radioWrites = [], preferences = [];
   let bufferConfig = {enabled:false}, bufferOptions;
   const app = Object.assign(new EventEmitter(), {
-    isPackaged: false, setName() {}, enableSandbox() {}, requestSingleInstanceLock: () => true,
+    commandLine:{appendSwitch(){}}, isPackaged: false, setName() {}, enableSandbox() {}, requestSingleInstanceLock: () => true,
     whenReady: () => Promise.resolve(), getPath: () => '/profile', setAppUserModelId() {}, quit() {}
   });
   class Window extends EventEmitter {
@@ -84,17 +84,18 @@ async function appHarness(platform, savedCaptions) {
     rewindCount: () => messages.filter(m => m.channel === 'desktop:caption-rewind' || m.channel === 'desktop:caption-buffer' && m.value.enabled && m.value.rewind).length};
 }
 
-for (const platform of ['win32', 'darwin', 'linux']) test(`${platform}: captions start off, None stops them, and only an off-to-on transition rewinds`, async () => {
+for (const platform of ['win32', 'darwin', 'linux']) test(`${platform}: captions start on with Whisper, Off stops them, and only an off-to-on transition rewinds`, async () => {
   const h = await appHarness(platform);
   const item = id => h.menu.getMenuItemById(id);
   assert.equal(h.bridge.active, false);
-  assert.equal(item('caption-engine-none').checked, true);
-  assert.equal(h.rewindCount(), 0);
+  assert.equal(item('caption-engine-none'), undefined);
+  assert.equal(h.rewindCount(), 1);
+  assert.equal(h.bufferedEnabled(), true);
 
   item('caption-engine-whisper').click(); await flush();
   assert.equal(h.bufferedEnabled(), true);
   assert.equal(item('caption-engine-whisper').checked, true);
-  assert.equal(item('caption-engine-none').checked, false);
+  assert.equal(item('captions-on').checked, true);
   assert.equal(h.rewindCount(), 1);
 
   item('caption-speed').submenu.items[1].click(); await flush();
@@ -102,13 +103,13 @@ for (const platform of ['win32', 'darwin', 'linux']) test(`${platform}: captions
   item('caption-engine-whisper').click(); await flush();
   assert.equal(h.rewindCount(), 1, 'Speed, channel, and engine restarts must not rewind again');
 
-  item('caption-engine-none').click(); await flush();
+  item('captions-off').click(); await flush();
   assert.equal(h.bufferedEnabled(), false);
-  assert.equal(item('caption-overlay').checked, false);
-  assert.equal(item('caption-engine-none').checked, true);
+  assert.equal(item('captions-off').checked, true);
+  assert.equal(item('caption-engine-none'), undefined);
   assert.equal(item('caption-speed').enabled, false);
 
-  item('caption-overlay').click({checked: true}); await flush();
+  item('captions-on').click(); await flush();
   assert.equal(h.bufferedEnabled(), true);
   assert.equal(item('caption-engine-whisper').checked, true);
   assert.equal(h.rewindCount(), 2);
@@ -143,7 +144,7 @@ test('Windows native captions clear when paused or seeking and resume does not r
   assert.equal(h.rewindCount(),1);h.window.emit('closed');await flush();
 });
 
-test('subtitle delay is saved, bounded, and restored without enabling captions', async () => {
+test('subtitle delay is saved, bounded, and restored with automatic captions', async () => {
   const h = await appHarness('linux',{delayMs: 500}), item = id => h.menu.getMenuItemById(id);
   assert.equal(item('caption-delay').label,'Subtitle delay: 0.5 s');assert.equal(h.bridge.active,false);
   item('caption-delay-more').click();assert.equal(item('caption-delay').label,'Subtitle delay: 0.6 s');
@@ -157,7 +158,7 @@ test('subtitle delay is saved, bounded, and restored without enabling captions',
 for (const platform of ['win32','darwin','linux']) test(`${platform}: subtitle cooldown defaults to five seconds and saves every whole second through thirty`,async () => {
   const h=await appHarness(platform),item=id=>h.menu.getMenuItemById(id);
   assert.equal(item('subtitle-cooldown').label,'Subtitle cooldown: 5 s');
-  assert.equal(h.bufferedEnabled(),false);
+  assert.equal(h.bufferedEnabled(),true);
   item('subtitle-cooldown-more').click();assert.equal(h.preferences.at(-1).cooldownSeconds,6);
   item('subtitle-cooldown-30').click();item('subtitle-cooldown-more').click();
   assert.equal(h.preferences.at(-1).cooldownSeconds,30);assert.equal(item('subtitle-cooldown-more').enabled,false);
@@ -169,7 +170,7 @@ for (const platform of ['win32','darwin','linux']) test(`${platform}: subtitle c
   h.window.emit('closed');await flush();
   const restored=await appHarness(platform,{cooldownSeconds:23});
   assert.equal(restored.menu.getMenuItemById('subtitle-cooldown').label,'Subtitle cooldown: 23 s');
-  assert.equal(restored.bufferedEnabled(),false);restored.window.emit('closed');await flush();
+  assert.equal(restored.bufferedEnabled(),true);restored.window.emit('closed');await flush();
 });
 
 test('invalid saved cooldown settings fall back to five seconds',async () => {
@@ -187,7 +188,20 @@ test('Windows captions stop during surfing and restart only after cooldown witho
   h.playback('playing');await flush();assert.equal(h.bridge.active,false);
   h.cooldown(true);await flush();assert.equal(h.bridge.active,false);
   h.cooldown(false);await flush();assert.equal(h.bridge.active,true);assert.equal(h.rewindCount(),rewinds);
-  h.cooldown(true);await flush();h.menu.getMenuItemById('caption-engine-none').click();await flush();
+  h.cooldown(true);await flush();h.menu.getMenuItemById('captions-off').click();await flush();
   h.cooldown(false);await flush();assert.equal(h.bridge.active,false);
   h.window.emit('closed');await flush();
+});
+
+for (const platform of ['win32','darwin','linux']) test(platform+': upgrades use Whisper automatically and explicit Off persists',async()=>{
+  const upgraded=await appHarness(platform,{engine:'windows'});
+  assert.equal(upgraded.bufferedEnabled(),true);
+  assert.equal(upgraded.menu.getMenuItemById('caption-engine-whisper').checked,true);
+  upgraded.menu.getMenuItemById('captions-off').click();await flush();
+  const saved=upgraded.preferences.at(-1);assert.equal(saved.enabled,false);assert.equal(saved.defaultsVersion,2);
+  upgraded.window.emit('closed');await flush();
+  const reopened=await appHarness(platform,saved);assert.equal(reopened.bufferedEnabled(),false);
+  assert.equal(reopened.menu.getMenuItemById('captions-off').checked,true);
+  assert.equal(reopened.menu.getMenuItemById('caption-engine-whisper').checked,true);
+  reopened.window.emit('closed');await flush();
 });

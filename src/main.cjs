@@ -17,6 +17,8 @@ const {configureAudioCors}=require('./audio-cors.cjs');
 
 app.setName('Spelunkr Desktop');
 app.enableSandbox();
+// Playback and local audio start without a first-click setup step.
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 if (!app.requestSingleInstanceLock()) { app.quit(); } else {
   let win;
   let failed = false;
@@ -92,13 +94,18 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     let captionDelayMs = 0;
     let subtitleCooldown = 5;
     let subtitleCoolingDown = false;
+    let captionsOn = true;
     const saveCaptionPreferences = () => {
-      try { fs.writeFileSync(captionPreferences, JSON.stringify({color: captionColor, size: captionSize, engine: captionEngine, speed: captionSpeed, delayMs: captionDelayMs, cooldownSeconds: subtitleCooldown})); } catch {}
+      try { fs.writeFileSync(captionPreferences, JSON.stringify({color: captionColor, size: captionSize, engine: captionEngine, enabled: captionsOn, defaultsVersion: 2, speed: captionSpeed, delayMs: captionDelayMs, cooldownSeconds: subtitleCooldown})); } catch {}
     };
     const captionSizes = [0.8, 1, 1.25, 1.5, 2];
     try {
       const savedCaptions = JSON.parse(fs.readFileSync(captionPreferences, 'utf8'));
-      if (process.platform === 'win32' && savedCaptions.engine === 'windows') captionEngine = 'windows';
+      // Upgrade older manual-setup builds once to automatic Whisper.
+      if (savedCaptions.defaultsVersion === 2) {
+        captionsOn = savedCaptions.enabled !== false;
+        if (process.platform === 'win32' && savedCaptions.engine === 'windows') captionEngine = 'windows';
+      }
       if (savedCaptions.speed === 'balanced') captionSpeed = 'balanced';
       if (savedCaptions.color === 'yellow') captionColor = 'yellow';
       if (captionSizes.includes(savedCaptions.size)) captionSize = savedCaptions.size;
@@ -123,10 +130,10 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     const updateCaptionMenu = () => {
       const menu = Menu.getApplicationMenu();
       if (!menu) return;
-      const toggle = menu.getMenuItemById('caption-overlay');
-      if (toggle) toggle.checked = overlayEnabled;
+      const onOff = menu.getMenuItemById(overlayEnabled ? 'captions-on' : 'captions-off');
+      if (onOff) onOff.checked = true;
       // Selecting one radio item unchecks its siblings; only update the active choice.
-      const engineChoice = menu.getMenuItemById(`caption-engine-${overlayEnabled ? captionEngine : 'none'}`);
+      const engineChoice = menu.getMenuItemById(`caption-engine-${captionEngine}`);
       if (engineChoice) engineChoice.checked = true;
       const status = menu.getMenuItemById('caption-status');
       if (status) status.label = captionStatus;
@@ -168,16 +175,16 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         transition = transition.then(() => captions.stop());
       },
       onStatus: status => {if (overlayEnabled && captionEngine === 'whisper') {captionStatus = status;updateCaptionMenu();}},
-      onFailure: async message => {
+      onFailure: message => {
         if (!overlayEnabled || captionEngine !== 'whisper') return;
-        await setOverlayEnabled(false);
-        if (win && !win.isDestroyed()) dialog.showMessageBox(win,{type:'info',title:'Buffered subtitles',message,
-          detail:'Subtitles read the channel audio ahead of playback and stay in memory. Try reloading the channel or choosing Faster recognition.'});
+        captionStatus = 'Reconnecting subtitles…';updateCaptionMenu();
       }});
     const setOverlayEnabled = enabled => {
       const request = ++revision;
       const rewindOnEnable = enabled && !overlayEnabled;
       overlayEnabled = enabled;
+      captionsOn = enabled;
+      saveCaptionPreferences();
       if (!enabled) subtitleCoolingDown = false;
       captureAccepting = false;
       cues.clear({ keepSnapshot: false });
@@ -201,7 +208,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
     };
     const setCaptionEngine = engine => {
       captionEngine = engine; saveCaptionPreferences();
-      setOverlayEnabled(true);
+      setOverlayEnabled(overlayEnabled);
     };
     const setCaptionSpeed = speed => {
       captionSpeed = speed; saveCaptionPreferences(); updateCaptionMenu();
@@ -359,11 +366,12 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         { label: 'Zoom in', click: nativeControls.zoomIn }, { label: 'Zoom out', click: nativeControls.zoomOut }, { label: 'Reset zoom', click: nativeControls.zoomReset }
       ] },
       { label: '&Captions', submenu: [
-        { id: 'caption-overlay', label: '&In-app live captions', type: 'checkbox', click: item => setOverlayEnabled(item.checked) },
+        {id:'captions-on',label:'On (default)',type:'radio',checked:overlayEnabled,click:()=>setOverlayEnabled(true)},
+        {id:'captions-off',label:'Off',type:'radio',checked:!overlayEnabled,click:()=>setOverlayEnabled(false)},
+        {type:'separator'},
         { label: 'Caption engine', submenu: [
-          { id: 'caption-engine-none', label: 'None', type: 'radio', checked: !overlayEnabled, click: () => setOverlayEnabled(false) },
-          { id: 'caption-engine-whisper', label: 'Built-in captions (Whisper)', type: 'radio', checked: overlayEnabled && captionEngine === 'whisper', click: () => setCaptionEngine('whisper') },
-          { id: 'caption-engine-windows', label: 'Windows Live Captions (Windows 11)', visible: process.platform === 'win32', type: 'radio', checked: overlayEnabled && captionEngine === 'windows', click: () => setCaptionEngine('windows') }
+          { id: 'caption-engine-whisper', label: 'Built-in captions (Whisper)', type: 'radio', checked: captionEngine === 'whisper', click: () => setCaptionEngine('whisper') },
+          { id: 'caption-engine-windows', label: 'Windows Live Captions (Windows 11)', visible: process.platform === 'win32', type: 'radio', checked: captionEngine === 'windows', click: () => setCaptionEngine('windows') }
         ] },
         { id: 'caption-speed', label: 'Recognition speed', enabled: overlayEnabled && captionEngine === 'whisper', submenu: [
           { id: 'caption-speed-balanced', label: 'Balanced (base English)', type: 'radio', checked: captionSpeed === 'balanced', click: () => setCaptionSpeed('balanced') },
@@ -419,6 +427,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); } else {
         { label: '&About this unofficial app', click: about }
       ] }
     ]));
+    setOverlayEnabled(captionsOn);
     loadHome();
   }
 

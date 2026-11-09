@@ -4,15 +4,15 @@ The Linux packages are for **64-bit Intel and AMD PCs**. Choose your distributio
 
 ## Debian
 
-For **Debian 12 or newer**, [download the .deb](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Debian-amd64.deb). Open a terminal in the folder where you saved it and run:
+For **Debian 12 or newer**, [download the .deb](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.8.0-beta.2/Spelunkr-Desktop-0.8.0-beta.2-Debian-amd64.deb). Open a terminal in the folder where you saved it and run:
 
 ```sh
-sudo apt install ./Spelunkr-Desktop-0.7.0-Debian-amd64.deb
+sudo apt install ./Spelunkr-Desktop-0.8.0-beta.2-Debian-amd64.deb
 ```
 
 ## Arch Linux
 
-[Download the Arch package](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz), update Arch, and install the file:
+[Download the Arch package](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.8.0-beta.2/Spelunkr-Desktop-0.8.0-beta.2-Arch-x64.pkg.tar.xz), update Arch, and install the file:
 
 ```sh
 sudo pacman -Syu
@@ -21,26 +21,26 @@ sudo pacman -Syu
 Then install the package from the download folder:
 
 ```sh
-sudo pacman -U ./Spelunkr-Desktop-0.7.0-Arch-x64.pkg.tar.xz
+sudo pacman -U ./Spelunkr-Desktop-0.8.0-beta.2-Arch-x64.pkg.tar.xz
 ```
 
 Run the install command from the download folder. This package is distributed through GitHub Releases; it isn't an AUR package.
 
 ## Fedora
 
-For **Fedora Workstation 43 or newer**, [download the .rpm](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.7.0/Spelunkr-Desktop-0.7.0-Fedora-x86_64.rpm). From the download folder, run:
+For **Fedora Workstation 43 or newer**, [download the .rpm](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/download/v0.8.0-beta.2/Spelunkr-Desktop-0.8.0-beta.2-Fedora-x86_64.rpm). From the download folder, run:
 
 ```sh
-sudo dnf install ./Spelunkr-Desktop-0.7.0-Fedora-x86_64.rpm
+sudo dnf install ./Spelunkr-Desktop-0.8.0-beta.2-Fedora-x86_64.rpm
 ```
 
-All three package managers install the declared dependencies. Open **Spelunkr Desktop** from your applications menu when installation finishes. The packages aren't signed; SHA-256 checksums are on the [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.7.0).
+All three package managers install the declared dependencies. Open **Spelunkr Desktop** from your applications menu when installation finishes. The packages aren't signed; SHA-256 checksums are on the [release page](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.2).
 
 ## Watching and captions
 
 Use **Up / Down** for channels and **Left / Right** for volume, in windowed and fullscreen views. **F11** uses video fullscreen; Escape or Exit fullscreen returns to the window. **Settings → Controls…** lets you assign keys and controller inputs, then Save them together.
 
-**Ctrl+Shift+L** toggles captions while the app has focus. Turning them on rewinds 15 seconds once and pauses to recognize a cache ahead of playback. The picture resumes when at least 15 seconds are ready. Captions start off.
+**Ctrl+Shift+L** toggles captions while the app has focus. Turning them on rewinds 15 seconds once and pauses to recognize a cache ahead of playback. The picture resumes when at least 15 seconds are ready. Captions start on automatically with built-in Whisper. No speech setup or model download is needed.
 
 Whisper and its English models are included. Faster recognition is the default; Balanced is available for the larger model. You don't need Python or a speech-service account to use the installed app. The [caption guide](CAPTIONS.md) covers color, size, pause clearing, and recognition settings.
 

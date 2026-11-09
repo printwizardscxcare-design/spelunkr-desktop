@@ -1,8 +1,8 @@
 # Using captions
 
-Click the app, then press **Ctrl+Shift+L** on Windows/Linux or **Command+Shift+L** on Mac. You can also use **Captions → In-app live captions**.
+Captions start **on**, using **Built-in captions (Whisper)**. Pick a channel; the app prepares subtitles automatically. The installer includes the engine and English speech models. There is no speech account, extra download, or microphone setup.
 
-Under **Captions → Caption engine**, choose **Built-in captions (Whisper)** to turn captions on, or **None** to turn them off. None clears the text and stops audio capture and recognition. The shortcut toggles your last-used engine, and the menu selection follows it. Captions start off when you open the app.
+Use **Captions → On / Off**, or **Ctrl+Shift+L** on Windows/Linux and **Command+Shift+L** on Mac. The On/Off choice is saved independently of the engine. Older installs switch to automatic Whisper once when upgrading; later choices are remembered. Temporary connection failures resume playback and retry automatically.
 
 Turning built-in captions on rewinds the video **15 seconds** and prepares a caption cache ahead of playback. The picture pauses with **Preparing subtitles…** until recognition has covered at least 15 seconds ahead, then resumes. Captions are displayed by their video timestamps, rather than whenever recognition finishes. A slow connection can make initial preparation take longer than 15 seconds.
 
@@ -12,11 +12,10 @@ The default engine is Whisper. It recognizes English speech on your computer, us
 
 ## Subtitle cooldown (0.8 beta)
 
-In the [0.8 beta](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.1), **Captions → Subtitle cooldown** gives you time to browse channels before loading subtitles. It waits for tuning to finish, then counts down near the bottom-right of the video. Each channel change cancels the old wait and starts a fresh one after the new channel tunes in.
+In the [0.8 beta](https://github.com/printwizardscxcare-design/spelunkr-desktop/releases/tag/v0.8.0-beta.2), **Captions → Subtitle cooldown** gives you time to browse channels before loading subtitles. It waits for tuning to finish, then counts down near the bottom-right of the video. Each channel change cancels the old wait and starts a fresh one after the new channel tunes in.
 
 The default is **5 seconds**. Choose a preset or use the one-second adjustments for any value up to **30 seconds**, or choose **Off**. Your choice is saved. Once the countdown ends, Whisper prepares its separate 15-second subtitle buffer. Turning captions on initially still prepares them right away; pausing or seeking within the same channel doesn't start the cooldown.
 
-This setting isn't in 0.7.0. Both the current version and beta are available on the [download page](../README.md#download).
 
 ## Separate subtitle audio (audio update)
 

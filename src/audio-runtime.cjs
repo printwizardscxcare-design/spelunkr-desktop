@@ -43,7 +43,8 @@ module.exports = function installAudio({ipcRenderer, document, window, model, cr
       }
       if (video!==currentVideo() || source!==video.currentSrc || !model.active(settings)) return;
       const denoiser=new window.AudioWorkletNode(context,'spelunkr-tape-denoiser',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2],channelCount:2,channelCountMode:'explicit'});
-      const graph=createGraph(context,context.createMediaElementSource(video),model,denoiser);
+      const guard=new window.AudioWorkletNode(context,'spelunkr-transition-guard',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
+      const graph=createGraph(context,context.createMediaElementSource(video),model,denoiser,guard);
       graph.apply(settings,true);graphs.set(video,graph);activeGraph=graph;
       await context.resume();
       status='Audio processing ready';report();

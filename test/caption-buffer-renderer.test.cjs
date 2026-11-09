@@ -158,3 +158,14 @@ test('buffering uses site playback controls and preserves cached cues across the
   h.userToggle();await Promise.resolve();
   assert.equal(h.sent.filter(([key])=>key==='buffer:source').length,1,'User pause/resume must reuse the prepared cache');
 });
+
+test('temporary subtitle failures resume playback and retry automatically without another rewind',()=>{
+  const h=setup();h.send('desktop:caption-buffer',{enabled:true,rewind:true});const original=h.source();
+  h.send('desktop:buffer-failure');assert.equal(h.video.paused,false);assert.equal(h.render(),'Subtitles reconnecting…');
+  h.tick(4999);assert.equal(h.source().session,original.session);
+  h.tick(1);assert.notEqual(h.source().session,original.session);assert.equal(h.source().startMs,85000);
+  const next=h.source();h.send('desktop:buffer-ready',{session:next.session,untilMs:100000});
+  assert.equal(h.video.paused,false);
+  h.send('desktop:buffer-failure');h.send('desktop:caption-buffer',{enabled:false});h.tick(60000);
+  assert.equal(h.source().session,next.session,'Off cancels retry');
+});
