@@ -23,7 +23,7 @@ app.whenReady().then(async()=>{
         s.buffer=buffer;
         const url=URL.createObjectURL(new Blob([workletSource],{type:'text/javascript'}));await c.audioWorklet.addModule(url);URL.revokeObjectURL(url);
         const denoiser=new AudioWorkletNode(c,'spelunkr-tape-denoiser',{outputChannelCount:[2]});
-        const guard=new AudioWorkletNode(c,'spelunkr-transition-guard',{outputChannelCount:[2]});
+        const guard=new AudioWorkletNode(c,'spelunkr-transition-guard',{outputChannelCount:[2],channelCount:2,channelCountMode:'explicit'});
         createGraph(c,s,model,denoiser,guard).apply(settings,true);s.start();const output=await c.startRendering();
         const values=output.getChannelData(0).slice(24000);return Math.sqrt(values.reduce((a,v)=>a+v*v,0)/values.length);
       }
@@ -36,15 +36,24 @@ app.whenReady().then(async()=>{
         const c=new OfflineAudioContext(2,rate,rate),s=c.createBufferSource(),b=c.createBuffer(1,rate,rate);
         const a=b.getChannelData(0);for(let i=Math.floor(rate*.2);i<Math.floor(rate*.7);i++)a[i]=.4;
         s.buffer=b;const url=URL.createObjectURL(new Blob([workletSource],{type:'text/javascript'}));await c.audioWorklet.addModule(url);URL.revokeObjectURL(url);
-        s.connect(new AudioWorkletNode(c,'spelunkr-transition-guard',{outputChannelCount:[2]})).connect(c.destination);s.start();
+        s.connect(new AudioWorkletNode(c,'spelunkr-transition-guard',{outputChannelCount:[2],channelCount:2,channelCountMode:'explicit'})).connect(c.destination);s.start();
         const values=(await c.startRendering()).getChannelData(0);let jump=0;for(let i=1;i<values.length;i++)jump=Math.max(jump,Math.abs(values[i]-values[i-1]));
         transitions.push({rate,jump,steady:values[Math.floor(rate*.5)]});
       }
-      return {base,pre,post,denoise,transitions};
+      const surroundContext=new OfflineAudioContext(2,48000,48000),surroundSource=surroundContext.createBufferSource(),surroundBuffer=surroundContext.createBuffer(6,48000,48000);
+      for(let i=0;i<48000;i++)surroundBuffer.getChannelData(2)[i]=.2*Math.sin(2*Math.PI*1000*i/48000);
+      surroundSource.buffer=surroundBuffer;
+      const surroundUrl=URL.createObjectURL(new Blob([workletSource],{type:'text/javascript'}));await surroundContext.audioWorklet.addModule(surroundUrl);URL.revokeObjectURL(surroundUrl);
+      const surroundGuard=new AudioWorkletNode(surroundContext,'spelunkr-transition-guard',{outputChannelCount:[2],channelCount:2,channelCountMode:'explicit'});
+      createGraph(surroundContext,surroundSource,model,null,surroundGuard);surroundSource.start();
+      const surroundOutput=(await surroundContext.startRendering()).getChannelData(0).slice(24000);
+      const surroundRms=Math.sqrt(surroundOutput.reduce((sum,v)=>sum+v*v,0)/surroundOutput.length);
+      return {base,pre,post,denoise,transitions,surroundRms};
     })()`);
     assert.ok(Math.abs(result.base-.3/Math.sqrt(2))<.0001,'Bypass preserves source');
     assert.ok(Math.abs(result.pre-result.post)>.005,`Effect order changes real audio: ${JSON.stringify(result)}`);
     for(const t of result.transitions){assert.ok(t.jump<.003,'Hard pause/start edges fade: '+JSON.stringify(t));assert.ok(Math.abs(t.steady-.4)<1e-6,'Steady signal keeps its level');}
+    assert.ok(result.surroundRms>.09,'Surround center dialogue survives stereo playback: '+result.surroundRms);
     assert.ok(result.denoise>0&&Number.isFinite(result.denoise));console.log('Chromium audio graph:',result);
     const wave=Buffer.alloc(44+48000*2);wave.write('RIFF');wave.writeUInt32LE(wave.length-8,4);wave.write('WAVEfmt ',8);wave.writeUInt32LE(16,16);wave.writeUInt16LE(1,20);wave.writeUInt16LE(1,22);wave.writeUInt32LE(48000,24);wave.writeUInt32LE(96000,28);wave.writeUInt16LE(2,32);wave.writeUInt16LE(16,34);wave.write('data',36);wave.writeUInt32LE(96000,40);
     for(let i=0;i<48000;i++)wave.writeInt16LE(Math.round(6553*Math.sin(2*Math.PI*1000*i/48000)),44+i*2);
